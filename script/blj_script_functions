@@ -1,0 +1,195 @@
+#!/bin/bash
+###################################################################
+##                                                               ##
+##  This script contains common functions used in                ##
+##  BioLockJ scripts.                                            ##
+##                                                               ##
+###################################################################
+
+
+# Return TRUE if variable name in Param 1 exists in shell
+# Param 1 - bash env variable
+var_exists() {
+	[ $(set | grep -c "^${1}=") -gt 0 ]
+}
+
+# Convert a path variable to store the absolute path
+# param 1 - a path
+# recommended: aPath=$(to_abs_path $aPath)
+to_abs_path(){
+    local target=${1}
+    absPath=""
+    [ ! -f $target ] && [ ! -d $target ] && exit_with_message "$1 cannot be found on this system."
+    if [ "$target" == "." ]; then
+        absPath="$(pwd)"
+    elif [ "$target" == ".." ]; then
+        absPath="$(dirname "$(pwd)")"
+    else
+        absPath="$(cd "$(dirname "$1")"; pwd)/$(basename "$1")"
+    fi
+    echo $absPath
+}
+
+
+
+
+# --->should stay
+# Return absolute path of current pipeline if in a pipeline directory
+current_pipeline() {
+	if [ -d "${BLJ_PROJ}" ]; then
+		dir="$PWD"
+		parentDir="$(dirname $dir)"
+		while [ "$parentDir" != "${BLJ_PROJ}" ] && [ "$parentDir" != "$(dirname $parentDir)" ] && ! $(is_pipeline_dir $dir)
+		do
+			dir="$parentDir"
+			parentDir="$(dirname $parentDir)"
+		done
+		[ "$parentDir" == "${BLJ_PROJ}" ] && echo $dir
+   fi
+}
+
+
+
+
+# Check for a default profile in the $USER $HOME dir
+get_default_profile() {
+	user_profile="${HOME}"/.bash_profile
+	[ ! -f "${user_profile}" ] && user_profile="${HOME}"/.bashrc
+	[ ! -f "${user_profile}" ] && user_profile="${HOME}"/.profile
+	[ ! -f "${user_profile}" ] && user_profile="${HOME}"/.bash_login
+	[ ! -f "${user_profile}" ] && user_profile="${HOME}"/.zshenv
+	[ ! -f "${user_profile}" ] && user_profile="${HOME}"/.zprofile
+	[ ! -f "${user_profile}" ] && user_profile="${HOME}"/.zshrc
+	[ ! -f "${user_profile}" ] && user_profile="${HOME}"/.zlogin
+	[ -f "${user_profile}" ] && echo "${user_profile}"
+}
+
+# Return property value from the given file
+# Param 1 - Config file
+# Param 2 - Prop name
+get_property() {
+	prop="$(cat $1 | grep ^$2=)" && echo "$(eval echo ${prop/$2=})"
+}
+
+# Remove property - delete the line from the file
+# Param 1 - Config file
+# Param 2 - prop name 
+rm_property() {
+	[ ! -f "${1}" ] && exit_script "Error [ blj_functions.rm_property() ]: Config file ${1} does not exist"
+	[ ${#2} -eq 0 ] && exit_script "Error [ blj_functions.rm_property() ]: Config property name is required"
+	TMP=~/.temp_config.txt && [ -f "${TMP}" ] && rm "${TMP}" && touch "${TMP}" && chmod 770 "${TMP}"
+	while read line; do
+		line="$(echo ${line} | xargs)" && IFS=$'=' && tokens=( ${line} ) && reset_IFS 
+		[ ${#line} -gt 0 ] && [ "${tokens[0]}" != "${2}" ] && echo "${line}" >> "${TMP}"
+	done < "${1}"
+	[ -f "${TMP}" ] && rm "${1}" && mv "${TMP}" "${1}"
+}
+
+# Set property in Config file ${1} unless this value already is set, in which case - do nothing.
+# Param 1 - Config file-path
+# Param 2 - Prop name
+# Param 3 - Prop value
+set_property() {
+	[ ! -f "${1}" ] && exit_script "Error [ blj_functions.set_property() ]: Config file ${1} does not exist"
+	[ ${#2} -eq 0 ] && exit_script "Error [ blj_functions.set_property() ]: Config property name is required"
+	[ $(cat $1 | grep -c ^$2="${3}") -gt 0 ] && return
+	prop="$(cat $1 | grep ^$2=)" && [ ${#prop} -gt 0 ] && rm_property "${1}" "${2}"
+	echo "${2}=${3}" >> "${1}"
+}
+
+
+
+
+# Exit script after sleeping 10 seconds because in some cases (Docker bash shells) exit command will close the terminal window.
+# In this case, the user can at least view the message before the window closes.
+# Param 1 Exit message
+# Param 2 (optional) Numeric status code
+exit_script() {
+	echo "${1}" && sleep 5 && [ ${#2} -gt 0 ] && exit ${2}
+	exit 1
+}
+
+# run command to pass to another script
+# If the variable BIOLOCKJ_TEST_MODE exists, the command is shown, not run and the program exits.
+# Otherwise the command is run, calling the next script
+exit_after_command(){
+	CMD="$@"
+	[ ${#BIOLOCKJ_TEST_MODE} -gt 0 ] && echo "${BIOLOCKJ_TEST_MODE}$CMD" && exit
+	eval $CMD
+	exit
+}
+
+# If the variable BIOLOCKJ_TEST_MODE exists, the command is shown, not run and the program exits.
+# Otherwise the command is run
+continue_after_command(){
+	CMD="$@"
+	[ ${#BIOLOCKJ_TEST_MODE} -gt 0 ] && echo "${BIOLOCKJ_TEST_MODE}$CMD" && exit
+	eval $CMD
+}
+
+# Optionally print a message, then show help, then exit with status 1
+exit_with_message(){
+	echo $1
+	[ -f "/.dockerenv" ] && sleep 5
+	echo "$(biolockj --help)" && exit 1 # display_help
+}
+
+
+
+# Check if parameter contains alpha-numeric chars [a-zA-Z0-9]
+# Param 1 - Any variable
+is_empty() {
+	x=$(echo "$1" | grep -c [a-zA-Z0-9])
+	[ ${x} -eq 0 ]
+}
+
+# Return TRUE if the directory path given ends with a valid module name
+# Example: 01_Demultiplexer
+is_module_dir() {
+	modNum=0 && modName=$(basename $1)
+	[ ${#modName} -gt 3 ] && modNum=$( echo ${modName:0:2} | egrep "^[0-9{2}]+$" )
+	[ -d "$1" ] && [ ${modName:2:1} == "_" ] && [ $modNum -gt 0 ]
+}
+
+# Trim last input $1 character if ends with "/"
+# Return 0 status code if $1 param ends with patthern _yyyymmmdd.
+# Example: myTestPipeline_2019Jan01 returns TRUE
+is_pipeline_dir() {
+	dir=$1 && [ "${dir: -1}" == "/" ] && dir=${dir:0:$((${#dir}-1))}
+	prefix=${dir: -10:1}
+	year=$(echo ${dir: -9:4} | egrep "^[0-9{4}]+$")
+	mon1=$(echo ${dir: -5:1} | egrep "^[A-S]+$")
+	mon23=$(echo ${dir: -4:2} | egrep "^[a-y{2}]+$")
+	day=$(echo ${dir: -2} | egrep "^[0-9{2}]+$")
+	[ "$dir" == "${dir/.}" ] && [ -d "$1" ] && [ "$prefix" == "_" ] && [ ${#year} -eq 4 ] && [ ${#mon1} -eq 1 ] && [ ${#mon23} -eq 2 ] && [ ${#day} -eq 2 ]
+}
+
+
+# Override function in $BLJ_SCRIPT/blj_functions to return the most recent pipeline dir-path 
+most_recent_pipeline() {
+	if [ -d "${BLJ_PROJ}" ]; then
+		IFS=$'\n' && dirs=$(\ls -1dt ${BLJ_PROJ}/*) && myDirs=( "$dirs" )
+		for dir in $myDirs; do
+			$(is_pipeline_dir $dir) && reset_IFS && echo "$dir" && return
+		done
+	fi
+	reset_IFS
+}
+
+
+
+
+# Reset IFS to initial shell value
+reset_IFS() {
+	export IFS="$IFS_CACHE"
+}
+
+# Default value --> $' \t\n'
+show_IFS() {
+	echo "Cached  IFS  -->  $(printf %q "$IFS_CACHE")"
+	echo "Current IFS  -->  $(printf %q "$IFS")"
+}
+
+IFS_CACHE="$IFS" && alias showIFS="show_IFS" && alias resetIFS="reset_IFS"
+SPACER="================================================================================"
+

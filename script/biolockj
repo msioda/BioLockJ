@@ -10,117 +10,122 @@
 ##  BioLockJ Config file (2nd param) instead of running a pipeline      ##
 ##                                                                      ##
 ##########################################################################
-. "${AWS_LIB}"
 
-BLJ_JAR=${BLJ}/dist/BioLockJ.jar
+. ${BLJ}/script/blj_functions
+. ${BLJ}/script/blj_user_arg_functions
 
-# Display BioLockJ release version
-display_version() {
-	[ -f "${BLJ}/.version" ] && cat "${BLJ}/.version" && return
-	echo "Missing ${BLJ}/.version"
-}
+#. "${AWS_LIB}" #<- should be able to delete this
 
-# Show the help menu
-display_help() {
-    echo "BioLockJ $(display_version) - UNCC Fodor Lab July 2018" 
-    echo 'Most args can be passed using 1st letter only (with or without hyphens)'
-    echo '    Run new pipeline:        config   <file_path>'
-    echo '    Restart pipeline:        restart  <dir_path>'
-    echo '    Encrypt password:        pass     <password>'
-    echo '    Show help menu:          help'
-    echo '    Show version:            version'
-    echo '    Run on AWS:              aws'
-    echo '    Run in Docker:           docker'
-    echo '    Run Docker GUI:          gui'
-    echo '    Mount Docker BLJ         blj'
-    echo '    Mount Docker BLJ_SUP     blj_sup'
-}
 
-# Convert input parameters to array of flag args and "name=value" arg pairs
-# Params $@ passed in from main script input parameters at runtime
-get_params() {
-	args=("$@") && i=0 && name='' && out='' && numArgs=${#args[*]} 
-    for arg in ${args[@]}; do
-    	arg=$(echo $arg | sed 's/^\(-\)*//')
-    	$(containsElement $arg docker blj blj_sup gui aws) && out="${out} ${arg}" && continue
-		[ ${#name} -eq 0 ] && name="${arg}" && continue
-		out="${out} ${name}=${arg}" && name=''
-    done
-	[ "${out/'c='}" == "${out}" ] && [ "${out/'r='}" == "${out}" ] && [ ${#name} -gt 0 ] && out="${out} c=${name}"
-    echo "${out}" | xargs
-}
 
-# Run main script algorithm
-# Param 1 - Array of biolockj script args
-main() {
-	arg1="${1//-}"
-	if [ $# -eq 1 ] && [ "${arg1:0:1}" == "v" ]; then
-		display_version
-	elif [ $# -eq 1 ] && [ "${arg1:0:1}" == "h" ]; then 
-		display_help
-	else
-		printf "Execute CMD  --------->  biolockj $(echo ${@}) \n"
-		run_biolockj $(get_params $@)
-	fi
-}
+# Get dockblj scripts formatted named arg params
+#docker_args() {
+#	args='' && [ ${#gui} -gt 0 ] && args="-gui"
+#	[ ${#config} -gt 0 ] && args="c=${config}" && [ ${#newPass} -gt 0 ] && args="${args} p=${newPass}"
+#	[ ${#restart} -gt 0 ] && args="${args} r=${restart}"
+#	[ ${#blj} -gt 0 ] && args="${args} blj"
+#	[ ${#blj_sup} -gt 0 ] && args="${args} blj_sup"
+#	echo "${args}"
+#}
+
+
+# <--------------------- delete starting here
+
+# Convert input parameters to array with values "name=value"
+#get_params() {
+#	count=0 && i=0 && conf='' && restartDir='' && args=( "$@" )
+#    for arg in ${args[@]}; do
+#    	count=$((count+1))
+#    	[ "${arg//-}" == "blj" ] && echo "blj" && continue
+#   	 	[ "${arg//-}" == "blj_sup" ] && echo "blj_sup" && continue
+#		i=$((i+1)) && [ $((i%2)) -eq 1 ] && name="${arg//-}"
+#		[ $((i%2)) -eq 1 ] && ! $(lastArgMustBeConfig $count $numArgs) && $(is_flag_arg $name) && echo "${name:0:1}" && name='' && i=$((i+1)) && continue
+#		if [ $((i%2)) -eq 0 ]; then
+#			echo "${name}=${arg}" && x="${name}" && name=''
+#			[ "${x:0:1}" == "r" ] && restartDir="${arg}"
+#			[ "${x:0:1}" == "c" ] && conf="${arg}"
+#    	fi
+#    done
+#     [ ${#name} -gt 0 ] && [ ${#conf} -eq 0 ] && echo "c=${name}"
+#}
+
+# Determine if given arg is a flag arg that will not be matched with the next arg
+# Param 1 - script arg
+#is_flag_arg() {
+#	[ $(echo ${1:0:1} | egrep -c 'a|b|d|g') -gt 0 ]
+#}
+
+# The last arg must be the config path, if config & restart dir are undefined and we are looking at the last parameter
+# Param 1 - Current script input param number
+# Param 2 - Total number of script input params
+#lastArgMustBeConfig() {
+#	[ $1 -eq $2 ] && [ ${#conf} -eq 0 ] && [ ${#restartDir} -eq 0 ]
+#}
+
+# Initialize script, read in script arguments
+# Param 1 -  All script args ${@}
+#read_input_args() {
+#	args=$(get_params $@)
+#	blj=$(arg_exists $args blj)
+#	blj_sup=$(arg_exists $args blj_sup)
+#	runAws=$(arg_exists $args a)
+#	runGui=$(arg_exists $args g)
+#	displayHelp=$(arg_exists $args h)
+#	displayVersion=$(arg_exists $args v)
+#	runDocker=$(arg_exists $args d)
+#	config=$(named_arg $args c)
+#	newPass=$(named_arg $args p)
+#	restart=$(named_arg $args r)
+#	
+#	if [ ${#runDocker} -eq 0 ]; then 
+#		[ ${#runGui} -gt 0 ] && runDocker="d" && echo "Arg \"gui\" is only applicable in Docker mode --> starting Docker biolockj_controller container"
+#		[ ${#blj} -gt 0 ] && echo "Arg \"blj\" is only applicable in Docker mode so will be ignored"
+#		[ ${#blj_sup} -gt 0 ] && echo "Arg \"blj_sup\" is only applicable in Docker mode so will be ignored"
+#	fi
+#}
+# <--------------------- delete up to here
+
+
+
+
+
 
 # Run biolockj by locally, on AWS, or in Docker mode based on script args
-# Params - Array of processed script args
 run_biolockj() {
-	config=$(named_arg $@ c)
-	restart=$(named_arg $@ r)
-	! $(containsElement gui $@) && [ ${#config} -eq 0 ] && [ ${#restart} -eq 0 ] && 
-		exit_script "Error [ biolockj ]: Either -config or -restart arg is required!"
-	if $(containsElement gui $@) && $(containsElement aws $@); then
-		run_aws_gui
-	elif (containsElement aws $@); then
-		[ ${#restart} -eq 0 ] && [ ${#config} -eq 0 ] && exit_script "Error [ biolockj ]: AWS pipelines require config file path arg!"
-		run_aws "${config}"
-	elif $(containsElement gui $@) || $(containsElement docker $@); then
-		dockblj $@
-	else # direct local pipeline
-		start_pipeline "$(verify_args $@)"
+	if [ ${aws} == "true" ]; then
+		exit_after_command "launch_aws ${@}"
+	elif [ ${gui} == "true" ]; then
+		echo "Need to write some code to run the gui. extract from dockblj"
+	elif [ ${docker} == "true" ]; then
+		exit_after_command "launch_docker ${@}"
+	else
+		exit_after_command "launch_java ${@}"
 	fi
 }
 
-# Start local pipeline by calling java to run the BioLockJ.jar on the given Config file
-# Params - Array of processed script args
-start_pipeline() {
-	i=0 && initDir="$(most_recent_pipeline)" && pipeDir="${initDir}" && initJava=$(ps | grep -c java) 
-	numJava=${initJava} && echo -e "Starting BioLockJ:  \"nohup java -jar ${BLJ_JAR} -b ${BLJ_PROJ} -u ${HOME} $@ >/dev/null 2>&1 &\""
-	nohup java -jar "${BLJ_JAR}" -b "${BLJ_PROJ}" -u "${HOME}" $@ >/dev/null 2>&1 &
-	[ $? != 0 ] && ${BLJ}/script/biolockj -h && exit_script "Error [ biolockj ]:  Unable to run ${BLJ_JAR}"
-	printf "Initializing BioLockJ."
-	while [ $i -lt 15 ] && [ "${initDir}" == "${pipeDir}" ] && [ ${initJava} -eq ${numJava} ]; do
-		sleep 3 && i=$((i+1)) && printf "." && pipeDir="$(most_recent_pipeline)" && numJava=$(ps | grep -c java)
-	done
-	sleep 1 && echo "." && pipeDir="$(most_recent_pipeline)"
-	if [ ${#restart} -gt 0 ] && [ ${numJava} -gt ${initJava} ]; then 
-		echo "Restarting pipeline:  ${pipeDir}"
-	elif [ ${#restart} -eq 0 ] && [ "${initDir}" != "${pipeDir}" ] || [ ${numJava} -gt ${initJava} ]; then 
-		echo "Starting pipeline:  ${pipeDir}"
-	elif [ ${#restart} -eq 0 ] && ! $(containsElement gui $@); then
-		echo "Pipeline may have failed to launch - check $BLJ_PROJ for new pipeline"
-	fi
-	echo "blj_go       -> Move to pipeline output directory"
-	echo "blj_log      -> Tail pipeline log (accepts tail runtime parameters)"
-	echo "blj_summary  -> View module execution summary"
-}
 
-# Throw error if params are invalid
-# Params - Array of processed script args
-verify_args() {
-	newPass=$(named_arg $@ p)
-	[ ${#newPass} -gt 0 ] && args="${@/p=$newPass}"
-	args="${@//=/ }"
-	[ ${#newPass} -gt 0 ] && args="${args} -p ${newPass}"
-	! $(in_docker_env) && [ ${#config} -gt 0 ] && [ ! -f "${config}" ] &&
-		${BLJ}/script/biolockj -h && exit_script "Error [ biolockj ]:  \"${config}\" not found on filesystem"
-	! $(in_docker_env) && [ ${#restart} -gt 0 ] && [ ! -d "${restart}" ] &&
-		${BLJ}/script/biolockj -h && exit_script "Error [ biolockj ]:  \"${restart}\" not found on filesystem"
-	[ ! -d "${BLJ_PROJ}" ] && exit_script "Error [ biolockj ]: Required env variable BLJ_PROJ undefined: \"${BLJ_PROJ}\""
-	[ ! -f "${BLJ_JAR}" ] && exit_script "Error [ biolockj ]: BioLockJ Jar file \"${BLJ_JAR}\" not found"
-	echo "${args}"
-}
 
-main $@
+
+# Before anything else, check to see if the user just wants help or version info.
+index_of "--help" "$@" || index_of "-h" "$@" && display_help && exit 0
+index_of "--version" "$@" || index_of "-v" "$@" && display_version && exit 0
+
+# Make sure there is at least one argument
+[ $# -eq 0 ] && exit_with_message "biolockj requires at least one argument."
+
+printf "\n ---------> Execute CMD [  biolockj $(echo ${@})  ]\n"
+
+# take standard biolockj args
+init_defaults
+split_main_arg_from_options "$@"
+[ ${#options[@]} -gt 0 ] && parse_options "${options[@]}"
+
+# store named arg values as bash variables; note that any -'s are removed from the variable name.
+for i in $(seq 0 $((${#longArgName[@]} - 1)) ); do
+	declare "${longArgName[ $i ]//-/}"=${parameters[ $i ]}
+	[ ${#BIOLOCKJ_TEST_MODE} -gt 0 ] && echo "${longArgName[ $i ]//-/} = ${parameters[ $i ]}"
+done 
+
+run_biolockj "${@}"
+
+

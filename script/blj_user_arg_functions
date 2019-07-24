@@ -1,0 +1,236 @@
+#!/bin/bash
+###################################################################
+##                                                               ##
+##  This script contains common functions used in                ##
+##  BioLockJ scripts.                                            ##
+##                                                               ##
+###################################################################
+
+
+
+# A good understanding of the index_of function is critical.
+#
+# Summary: 
+#   This function checks if an array contains a value, 
+#   if so $index is the index of the value in the array, 
+#   otherwise $index is -1.
+#   param 1: the value
+#   param 2-n: the array
+#   
+# Example: 
+#   index_of "-h" "$@"
+#
+# Desctiption:
+# If the value is found in the array, then the function 
+#   returns 0 (success) and any && after this function call will be evaluated,
+#   and the value of $index is the index of the value in the array.
+# If the value is NOT found in the array, then the function 
+#   returns 1 (failure) and any && after this function call will NOT be evaluated,
+#   and the value of $index is -1, so "[ $index -eq -1 ]" will 
+#   evaluate to 0 (true) and any && after that will be evaluated.
+# Every reference to $index refers to the most recent evaluation of "index_of"
+# 
+# Leave the commented echo's in place for future troubleshooting.
+index_of(){
+	#echo "inputs: " $*
+	local array=( "$@" )
+	#echo "array: " ${array[@]}	
+	for arrayIndex in $(seq 1 ${#array[@]}); do
+		#echo "comparing " $1 " to " ${array[$i]}
+		if [ "${array[$arrayIndex]}" == "$1" ]; then
+			index=$(( $arrayIndex - 1 ))
+			return 0
+		fi
+	done
+	index=-1
+	return 1
+}
+
+# example: take_standard_biolockj_args "$@"
+take_standard_biolockj_args(){
+	init_defaults
+	split_main_arg_from_options "$@"
+	[ ${#options[@]} -gt 0 ] && parse_options "${options[@]}"
+}
+
+init_defaults(){
+	GUI_ARG=gui
+	PASSWORD_ARG=password
+	CONFIG_ARG=config-override
+	RESTART_ARG=restart
+	AWS_ARG=aws
+	DOCKER_ARG=docker
+	FG_ARG=foreground
+	EXT_MODS_ARG=external-modules
+	BLJ_ARG=blj
+	BLJ_SUP_ARG=blj_sup
+	
+	longArgName=( $GUI_ARG $PASSWORD_ARG $CONFIG_ARG $RESTART_ARG $AWS_ARG $DOCKER_ARG $FG_ARG $EXT_MODS_ARG $BLJ_ARG $BLJ_SUP_ARG )
+	takeShortArg=($GUI_ARG $PASSWORD_ARG $CONFIG_ARG $RESTART_ARG $AWS_ARG $DOCKER_ARG $FG_ARG help version)
+	shortArgName=()
+	parameters=()
+	mustTakeValue=($PASSWORD_ARG $CONFIG_ARG)
+	canTakeValue=($PASSWORD_ARG $CONFIG_ARG)
+	for i in ${!longArgName[@]}; do
+		longName=${longArgName[ $i ]}
+		index_of $longName ${takeShortArg[@]} && shortArgName[ $i ]=${longName:0:1}
+		[ $index -eq -1 ] && shortArgName[ $i ]=$longName # a place holder
+		parameters[ $i ]="default"
+		i=$((i+1))
+	done
+	argsFromUser=() # distinguish between the default, and the user supplying "default" as the value
+}
+###
+## Optionally, use the following lines in the active script to 
+## set all varaibles from long args to the parameter values.
+## store named arg values as bash variables; note that any -'s are removed from the variable name.
+## scope is limited to this shell; export any values needed by subshells
+## use trueIfArgUsed() to only get values if the user passed the argument.
+#for i in $(seq 0 $((${#longArgName[@]} - 1)) ); do
+#	declare "${longArgName[ $i ]//-/}"=${parameters[ $i ]}
+#	[ ${#BIOLOCKJ_TEST_MODE} -gt 0 ] && echo "${longArgName[ $i ]//-/} = ${parameters[ $i ]}"
+#done 
+
+
+
+trueIfArgUsed(){
+	index_of $1 ${argsFromUser[@]} && echo "true"
+	[ $index -eq -1 ] && echo "false"
+}
+
+ifArgUsed(){
+	local tmp=$(trueIfArgUsed $1)
+	[ $tmp == "true" ] && return 0
+	[ $tmp == "false" ] && return 1
+}
+
+
+assign_main_arg(){
+	if ifArgUsed $RESTART_ARG ; then
+		restartDir=$mainArg
+		[ ${#BIOLOCKJ_TEST_MODE} -gt 0 ] && echo "Using $restartDir as the pipeline to restart."
+		[ $configoverride != "default" ] && configFile=configoverride && echo "Updating pipeline with config file $configFile."
+	else
+		configFile=$mainArg
+		[ ${#BIOLOCKJ_TEST_MODE} -gt 0 ] && echo "Using $configFile as the config file."
+	fi
+}
+
+# get the last argument, and call it mainArg
+# all preceding arguments are options
+split_main_arg_from_options(){
+	local args=( "$@" )	
+	numArgs=${#args[@]}
+	mainArg=${args[$numArgs-1]}
+	options=()
+	if [ $numArgs -gt 1 ]; then
+		for i in $(seq 0 $((${#args[@]} - 2)) ); do
+			options[ $i ]=${args[ $i ]}
+		done
+	fi
+	if [ ${mainArg:0:1} == "-" ]; then
+		mainArg=""
+		local i=${#options[@]}
+		options[ $i ]=${args[ $i ]}
+	fi
+}
+
+# call using: parse_options $options
+# assumes that the following variables exist: 
+#   order within these three should match: longArgName, shortArgName, parameters
+#   order of these does not matter:    mustTakeValue, canTakeValue
+parse_options(){
+	argName=""
+	# iterate over all args except the the last one; that one is handled as "mainArg"
+	for arg in "$@" ; do
+		# if arg starts with -, we assume its an an argument name
+		if [ ${arg:0:1} == "-" ]; then
+			[ ${#argName} -gt 0 ] && index_of $argName ${mustTakeValue[@]} && exit_with_message "error: the value of argument [ $argName ] should not begin with \"-\" or \"--\", found [ $arg ]."
+			argName=""
+			#  if arg starts with --, we assume it is a long-form argument name or flag
+			if [ ${arg:0:2} == "--" ]; then
+				arg=${arg#--}
+				apply_arg $arg	
+			else # only single -, we assume it is a short-form argument
+				arg=${arg#-}
+				#process each letter in arg, so multiple short form args can be stacked behind a single -
+				for i in $(seq 0 $((${#arg} - 1)) ); do
+				letter=${arg:$i:1}
+					index_of $letter ${shortArgName[@]} && argLong=${longArgName[${index}]} && apply_arg $argLong
+					[ $index -eq -1 ] && exit_with_message "error: unrecognized short-form argument [ -$letter ]."
+				done
+			fi		
+		# if arg starts with no dashes, we assume it must be the value for $argName
+		else
+			[ ${#argName} -eq 0 ] && exit_with_message "error: unnamed value [ $arg ]"
+			index_of $argName "${longArgName[@]}" && parameters[ $index ]=${arg} && argName=""
+			[ $index -eq -1 ] && exit_with_message "error: unrecognized argument name [ $argName ]"
+		fi
+			
+	done
+
+}
+
+# Set a parameter value to true
+# param1: name of flag to set
+set_flag_to_true(){
+	index_of $1 ${longArgName[@]} && parameters[${index}]="true"
+	[ $index -eq "-1" ] && exit_with_message "error: unrecognized argument [ $1 ]."
+}
+
+
+# Determine if an argument takes a value; if so, store the name and await the value
+# otherwise the argument is a flag, set that parameter to true
+# param1: the long-form argument name
+apply_arg(){
+	argsFromUser=(argsFromUser $1)
+	index_of $1 "${canTakeValue[@]}" && argName=$1
+	set_flag_to_true $1
+}
+
+
+# Display BioLockJ release version
+display_version() {
+	[ -f "${BLJ}/.version" ] && cat "${BLJ}/.version" && return
+	echo "Missing ${BLJ}/.version"
+}
+
+# Show the help menu
+display_help() {
+	init_defaults
+	addSpace(){
+		if [ ${#BIOLOCKJ_TEST_MODE} -gt 0 ]; then
+			local allargs=(${longArgName[@]} help version)
+			index_of $1 ${allargs[@]}
+			[ $index -eq -1 ] && echo "$1 may not be supported!"
+		fi
+		index_of $1 ${takeShortArg[@]} && addSpaceWithShort "${@}"
+		[ $index -eq -1 ] && addSpaceNoShortArg "${@}"
+	}
+	addSpaceWithShort(){ 
+		printf '%-1s %-3s %-25s %-10s\n' "" "-${1:0:1}" "--$1" "$2"
+	}
+	addSpaceNoShortArg(){ 
+		printf '%-1s %-3s %-25s %-10s\n' "" "" "--$1" "$2"
+	}
+	echo ""
+	echo "BioLockJ $(display_version) - UNCC Fodor Lab July 2018" 
+    echo 'Usage:'
+    printf '%-1s %-3s' "" "biolockj [options] <config|pipeline>" && echo ""
+    echo ""
+    echo 'Options:'
+    addSpace "version" "show version"
+    addSpace "help" "show help menu"
+    addSpace "restart" "resume an existing pipeline"
+    addSpace "$CONFIG_ARG <file>" "new config file (if restarting a pipeline)"
+    addSpace "$PASSWORD_ARG <password>" "encrypt password"
+    addSpace "$DOCKER_ARG" "run in docker"
+    addSpace "$AWS_ARG" "run on aws"
+    addSpace "$GUI_ARG" "start the BioLockJ GUI"
+    addSpace "$FG_ARG" "run the java process in the foreground without nohup"
+    addSpace "$EXT_MODS_ARG <dir>" "directory with compiled java code giving additional modules"
+    addSpace "$BLJ_ARG" "map \$BLJ folder into the docker container"
+    addSpace "$BLJ_SUP_ARG" "map \$BLJ_SUP folder into the docker container"
+    echo ""
+}
+

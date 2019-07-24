@@ -1,0 +1,79 @@
+#!/bin/bash
+###################################################################
+##                                                               ##
+##  Functions to be called by the user.                          ##
+##                                                               ##
+###################################################################
+
+
+
+# This script navigates the $USER to their most recent pipeline and lists the current directory
+blj_go() {
+	[ ! -d "${BLJ_PROJ}" ] && echo "Exit program - BLJ_PROJ: directory not found: ${BLJ_PROJ}" && return
+	pipeline=$(most_recent_pipeline)
+	if [ ${#pipeline} -gt 0 ]; then
+		echo "Goto latest BioLockJ pipeline: ${pipeline}"
+		cd "${pipeline}" && ls "${pipeline}"
+	else
+		echo "No pipelines found in BLJ_PROJ: ${BLJ_PROJ}"
+	fi
+}
+
+# This script tails 1K lines from the current pipelines Java log file.
+# If the current directory is not a BioLockJ pipeline, print last 1K lines from the most recent pipeline executed.  
+# If param is passed, pass it to tail command in place of -1000 parameter.
+blj_log() {
+	pipeline=$(current_pipeline)
+	if [ ${#pipeline} -gt 0 ]; then
+		echo "Tail current BioLockJ pipeline log: $pipeline"
+	else
+		pipeline=$(most_recent_pipeline)
+		[ ${#pipeline} -gt 0 ] && echo "Tail most recent BioLockJ pipeline log: $pipeline"
+	fi
+	
+	if [ ${#pipeline} -gt 0 ]; then
+		if [ ${#1} -gt 0 ]; then
+			\tail $1 $pipeline/*.log 
+		else
+			\tail -1000 $pipeline/*.log 
+		fi
+	else
+		echo "No pipelines found in BLJ_PROJ: ${BLJ_PROJ}"
+	fi
+}
+
+# Rerun current pipeline from point of failure using same MASTER config
+blj_rerun() {
+	echo "Restarting BioLockJ pipeline: ${PWD}"
+	if [ ${#1} -gt 0 ]; then biolockj -r "${PWD}" -c "${1}"; else biolockj -r "${PWD}"; fi
+}
+
+# This script prints the Summary BioModule output of current pipeline.
+# If the current directory is not a BioLockJ pipeline, print the summary of the most recent pipeline executed.
+blj_summary() {
+	pipeline=$(most_recent_pipeline)
+	SUM=summary.txt
+	if [ -f $SUM ]; then
+		echo "Print summary file: $SUM"
+		cat $SUM
+	elif [ ${#pipeline} -gt 0 ]; then
+		echo "Print summary file: $pipeline/$SUM"
+		cat "$pipeline/$SUM"
+	else
+		echo "No pipeline summary found in BLJ_PROJ: ${BLJ_PROJ}"
+	fi
+}
+
+
+
+
+# Kill running biolockj CMD
+# Param 1 - Override biolockj CMD name
+kill_blj() {
+	[ $# -eq 0 ] && procName="biolockj"
+	[ $# -gt 0 ] && procName="${1}"
+	pgrep ${procName}
+	pkill -9 [^]]${procName}
+}
+
+

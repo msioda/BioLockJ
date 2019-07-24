@@ -1,0 +1,289 @@
+#!/bin/bash
+###################################################################
+##                                                               ##
+##  This script contains common functions used in BioLockJ.      ##
+##                                                               ##
+###################################################################
+
+# Return value if found in input parameters
+# Param 1 - Script paramaters $@
+# Param 2 - Target param
+arg_exists() {
+	args=("$@")
+	numArgs=${#@}
+	target=${args[$((numArgs-1))]}
+	args=${args[@]:0:$((numArgs-1))}
+	for arg in $args; do
+		[ "$arg" == "$target" ] && echo "$target" && return
+	done
+}
+
+# Add a named arg to a space-delimited list of args (Use "=" to add a name-value pair)
+# Param 1 - arg name
+# Param 2 - arg value
+# Param 3 (optional) - space delimited named args: if empty, return name-value pair
+add_named_arg() {
+	myArgs=$3
+	val=$(named_arg "$3" $1)
+	[ $# -eq 2 ] && echo "$1=$2"
+	[ $# -eq 3 ] && [ ${#val} -gt 0 ] && myArgs="${3/$1=$val}"
+	[ $# -eq 3 ] && echo "$myArgs $1=$2"
+}
+
+# Call ANT to build BioLockJ
+blj_build() {
+	echo "Building BioLockJ with ANT..."
+	[ ! -f "$BLJ/resources/build.xml" ] && exit_script "Error [ blj_functions.blj_build() ]: ANT build script missing: $BLJ/resources/build.xml"
+	myDir="$PWD"
+	cd $BLJ/resources
+	[ ${#1} -eq 0 ] && ant
+	[ ${#1} -gt 0 ] && ant $1
+	echo "Ant script execution complete"
+
+	if [ -f "$BLJ/dist/BioLockJ.jar" ]; then
+		ls -lh "$BLJ/dist/BioLockJ.jar"
+	else
+		echo "Build Failed - missing $BLJ/dist/BioLockJ.jar"
+	fi
+	cd $myDir
+}
+
+# Pull the latest Git code and build BioLockJ.jar
+blj_deploy() {
+	blj_sup_git
+	blj_git
+	blj_build build-jar
+}
+
+# Git latest $BLJ + build BioLockJ.jar
+blj_git() {
+	[ ! -d "${BLJ}" ] && echo "Cannot build BLJ: directory not found: ${BLJ}" && return
+	blj_git_reset "${BLJ}"
+}
+
+# Reset git repo + set file permissions 770
+# Param 1 - Directory path of Git repo (use current directory if undefined)
+blj_git_reset() {
+	gitDir="$PWD" && [ ${#1} -gt 0 ] && gitDir="${1}" 
+	echo "Get latest code from GitHub repo: ${gitDir}" && cd "${gitDir}"
+	git fetch && git checkout -q master && git reset -q --hard origin/master  
+	chmod -R 770 "${gitDir}"
+	echo "$SPACER"
+	echo "${gitDir} Git pull SUCESSFULLY COMPLETED!"
+	chmod -R 770 "${gitDir}"
+	echo "${gitDir} permissions set: 770"
+	echo "$SPACER"
+	echo "" && cd "${gitDir}"
+}
+
+# This script navigates the $USER to their most recent pipeline and lists the current directory
+blj_go() {
+	[ ! -d "${BLJ_PROJ}" ] && echo "Exit program - BLJ_PROJ: directory not found: ${BLJ_PROJ}" && return
+	pipeline=$(most_recent_pipeline)
+	if [ ${#pipeline} -gt 0 ]; then
+		echo "Goto latest BioLockJ pipeline: ${pipeline}"
+		cd "${pipeline}" && ls "${pipeline}"
+	else
+		echo "No pipelines found in BLJ_PROJ: ${BLJ_PROJ}"
+	fi
+}
+
+# This script tails 1K lines from the current pipelines Java log file.
+# If the current directory is not a BioLockJ pipeline, print last 1K lines from the most recent pipeline executed.  
+# If param is passed, pass it to tail command in place of -1000 parameter.
+blj_log() {
+	pipeline=$(current_pipeline)
+	if [ ${#pipeline} -gt 0 ]; then
+		echo "Tail current BioLockJ pipeline log: $pipeline"
+	else
+		pipeline=$(most_recent_pipeline)
+		[ ${#pipeline} -gt 0 ] && echo "Tail most recent BioLockJ pipeline log: $pipeline"
+	fi
+	
+	if [ ${#pipeline} -gt 0 ]; then
+		if [ ${#1} -gt 0 ]; then
+			\tail $1 $pipeline/*.log 
+		else
+			\tail -1000 $pipeline/*.log 
+		fi
+	else
+		echo "No pipelines found in BLJ_PROJ: ${BLJ_PROJ}"
+	fi
+}
+
+# Rerun current pipeline from point of failure using same MASTER config
+blj_rerun() {
+	echo "Restarting BioLockJ pipeline: ${PWD}"
+	if [ ${#1} -gt 0 ]; then biolockj -r "${PWD}" -c "${1}"; else biolockj -r "${PWD}"; fi
+}
+
+# This script prints the Summary BioModule output of current pipeline.
+# If the current directory is not a BioLockJ pipeline, print the summary of the most recent pipeline executed.
+blj_summary() {
+	pipeline=$(most_recent_pipeline)
+	SUM=summary.txt
+	if [ -f $SUM ]; then
+		echo "Print summary file: $SUM"
+		cat $SUM
+	elif [ ${#pipeline} -gt 0 ]; then
+		echo "Print summary file: $pipeline/$SUM"
+		cat "$pipeline/$SUM"
+	else
+		echo "No pipeline summary found in BLJ_PROJ: ${BLJ_PROJ}"
+	fi
+}
+
+# Git latest ${BLJ_SUP}
+blj_sup_git() {
+	[ ! -d "${BLJ_SUP}" ] && echo "Cannot build BLJ_SUP: directory not found: ${BLJ_SUP}" && return
+	blj_git_reset "${BLJ_SUP}"
+}
+
+# Return absolute path of current pipeline if in a pipeline directory
+current_pipeline() {
+	if [ -d "${BLJ_PROJ}" ]; then
+		dir="$PWD"
+		parentDir="$(dirname $dir)"
+		while [ "$parentDir" != "${BLJ_PROJ}" ] && [ "$parentDir" != "$(dirname $parentDir)" ] && ! $(is_pipeline_dir $dir)
+		do
+			dir="$parentDir"
+			parentDir="$(dirname $parentDir)"
+		done
+		[ "$parentDir" == "${BLJ_PROJ}" ] && echo $dir
+   fi
+}
+
+# Check for a default profile in the $USER $HOME dir
+get_default_profile() {
+	user_profile="${HOME}"/.bash_profile
+	[ ! -f "${user_profile}" ] && user_profile="${HOME}"/.bashrc
+	[ ! -f "${user_profile}" ] && user_profile="${HOME}"/.profile
+	[ ! -f "${user_profile}" ] && user_profile="${HOME}"/.bash_login
+	[ ! -f "${user_profile}" ] && user_profile="${HOME}"/.zshenv
+	[ ! -f "${user_profile}" ] && user_profile="${HOME}"/.zprofile
+	[ ! -f "${user_profile}" ] && user_profile="${HOME}"/.zshrc
+	[ ! -f "${user_profile}" ] && user_profile="${HOME}"/.zlogin
+	[ -f "${user_profile}" ] && echo "${user_profile}"
+}
+
+# Return property value from the given file
+# Param 1 - Config file
+# Param 2 - Prop name
+get_property() {
+	prop="$(cat $1 | grep ^$2=)" && echo "$(eval echo ${prop/$2=})"
+}
+
+# Exit script after sleeping 10 seconds because in some cases (Docker bash shells) exit command will close the terminal window.
+# In this case, the user can at least view the message before the window closes.
+# Param 1 Exit message
+# Param 2 (optional) Numeric status code
+exit_script() {
+	echo "${1}" && sleep 5 && [ ${#2} -gt 0 ] && exit ${2}
+	exit 1
+}
+
+# Check if parameter contains alpha-numeric chars [a-zA-Z0-9]
+# Param 1 - Any variable
+is_empty() {
+	x=$(echo "$1" | grep -c [a-zA-Z0-9])
+	[ ${x} -eq 0 ]
+}
+
+# Return TRUE if the directory path given ends with a valid module name
+# Example: 01_Demultiplexer
+is_module_dir() {
+	modNum=0 && modName=$(basename $1)
+	[ ${#modName} -gt 3 ] && modNum=$( echo ${modName:0:2} | egrep "^[0-9{2}]+$" )
+	[ -d "$1" ] && [ ${modName:2:1} == "_" ] && [ $modNum -gt 0 ]
+}
+
+# Trim last input $1 character if ends with "/"
+# Return 0 status code if $1 param ends with patthern _yyyymmmdd.
+# Example: myTestPipeline_2019Jan01 returns TRUE
+is_pipeline_dir() {
+	dir=$1 && [ "${dir: -1}" == "/" ] && dir=${dir:0:$((${#dir}-1))}
+	prefix=${dir: -10:1}
+	year=$(echo ${dir: -9:4} | egrep "^[0-9{4}]+$")
+	mon1=$(echo ${dir: -5:1} | egrep "^[A-S]+$")
+	mon23=$(echo ${dir: -4:2} | egrep "^[a-y{2}]+$")
+	day=$(echo ${dir: -2} | egrep "^[0-9{2}]+$")
+	[ "$dir" == "${dir/.}" ] && [ -d "$1" ] && [ "$prefix" == "_" ] && [ ${#year} -eq 4 ] && [ ${#mon1} -eq 1 ] && [ ${#mon23} -eq 2 ] && [ ${#day} -eq 2 ]
+}
+
+# Kill running biolockj CMD
+# Param 1 - Override biolockj CMD name
+kill_blj() {
+	[ $# -eq 0 ] && procName="biolockj"
+	[ $# -gt 0 ] && procName="${1}"
+	pgrep ${procName}
+	pkill -9 [^]]${procName}
+}
+
+# Override function in $BLJ_SCRIPT/blj_functions to return the most recent pipeline dir-path 
+most_recent_pipeline() {
+	if [ -d "${BLJ_PROJ}" ]; then
+		IFS=$'\n' && dirs=$(\ls -1dt ${BLJ_PROJ}/*) && myDirs=( "$dirs" )
+		for dir in $myDirs; do
+			$(is_pipeline_dir $dir) && reset_IFS && echo "$dir" && return
+		done
+	fi
+	reset_IFS
+}
+
+# Pass script input parameters + the argument name
+# Named arguments must be formated: "argName=argValue"
+# Param 1 - Array of script args $@
+# Param 2 - Parameter name
+named_arg() {
+	args=("$@") && numArgs=${#@} && target=${args[$((numArgs-1))]}
+	args=${args[@]:0:$((numArgs-1))}
+	for arg in $args; do
+		tokens=( ${arg//=/ } ) && [ ${tokens[0]} == $target ] && echo ${tokens[1]} && return
+	done
+}
+
+# Reset IFS to initial shell value
+reset_IFS() {
+	export IFS="$IFS_CACHE"
+}
+
+# Remove property - delete the line from the file
+# Param 1 - Config file
+# Param 2 - prop name 
+rm_property() {
+	[ ! -f "${1}" ] && exit_script "Error [ blj_functions.rm_property() ]: Config file ${1} does not exist"
+	[ ${#2} -eq 0 ] && exit_script "Error [ blj_functions.rm_property() ]: Config property name is required"
+	TMP=~/.temp_config.txt && [ -f "${TMP}" ] && rm "${TMP}" && touch "${TMP}" && chmod 770 "${TMP}"
+	while read line; do
+		line="$(echo ${line} | xargs)" && IFS=$'=' && tokens=( ${line} ) && reset_IFS 
+		[ ${#line} -gt 0 ] && [ "${tokens[0]}" != "${2}" ] && echo "${line}" >> "${TMP}"
+	done < "${1}"
+	[ -f "${TMP}" ] && rm "${1}" && mv "${TMP}" "${1}"
+}
+
+# Set property in Config file ${1} unless this value already is set, in which case - do nothing.
+# Param 1 - Config file-path
+# Param 2 - Prop name
+# Param 3 - Prop value
+set_property() {
+	[ ! -f "${1}" ] && exit_script "Error [ blj_functions.set_property() ]: Config file ${1} does not exist"
+	[ ${#2} -eq 0 ] && exit_script "Error [ blj_functions.set_property() ]: Config property name is required"
+	[ $(cat $1 | grep -c ^$2="${3}") -gt 0 ] && return
+	prop="$(cat $1 | grep ^$2=)" && [ ${#prop} -gt 0 ] && rm_property "${1}" "${2}"
+	echo "${2}=${3}" >> "${1}"
+}
+
+# Default value --> $' \t\n'
+show_IFS() {
+	echo "Cached  IFS  -->  $(printf %q "$IFS_CACHE")"
+	echo "Current IFS  -->  $(printf %q "$IFS")"
+}
+
+# Return TRUE if variable name in Param 1 exists in shell
+# Param 1 - bash env variable
+var_exists() {
+	[ $(set | grep -c "^${1}=") -gt 0 ]
+}
+
+IFS_CACHE="$IFS" && alias showIFS="show_IFS" && alias resetIFS="reset_IFS"
+SPACER="================================================================================"

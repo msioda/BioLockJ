@@ -1,0 +1,25 @@
+#!/bin/bash
+##############################################################
+##  This script launches an aws pipeline                    ##
+##############################################################
+
+. ${BLJ}/script/blj_functions
+. ${BLJ}/script/blj_user_arg_functions
+. ${BLJ}/script/aws_functions
+
+printf "\n ---------> Execute CMD [  launch_aws $(echo ${@})  ]\n"
+
+take_standard_biolockj_args "$@"
+
+# store named arg values as bash variables; note that any -'s are removed from the variable name.
+# scope is limited to this shell; export any values needed by subshells
+for i in $(seq 0 $((${#longArgName[@]} - 1)) ); do
+	declare "${longArgName[ $i ]//-/}"=${parameters[ $i ]}
+	[ ${#BIOLOCKJ_TEST_MODE} -gt 0 ] && echo "${longArgName[ $i ]//-/} = ${parameters[ $i ]}"
+done 
+
+if ifArgUsed $GUI_ARG ; then
+	exit_after_command run_aws_gui
+else
+	exit_after_command run_aws $configFile
+fi

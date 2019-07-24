@@ -1,0 +1,98 @@
+#!/bin/bash
+##########################################################################
+##                                                                      ##
+##  Script requires 1+ of the listed arguments parameter.               ##
+##  Script requires  BioLockJ pipeline root directory: $BLJ_PROJ.       ##
+##                                                                      ##
+##  Pass optional param "-r" as 1st param to restart failed pipeline    ##
+##                                                                      ##
+##  Pass admin email password as 1st param to encode and store in the   ##
+##  BioLockJ Config file (2nd param) instead of running a pipeline      ##
+##                                                                      ##
+##########################################################################
+
+. ${BLJ}/script/blj_functions
+. ${BLJ}/script/blj_user_arg_functions
+
+catch_bad_values(){
+	if ifArgUsed $RESTART_ARG ; then
+		[ ! -d $restartDir ] && exit_with_message "Error [ launch_java ]: $restartDir is not a directory on the filesystem."
+	else
+		[ ! -f "${configFile}" ] && exit_with_message "Error [ launch_java ]: Config file [ $configFile ] not found on filesystem."
+	fi
+	[ ! -d "${BLJ_PROJ}" ] && exit_script "Error [ launch_java ]: Required env variable BLJ_PROJ undefined: \"${BLJ_PROJ}\""
+	[ ! -f "${BLJ_JAR}" ] && exit_script "Error [ launch_java ]: BioLockJ Jar file \"${BLJ_JAR}\" not found."
+}
+
+before_java_start(){
+	initDir="$(most_recent_pipeline)" && pipeDir="${initDir}" && initJava=$(ps | grep -c java) 
+}
+
+confirm_java_start(){
+	[ $? != 0 ] && exit_with_message "Error [ biolockj ]:  Unable to run ${BLJ_JAR}"
+	printf "Initializing BioLockJ."
+	i=0
+	while [ $i -lt 15 ] && [ "${initDir}" == "${pipeDir}" ] && [ ${initJava} -eq ${numJava} ]; do
+		sleep 3 && i=$((i+1)) && printf "." && pipeDir="$(most_recent_pipeline)" && numJava=$(ps | grep -c java)
+	done
+	sleep 1 && echo "." && pipeDir="$(most_recent_pipeline)"
+	print_info
+}
+
+print_info(){
+	if [ ${#restart} -gt 0 ] && [ ${numJava} -gt ${initJava} ]; then 
+		echo "Restarting pipeline:  ${pipeDir}"
+	elif [ ${#restart} -eq 0 ] && [ "${initDir}" != "${pipeDir}" ] || [ ${numJava} -gt ${initJava} ]; then 
+		echo "Starting pipeline:  ${pipeDir}"
+	elif [ ${#restart} -eq 0 ] && [ ${#runGui} -eq 0 ]; then
+		echo "Pipeline may have failed to launch - check $BLJ_PROJ for new pipeline"
+	fi
+	echo "blj_go       -> Move to pipeline output directory"
+	echo "blj_log      -> Tail pipeline log (accepts tail runtime parameters)"
+	echo "blj_summary  -> View module execution summary"
+}
+
+
+### END OF DEFINING FUNCTIONS
+
+printf "\n ---------> Execute CMD [  launch_java $(echo ${@})  ]\n"
+
+take_standard_biolockj_args "$@"
+
+# store named arg values as bash variables; note that any -'s are removed from the variable name.
+for i in $(seq 0 $((${#longArgName[@]} - 1)) ); do
+	declare "${longArgName[ $i ]//-/}"=${parameters[ $i ]}
+	[ ${#BIOLOCKJ_TEST_MODE} -gt 0 ] && echo "${longArgName[ $i ]//-/} = ${parameters[ $i ]}"
+done 
+assign_main_arg
+
+
+# Start local pipeline
+BLJ_JAR=${BLJ}/dist/BioLockJ.jar
+catch_bad_values
+before_java_start
+
+args="-b ${BLJ_PROJ} -u ${HOME}"
+ifArgUsed $PASSWORD_ARG && args="${args} p=${password}" 
+ifArgUsed $RESTART_ARG && args="${args} r=${restartDir}"
+[ ${#configFile} -gt 0 ] && args="${args} ${configFile}"
+if ifArgUsed $FG_ARG ; then
+	directStdOut=""
+	useNohup=""
+else
+	directStdOut=">/dev/null 2>&1 &"
+	useNohup="nohup"
+fi
+if ifArgUsed $EXT_MODS_ARG ; then
+	classPathAndMain="-cp $externalmodules/*:${BLJ_JAR} biolockj.BioLockJ"
+else
+	classPathAndMain="-jar ${BLJ_JAR}"
+fi
+
+CMD="$useNohup java $classPathAndMain $args $directStdOut"
+numJava=${initJava}
+echo -e "Launching BioLockJ:  $CMD" #<-- for the user to see cmd
+continue_after_command $CMD #<-- for the developer and test suite to see cmd
+confirm_java_start
+
+
