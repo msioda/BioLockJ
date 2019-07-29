@@ -7,14 +7,6 @@ Description: >-
   Future commands on a stack will only be accppeted if issued from the very same IP commands address.
   If working from a new location, the IP params must be updated from the AWS console, otherwise a new stack is required.
 Parameters:
-  NetworkAccessIP:
-    Description: Source that has SSH access to the bastion host. (i.e. 50.32.108.38/32)
-    Type: String
-    MinLength: '9'
-    MaxLength: '18'
-    Default: 0.0.0.0/32
-    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
-    ConstraintDescription: must be a valid CIDR range of the form x.x.x.x/x.
   SpotBidPercentage:
     Description: Maximum bid percentage for Spot Compute Environment
     Type: Number
@@ -112,26 +104,8 @@ Resources:
             - - !Ref 'AWS::StackName'
               - '-bastion-sg'
       SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: '22'
-          ToPort: '22'
-          CidrIp: !Ref NetworkAccessIP
-        - IpProtocol: tcp
-          FromPort: '80'
-          ToPort: '80'
-          CidrIp: !Ref NetworkAccessIP
-        - IpProtocol: tcp
-          FromPort: '443'
-          ToPort: '443'
-          CidrIp: !Ref NetworkAccessIP
-        - IpProtocol: tcp
-          FromPort: '8080'
-          ToPort: '8080'
-          CidrIp: !Ref NetworkAccessIP
-        - IpProtocol: icmp
-          FromPort: '-1'
-          ToPort: '-1'
-          CidrIp: !Ref NetworkAccessIP
+        - IpProtocol: '-1'
+          CidrIp: 0.0.0.0/0
       SecurityGroupEgress:
         - IpProtocol: '-1'
           CidrIp: 0.0.0.0/0

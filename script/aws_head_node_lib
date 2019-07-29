@@ -65,17 +65,13 @@ get_docker_job_def_flag() {
 
 # Get EC2 instance public IP address
 get_ec2_public_ip() {
-	if [ "$(get_blj_prop aws.ec2PublicIP)" == "" ]; then
-		[ "$(get_blj_prop aws.ec2InstanceID)" == "" ] && exit_script "Error [ aws_head_node_lib.get_ec2_public_ip() ] ] property \"aws.ec2InstanceID\" is undefined"
-		set_blj_prop aws.ec2PublicIP $(aws ec2 describe-instances --instance-ids $(get_blj_prop aws.ec2InstanceID) --query "Reservations[].Instances[].PublicDnsName")
-	fi
-	echo "$(get_blj_prop aws.ec2PublicIP)"
+	aws ec2 describe-instances --instance-ids $(get_blj_prop aws.ec2InstanceID) --query "Reservations[].Instances[].PublicDnsName"
 }
 
 # Get a stack parameter for the configured stack 
 # Param 1 - Param name
 get_stack_param() {
-	echo $(aws cloudformation describe-stacks --stack-name "$(get_blj_prop aws.stack)" --query "Stacks[*].Outputs[?OutputKey=='$1'].OutputValue")
+	aws cloudformation describe-stacks --stack-name "$(get_blj_prop aws.stack)" --query "Stacks[*].Outputs[?OutputKey=='$1'].OutputValue"
 }
 
 head_name() {

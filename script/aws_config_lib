@@ -116,19 +116,18 @@ init_aws_config() {
 	[ "${1}" == "gui" ] && return
 	set_pipeline_conig_props "${STANDARD_CONFIG}" && set_pipeline_conig_props "${DOCKER_CONFIG}"
 	defConfig='' && propFile="$(get_property $1 pipeline.defaultProps)"
-	if [ -f "${propFile}" ]; then
-		while [ "${propFile}" != "${STANDARD_CONFIG}" ] && [ "${propFile}" != "${DOCKER_CONFIG}" ] && [ "${defConfig}" == "${defConfig/$propFile}" ]; do
-			[ ${#defConfig} -gt 0 ] && defConfig=", ${defConfig}"
-			defConfig="${propFile}${defConfig}" && set_pipeline_conig_props "${propFile}" && propFile="$(get_property $propFile pipeline.defaultProps)"
-		done
-	fi
+	while [ -f "${propFile}" ] && [ "${propFile}" != "${STANDARD_CONFIG}" ] && [ "${propFile}" != "${DOCKER_CONFIG}" ] && [ "${defConfig}" == "${defConfig/$propFile}" ]; do
+		aws_log "Load default Config file: $propFile"
+		[ ${#defConfig} -gt 0 ] && defConfig=", ${defConfig}"
+		defConfig="${propFile}${defConfig}" && set_pipeline_conig_props "${propFile}" && propFile="$(get_property $propFile pipeline.defaultProps)"
+	done
 
 	set_pipeline_conig_props "${1}"
 	[ $# -eq 2 ] && set_blj_prop "aws.profile" "${2}"
  	export AWS_DEFAULT_PROFILE="$(aws_profile)"
 	verify_config
 	aws_log "Using AWS profile: $(aws_profile)"
-	set_blj_prop "internal.config" "${1}" && [ ${#defConfig} -gt 0 ] && set_blj_prop "internal.defaultConfig" "${defConfig}"
+	set_blj_prop "internal.config" "${1}"
 	aws_log "MASTER AWS Config properties saved to --> ${AWS_CONF}" && sort -d "${AWS_CONF}" > "${TMP}" && mv "${TMP}" "${AWS_CONF}"
 }
 

@@ -14,8 +14,11 @@ build_stack() {
 	aws_log "Please wait while building AWS cloud formation stack: ${stack}..." 
 	myIP=$(curl -s checkip.dyndns.org | sed -e 's/.*Current IP Address: //' -e 's/<.*$//')
 	ec2SpotPer=$(get_blj_prop aws.ec2SpotPer)
-	params="ParameterKey=NetworkAccessIP,ParameterValue=${myIP}/32"
-	[ ${ec2SpotPer} -gt 0 ] && params="${params} ParameterKey=SpotBidPercentage,ParameterValue=${ec2SpotPer}"
+	if [ ${#ec2SpotPer} -gt 0 ]; then
+		params="ParameterKey=SpotBidPercentage,ParameterValue=${ec2SpotPer}"
+	else 
+		params="ParameterKey=SpotBidPercentage,ParameterValue=80"
+	fi
 	aws_log "aws cloudformation create-stack --template-body ${stackYml} --stack-name ${stack} --capabilities CAPABILITY_IAM --parameters ${params}"
 	aws cloudformation create-stack --template-body "${stackYml}" --stack-name "${stack}" --capabilities CAPABILITY_IAM --parameters ${params}
 	while [ $(is_stack_complete) != "true" ]; do printf "." && sleep 5s && numSecs=$((numSecs+5)); done

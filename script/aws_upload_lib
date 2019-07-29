@@ -25,7 +25,7 @@ build_start_script() {
 	echo '[ -f "${flagFile}" ] && rm "${flagFile}"' >> "${ss}"
 	echo "docker pull $(get_blj_prop docker.user)/biolockj_controller:$(get_blj_prop docker.imgVersion)" >> "${ss}"
 	echo "clearDock" >> "${ss}"
-	echo "biolockj -aws $(get_config ec2)" >> "${ss}"
+	echo "biolockj -docker $(get_config ec2)" >> "${ss}"
 	echo "sudo chown -R ${EC2_USER}:${EC2_USER} ${EFS}" >> "${ss}"
 	echo "sudo chmod -R 777 ${EFS}" >> "${ss}"
 	if [ "$(get_blj_prop aws.ec2TerminateHead)" == "Y" ]; then
@@ -102,9 +102,24 @@ stage_pipeline() {
 stage_pipeline_config_to_efs() {
 	aws_log "Uploading pipeline Config files to EFS: $(get_config ec2)" 
 	upload_to_efs $(get_blj_prop internal.config) $BLJ_CONFIG
-	exe_remote_cmd ". ${EC2_HOME}/.bash_profile; set_property $(get_config ec2) internal.config $(get_config ec2)"
+	
 	localS3=$(get_property $(get_config local) "aws.s3")
 	[ ${#localS3} -eq 0 ] && update_efs_config "aws.s3" "$(get_blj_prop aws.s3)"
+
+	localMeta=$(get_blj_prop "metadata.filePath")
+	[ ${#localMeta} -gt 0 ] && update_efs_config "metadata.filePath" "$EFS/metadata/$(basename $localMeta)"
+	
+	localInput=$(get_blj_prop "input.dirPaths")
+	[ ${#localInput} -gt 0 ] && update_efs_config "input.dirPaths" "$BLJ_INPUT/$(basename $localInput)"
+	
+	localPrimers=$(get_blj_prop "trimPrimers.filePath")
+	[ ${#localPrimers} -gt 0 ] && update_efs_config "trimPrimers.filePath" "$BLJ_PRIMER/$(basename $localPrimers)"
+	
+	localDefaultConf=$(get_property $(get_config local) "pipeline.defaultProps")
+	if [ ${#localDefaultConf} -gt 0 ]; then
+		upload_to_efs $localDefaultConf $BLJ_CONFIG
+		update_efs_config "pipeline.defaultProps" "$BLJ_CONFIG/$(basename $localDefaultConf)"
+	fi 
 }
 
 # Stage custom database files for pipeline onto EFS volume

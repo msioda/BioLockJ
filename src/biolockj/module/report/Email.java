@@ -21,7 +21,6 @@ import javax.crypto.spec.PBEParameterSpec;
 import javax.mail.*;
 import javax.mail.internet.*;
 import biolockj.*;
-import biolockj.exception.ConfigNotFoundException;
 import biolockj.module.BioModuleImpl;
 import biolockj.util.*;
 
@@ -48,17 +47,12 @@ public class Email extends BioModuleImpl {
 	 */
 	@Override
 	public void checkDependencies() throws Exception {
-		getHost();
+		Config.requireString( this, EMAIL_HOST );
 		Config.requireString( this, EMAIL_PORT );
 		Config.requireBoolean( this, EMAIL_SMTP_AUTH );
 		Config.requireBoolean( this, EMAIL_START_TLS_ENABLE );
 		Config.requireString( this, EMAIL_ENCRYPTED_PASSWORD );
 		Config.getString( this, Constants.CLUSTER_HOST );
-		
-		if( DockerUtil.inAwsEnv() ) {
-			Config.requireString( this, AWS_SMTP_USER );
-			Config.requireString( this, AWS_SMTP_PASS );
-		}
 
 		new InternetAddress( Config.requireString( this, EMAIL_FROM ) ).validate();
 		for( final String email: Config.requireList( this, EMAIL_TO ) )
@@ -76,30 +70,9 @@ public class Email extends BioModuleImpl {
 		try {
 			emailBody += RETURN + "Regards," + RETURN + "BioLockJ Admin";
 			Log.debug( getClass(), "Attempt to send email ---> " + RETURN + emailBody );
-			
-			MimeMessage mm = getMimeMessage( emailBody );
-			if( DockerUtil.inAwsEnv() ) {
-				Transport transport = mm.getSession().getTransport();
-				try {
-					Log.info( getClass(), "ATTEMPT TO PRE-CONNECT TO SMTP SERVER" );
-					transport.connect( getHost(), Config.requireString( null, AWS_SMTP_USER ), 
-						Config.requireString( null, AWS_SMTP_PASS ) );
-					Log.info( getClass(), "CONNECTED TO SMTP SERVER" );
-					
-					transport.sendMessage( mm, mm.getAllRecipients() );
-					Log.info( getClass(), "EMAIL SENT!" );
-					successful = true;
-				} catch ( Exception ex ) {
-					Log.error(getClass(), "Failed to send AWS email: " + ex.getMessage() );
-				} finally {
-					transport.close();
-				}
-			} else {
-				Transport.send( mm );
-				Log.info( getClass(), "EMAIL SENT!" );
-				successful = true;
-			}
-			
+			Transport.send( getMimeMessage( emailBody ) );
+			Log.info( getClass(), "EMAIL SENT!" );
+			successful = true;
 		} catch( final Exception ex ) {
 			throw new Exception( "Unable to send email: " + ex.getMessage() );
 		}
@@ -113,6 +86,44 @@ public class Email extends BioModuleImpl {
 		if( successful ) return "EMAIL SENT";
 
 		return "EMAIL FAILED";
+	}
+
+	/**
+	 * Build an authenticated javax.mail.Session using {@link biolockj.Config} email properties
+	 *
+	 * @return javax.mail.Session required to send a MimeMessage
+	 * @throws Exception if {@link biolockj.Config} finds missing or invalid email properties
+	 */
+	protected Session getSession() throws Exception {
+		String startTls = "false";
+		String smtpAuth = "false";
+		if( Config.getBoolean( this, EMAIL_SMTP_AUTH ) ) smtpAuth = "true";
+		if( Config.getBoolean( this, EMAIL_START_TLS_ENABLE ) ) startTls = "true";
+
+		final Properties props = new Properties();
+		props.put( EMAIL_SMTP_AUTH, smtpAuth );
+		props.put( EMAIL_START_TLS_ENABLE, startTls );
+		props.put( EMAIL_HOST, Config.requireString( this, EMAIL_HOST ) );
+		props.put( EMAIL_PORT, Config.requireString( this, EMAIL_PORT ) );
+
+		final Session session = Session.getInstance( props, new Authenticator() {
+			@Override
+			protected PasswordAuthentication getPasswordAuthentication() {
+				try {
+					return new PasswordAuthentication( Config.requireString( null, EMAIL_FROM ),
+						decrypt( Config.requireString( null, EMAIL_ENCRYPTED_PASSWORD ) ) );
+				} catch( final Exception ex ) {
+					Log.error( getClass(),
+						"Unable to build PasswordAuthentication due to missing/invalid properties: " + EMAIL_FROM +
+							" or " + EMAIL_ENCRYPTED_PASSWORD + " : " + ex.getMessage(),
+						ex );
+				}
+
+				return null;
+			}
+		} );
+
+		return session;
 	}
 
 	/**
@@ -139,63 +150,14 @@ public class Email extends BioModuleImpl {
 	}
 
 	/**
-	 * Build an authenticated javax.mail.Session using {@link biolockj.Config} email properties
-	 *
-	 * @return javax.mail.Session required to send a MimeMessage
-	 * @throws Exception if {@link biolockj.Config} finds missing or invalid email properties
-	 */
-	protected Session getSession() throws Exception {
-		String startTls = "false";
-		String smtpAuth = "false";
-		if( Config.getBoolean( this, EMAIL_SMTP_AUTH ) ) smtpAuth = "true";
-		if( Config.getBoolean( this, EMAIL_START_TLS_ENABLE ) ) startTls = "true";
-
-		final Properties props = new Properties();
-		props.put( EMAIL_SMTP_AUTH, smtpAuth );
-		props.put( EMAIL_START_TLS_ENABLE, startTls );
-		props.put( EMAIL_HOST, getHost() );
-		props.put( EMAIL_PORT, Config.requireString( this, EMAIL_PORT ) );
-		
-		
-		Session session = null;
-		if( DockerUtil.inAwsEnv() ) {
-			props.put( EMAIL_PROTOCOL, SMTP );
-			session = Session.getDefaultInstance( props );
-		} else {
-
-			session = Session.getInstance( props, new Authenticator() {
-				@Override
-				protected PasswordAuthentication getPasswordAuthentication() {
-					try {
-						return new PasswordAuthentication( Config.requireString( null, EMAIL_FROM ), decrypt( Config.requireString( null, EMAIL_ENCRYPTED_PASSWORD ) ) );
-					} catch( final Exception ex ) {
-						Log.error( getClass(),
-							"Unable to build PasswordAuthentication due to missing/invalid properties: " + EMAIL_FROM +
-								" or " + EMAIL_ENCRYPTED_PASSWORD + " : " + ex.getMessage(),
-							ex );
-					}
-	
-					return null;
-				}
-			} );
-		}
-
-		return session;
-	}
-
-	private String getHost() throws ConfigNotFoundException {
-		return Config.requireString( this, DockerUtil.inAwsEnv() ? AWS_SMTP_HOST: EMAIL_HOST );
-	}
-
-	/**
 	 * Create the MimeMessage using the emailBody parameter.
 	 *
 	 * @param emailBody Pipeline summary
 	 * @return MimeMessage
 	 * @throws Exception if email properties are missing or invalid
 	 */
-	private MimeMessage getMimeMessage( final String emailBody ) throws Exception {
-		final MimeMessage message = new MimeMessage( getSession() );
+	private Message getMimeMessage( final String emailBody ) throws Exception {
+		final Message message = new MimeMessage( getSession() );
 		message.setFrom( new InternetAddress( Config.requireString( this, EMAIL_FROM ) ) );
 		message.addRecipients( Message.RecipientType.TO, InternetAddress.parse( getRecipients() ) );
 		message.setSubject( "BioLockJ " + Config.pipelineName() + " " + Pipeline.getStatus() );
@@ -278,22 +240,6 @@ public class Email extends BioModuleImpl {
 	}
 
 	/**
-	 * {@link biolockj.Config} AWS Specific SMTP Host: {@value #AWS_SMTP_HOST}
-	 */
-	protected static final String AWS_SMTP_HOST = "aws.smtpHost";
-	
-	/**
-	 * {@link biolockj.Config} AWS Specific SMTP Host: {@value #AWS_SMTP_USER}
-	 */
-	protected static final String AWS_SMTP_USER = "aws.smtpUser";
-	
-	/**
-	 * {@link biolockj.Config} AWS Specific SMTP Host: {@value #AWS_SMTP_PASS}
-	 */
-	protected static final String AWS_SMTP_PASS = "aws.smtpPass";
-	
-
-	/**
 	 * {@link biolockj.Config} String property: {@value #EMAIL_ENCRYPTED_PASSWORD}<br>
 	 * The Base 64 encrypted password is stored in the Config file using this property.
 	 */
@@ -318,11 +264,6 @@ public class Email extends BioModuleImpl {
 	protected static final String EMAIL_PORT = "mail.smtp.port";
 
 	/**
-	 * {@link biolockj.Config} Email protocol: {@value #EMAIL_PROTOCOL}<br>
-	 */
-	protected static final String EMAIL_PROTOCOL = "mail.transport.protocol";
-
-	/**
 	 * {@link biolockj.Config} Boolean property: {@value #EMAIL_SMTP_AUTH}<br>
 	 * {@link javax.mail.Session} SMTP authorization flag, set to {@value biolockj.Constants#TRUE} if required by
 	 * {@value #EMAIL_HOST}
@@ -345,6 +286,5 @@ public class Email extends BioModuleImpl {
 
 	private static final byte[] SALT =
 		{ (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12, (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12, };
-	private static final String SMTP = "smtp";
 	private static boolean successful = false;
 }

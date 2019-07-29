@@ -172,6 +172,6 @@ verify_inputs() {
 
 printf "\n ---------> Execute CMD [  dockblj $(echo ${@})  ]\n"
 scan_script_and_env_args $@
-$(null_var $runGui) && verify_inputs 
+$(null_var $runGui) && [ "${HOME}" != "${EC2_HOME}" ] && verify_inputs 
 run_docker
 ! $(null_var $runGui) && startBrowser
