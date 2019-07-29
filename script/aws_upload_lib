@@ -9,7 +9,7 @@ alias dl_efs="download_dir_from_efs"
 # Build start script for given Pipeline Config file and reutnr local path
 # Param 1 - Pipeline Config file
 build_start_script() {
-	ss="${HOME}/.aws/start-$(get_config_name).sh"
+	ss="${HOME}/.aws/start-$(get_config_name).sh" && [ -f "$(get_blj_prop metadata.filePath)" ] && meta="m=${EFS}/metadata "
 	echo '#!/bin/bash' > "${ss}"
 	echo "###################################################################" >> "${ss}"
 	echo "##  Run this script to launch BioLockJ pipeline on AWS           ##" >> "${ss}"
@@ -18,14 +18,14 @@ build_start_script() {
 	echo "##  3) Set pipeline.host Config property                         ##" >> "${ss}"
 	echo "##  4) Run dockblj on the AWS Config                             ##" >> "${ss}"
 	echo "##  5) Reset Nextflow-modified EFS dir owner and access privs    ##" >> "${ss}"
-	echo "##  6) May stop/terminate EC2 instance upon pipeline success     ##" >> "${ss}"
+	echo "##  6) Terminate EC2 instance if configured to do so             ##" >> "${ss}"
 	echo "###################################################################" >> "${ss}"
 	echo '. ~/.bash_profile' >> "${ss}"
 	echo "flagFile=${EC2_HOME}/$(get_config_name)-success" >> "${ss}"
 	echo '[ -f "${flagFile}" ] && rm "${flagFile}"' >> "${ss}"
 	echo "docker pull $(get_blj_prop docker.user)/biolockj_controller:$(get_blj_prop docker.imgVersion)" >> "${ss}"
 	echo "clearDock" >> "${ss}"
-	echo "biolockj -docker $(get_config ec2)" >> "${ss}"
+	echo "dockblj -aws ${meta}i=${BLJ_INPUT}/$(basename $(get_blj_prop input.dirPaths)) c=$(get_config ec2)" >> "${ss}"
 	echo "sudo chown -R ${EC2_USER}:${EC2_USER} ${EFS}" >> "${ss}"
 	echo "sudo chmod -R 777 ${EFS}" >> "${ss}"
 	if [ "$(get_blj_prop aws.ec2TerminateHead)" == "Y" ]; then
@@ -100,25 +100,14 @@ stage_pipeline() {
 
 # The method creates a new version of the pipeline Config files by replacing 
 stage_pipeline_config_to_efs() {
-	aws_log "Uploading pipeline Config files to EFS: $(get_config ec2)" 
+	aws_log "Uploading pipeline Config files to EFS: $(get_config ec2)"
 	upload_to_efs $(get_blj_prop internal.config) $BLJ_CONFIG
-	
 	localS3=$(get_property $(get_config local) "aws.s3")
 	[ ${#localS3} -eq 0 ] && update_efs_config "aws.s3" "$(get_blj_prop aws.s3)"
-
-	localMeta=$(get_blj_prop "metadata.filePath")
-	[ ${#localMeta} -gt 0 ] && update_efs_config "metadata.filePath" "$EFS/metadata/$(basename $localMeta)"
-	
-	localInput=$(get_blj_prop "input.dirPaths")
-	[ ${#localInput} -gt 0 ] && update_efs_config "input.dirPaths" "$BLJ_INPUT/$(basename $localInput)"
-	
-	localPrimers=$(get_blj_prop "trimPrimers.filePath")
-	[ ${#localPrimers} -gt 0 ] && update_efs_config "trimPrimers.filePath" "$BLJ_PRIMER/$(basename $localPrimers)"
-	
-	localDefaultConf=$(get_property $(get_config local) "pipeline.defaultProps")
-	if [ ${#localDefaultConf} -gt 0 ]; then
-		upload_to_efs $localDefaultConf $BLJ_CONFIG
-		update_efs_config "pipeline.defaultProps" "$BLJ_CONFIG/$(basename $localDefaultConf)"
+	defaultConf=$(get_property $(get_config local) "pipeline.defaultProps")
+	if [ ${#defaultConf} -gt 0 ]; then
+		upload_to_efs $defaultConf $BLJ_CONFIG
+		update_efs_config "pipeline.defaultProps" "$BLJ_CONFIG/$(basename $defaultConf)"
 	fi 
 }
 
