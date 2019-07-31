@@ -528,14 +528,8 @@ public class Demultiplexer extends JavaModuleImpl implements SeqModule {
 	private int hasBarcode( final String line ) throws Exception {
 		for( final String code: MetaUtil.getFieldValues( Config.requireString( this, MetaUtil.META_BARCODE_COLUMN ),
 			true ) )
-			if( line.contains( code ) )
-				// Log.info( getClass(), "Found barcode[ " + code + "] in line: " + line );
-				return 1;
-			else if( line.contains( SeqUtil.reverseComplement( code ) ) ) // Log.info( getClass(), "Found REVERSE
-																			// COMPLIMENT of barcode[ " +
-																			// SeqUtil.reverseComplement( code ) +
-				// "] in line: " + line );
-				return 2;
+			if( line.contains( code ) ) return 1;
+			else if( line.contains( SeqUtil.reverseComplement( code ) ) ) return 2;
 		return 0;
 	}
 

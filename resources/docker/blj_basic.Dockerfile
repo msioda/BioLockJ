@@ -4,8 +4,10 @@ FROM ubuntu:18.04
 ARG DEBIAN_FRONTEND=noninteractive
 
 #1.) Setup Standard Dirs (used by some but not all ancestors)
-ENV BLJ="/app/biolockj"
-ENV BLJ_SUP="/app/blj_support"
+ENV APP="/app"
+ENV APP_BIN="${APP}/bin"
+ENV BLJ="${APP}/biolockj"
+ENV BLJ_SUP="${APP}/blj_support"
 ENV EFS="/mnt/efs"
 ENV BLJ_CONFIG="${EFS}/config"
 ENV BLJ_DB="${EFS}/db"
@@ -16,7 +18,7 @@ ENV BLJ_META="${EFS}/metadata"
 ENV BLJ_PROJ="${EFS}/pipelines"
 ENV BLJ_PRIMER="${EFS}/primer"
 ENV BLJ_SCRIPT="${EFS}/script"
-ENV PATH="$PATH:${BLJ_HOST_HOME}/miniconda/bin"
+ENV PATH="$PATH:${BLJ_HOST_HOME}/miniconda/bin:${APP_BIN}"
 
 #2.) Build Standard Directories 
 RUN mkdir -p "${BLJ}" && mkdir "${BLJ_SUP}" && mkdir -p "${BLJ_PROJ}" && \

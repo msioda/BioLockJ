@@ -5,7 +5,7 @@
 ##                                                                           ##
 ##  Required Parameters (If gui arg passed, no other args required)          ##
 ##  Note, all params (other than blj & blj_sup) can use only 1st letter      ##
-##  Config file path:          config  <file_path>                            ##
+##  Config file path:          config  <file_path>                           ##
 ##                                                                           ##
 ##  Optional Parameters:                                                     ##
 ##  Aws flag:                  aws                                           ##
@@ -84,6 +84,7 @@ get_volumes() {
 			! $(null_var $primerPath) && vols="${vols} -v $primerPath:${BLJ_PRIMER}:ro"
 		else
 			vols="${vols} -v ${BLJ}/resources/config/gui:${BLJ_CONFIG}:delegated"
+			[ -f "$(which aws)" ] && [ -d "$(dirname $(which aws))" ] && vols="${vols} -v $(dirname $(which aws)):${APP_BIN}"
 		fi
 		! $(null_var $blj) && vols="${vols} -v ${blj}:/app/biolockj:ro"
 		! $(null_var $blj_sup) && vols="${vols} -v ${blj_sup}:/app/blj_support:ro"
@@ -171,6 +172,6 @@ verify_inputs() {
 
 printf "\n ---------> Execute CMD [  dockblj $(echo ${@})  ]\n"
 scan_script_and_env_args $@
-$(null_var $runGui) && verify_inputs 
+$(null_var $runGui) && [ "${HOME}" != "${EC2_HOME}" ] && verify_inputs 
 run_docker
 ! $(null_var $runGui) && startBrowser

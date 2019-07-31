@@ -18,6 +18,7 @@ export DOCKER_VER="docker-18.09.2"
 export EFS="/mnt/efs"
 export EFS_PROJ="${EFS}/pipelines"
 
+export APP_BIN="/app/bin"
 export BLJ_CONFIG="${EFS}/config"
 export BLJ_DB="${EFS}/db"
 export BLJ_DEFAULT_DB="/mnt/db"
