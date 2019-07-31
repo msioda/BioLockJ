@@ -84,6 +84,11 @@ get_aws_secret_access_key() {
 	echo $(aws_local_prop aws_secret_access_key ~/.aws/credentials)
 }
 
+# Get the current IAM user name
+get_aws_user() {
+	aws iam get-user --query User.UserName
+}
+
 # Get a prop stored in ${AWS_CONF}
 # Param 1 - Prop name
 # Param 2 - (Optional) Default value
@@ -103,6 +108,13 @@ get_config() {
 # Get the Config name - used to label pipeline dirs
 get_config_name() {
 	echo $(echo $(basename $(get_config local)) | cut -f1 -d".")
+}
+
+# Get EC2 head node name formatted as "Head-$USER-biolockj
+head_name() {
+	name="$(get_blj_prop aws.stack)"
+	[ "${name}" == "${name/$(get_aws_user)}" ] && name="$(get_aws_user)-${name}"
+	echo "Head-${name}"
 }
 
 # Init AWS Config properties file ${AWS_CONF} with pipeline Config, AWS config, and standard defaults
@@ -133,8 +145,8 @@ init_aws_config() {
 
 # Get the ec2 key file for the ec2 head node
 key_file() {
-	[ "$(get_blj_prop aws.stack)" == "" ] && exit_script "Error [ aws_config_lib.key_file() ]: Required AWS Config \"aws.stack\" is undefined!"
-	echo "${HOME}/.aws/$(get_blj_prop aws.stack).pem"
+	[ "$(head_name)" == "" ] && exit_script "Error [ aws_config_lib.key_file() ]: Required AWS Config \"aws.stack\" is undefined!"
+	echo "${HOME}/.aws/$(head_name).pem"
 }
 
 # Get local Nextflow <base> config file

@@ -81,19 +81,6 @@ get_ami() {
 	echo "${awsAmi}"
 }
 
-# Get the current IAM user name
-get_aws_user() {
-	aws iam get-user --query User.UserName
-}
-
-# Get EC2 head node name formatted as "Head-$USER-biolockj
-head_name() {
-	name="$(get_blj_prop aws.stack)"
-	[ "${name}" == "${name/$(get_aws_user)}" ] && name="$(get_aws_user)-${name}"
-	echo "Head-${name}"
-}
-
-
 # Check status of Cloud Formation Stack
 is_stack_complete() {
 	stacks=$(aws cloudformation describe-stacks --query "Stacks[].StackName")
