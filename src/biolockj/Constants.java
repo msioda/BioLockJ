@@ -101,8 +101,8 @@ public class Constants {
 	public static final String DEFAULT_STATS_MODULE = "pipeline.defaultStatsModule";
 
 	/**
-	 * In an otu string for multiple levels, each separated by {@value #SEPARATOR}, each otu has a level prefix ending
-	 * with {@value #DELIM_SEP}
+	 * In an otu string for multiple levels, each separated by {@value #OTU_SEPARATOR}, each otu has a level prefix
+	 * ending with {@value #DELIM_SEP}
 	 */
 	public static final String DELIM_SEP = "__";
 
@@ -146,6 +146,7 @@ public class Constants {
 	 * Set command line executable docker
 	 */
 	public static final String EXE_DOCKER = "exe.docker";
+
 	/**
 	 * {@link biolockj.Config} String property {@value #EXE_GZIP}<br>
 	 * Set command line executable gzip
@@ -181,7 +182,6 @@ public class Constants {
 	 * File extension for fastq files: {@value #FASTQ}
 	 */
 	public static final String FASTQ = "fastq";
-
 	/**
 	 * {@link biolockj.Config} option for {@value #REPORT_TAXONOMY_LEVELS}: {@value #GENUS}
 	 */
@@ -191,6 +191,11 @@ public class Constants {
 	 * Gzip compressed file extension: {@value #GZIP_EXT}
 	 */
 	public static final String GZIP_EXT = ".gz";
+
+	/**
+	 * Argument to print help menu: {@value #HELP}
+	 */
+	public static final String HELP = "-help";
 
 	/**
 	 * {@link biolockj.Config} Boolean property to disable HumanN2 Gene Family report:
@@ -209,6 +214,7 @@ public class Constants {
 	 * {@value #HN2_DISABLE_PATH_COVERAGE}
 	 */
 	public static final String HN2_DISABLE_PATH_COVERAGE = "humann2.disablePathCoverage";
+
 	/**
 	 * HumanN2 file suffix identifier for Gene Family Summary report: {@value #HN2_GENE_FAM_SUM}
 	 */
@@ -244,7 +250,6 @@ public class Constants {
 	 * Set sequence file directories
 	 */
 	public static final String INPUT_DIRS = "input.dirPaths";
-
 	/**
 	 * {@link biolockj.Config} String property: {@value #INPUT_FORWARD_READ_SUFFIX}<br>
 	 * Set file suffix used to identify forward reads in {@value #INPUT_DIRS}
@@ -402,6 +407,11 @@ public class Constants {
 	 * Included in the file name of each file output. One file per sample is output by the ParserModule.
 	 */
 	public static final String OTU_COUNT = "otuCount";
+
+	/**
+	 * A pipe is used to separate each taxa {@value #OTU_SEPARATOR}
+	 */
+	public static final String OTU_SEPARATOR = "|";
 
 	/**
 	 * QIIME OTU table prefix: {@value #OTU_TABLE_PREFIX}
@@ -603,6 +613,12 @@ public class Constants {
 	public static final String REPORT_TAXONOMY_LEVELS = "report.taxonomyLevels";
 
 	/**
+	 * {@link biolockj.Config} Boolean property: {@value #REPORT_UNCLASSIFIED_TAXA}<br>
+	 * Set the max number of minutes to allow for S3 transfers to complete.
+	 */
+	public static final String REPORT_UNCLASSIFIED_TAXA = "report.unclassifiedTaxa";
+
+	/**
 	 * Return character: *backslash-n*
 	 */
 	public static final String RETURN = "\n";
@@ -612,6 +628,17 @@ public class Constants {
 	 * {@value #RM_TEMP_FILES}
 	 */
 	public static final String RM_TEMP_FILES = "pipeline.deleteTempFiles";
+
+	/**
+	 * Rscript exe commmand.
+	 */
+	public static final String RSCRIPT = "Rscript";
+
+	/**
+	 * {@link biolockj.Config} List property: {@value #SCRIPT_DEFAULT_HEADER}<br>
+	 * Store default script header for MAIN script and locally run WORKER scripts.
+	 */
+	public static final String SCRIPT_DEFAULT_HEADER = "script.defaultHeader";
 
 	/**
 	 * Name of the script sub-directory: {@value #SCRIPT_DIR}
@@ -624,6 +651,25 @@ public class Constants {
 	public static final String SCRIPT_FAILURES = "Failures";
 
 	/**
+	 * {@link biolockj.Config} Integer property: {@value #SCRIPT_NUM_THREADS}<br>
+	 * Used to reserve cluster resources and passed to any external application call that accepts a numThreads
+	 * parameter.
+	 */
+	public static final String SCRIPT_NUM_THREADS = "script.numThreads";
+
+	/**
+	 * {@link biolockj.Config} Integer property: {@value #SCRIPT_NUM_WORKERS}<br>
+	 * Set number of samples to process per script (if parallel processing)
+	 */
+	public static final String SCRIPT_NUM_WORKERS = "script.numWorkers";
+
+	/**
+	 * {@link biolockj.Config} String property: {@value #SCRIPT_PERMISSIONS}<br>
+	 * Used as chmod permission parameter (ex: 774)
+	 */
+	public static final String SCRIPT_PERMISSIONS = "script.permissions";
+
+	/**
 	 * File suffix appended to started script: {@value #SCRIPT_STARTED}
 	 */
 	public static final String SCRIPT_STARTED = "Started";
@@ -634,9 +680,15 @@ public class Constants {
 	public static final String SCRIPT_SUCCESS = "Success";
 
 	/**
-	 * Semi-colon is used to separate each taxa {@value #SEPARATOR}
+	 * {@link biolockj.Config} Integer property: {@value #SCRIPT_TIMEOUT}<br>
+	 * Sets # of minutes before worker scripts times out.
 	 */
-	public static final String SEPARATOR = "|";
+	public static final String SCRIPT_TIMEOUT = "script.timeout";
+
+	/**
+	 * {@link biolockj.Config} property {@value #SET_SEED} set the seed for a random process. Must be positive integer.
+	 */
+	public static final String SET_SEED = "pipeline.setSeed";
 
 	/**
 	 * BioLockJ shell script file extension: {@value #SH_EXT}
@@ -674,10 +726,20 @@ public class Constants {
 	public static final String TXT_EXT = ".txt";
 
 	/**
+	 * Unclassified taxa prefix: {@value #UNCLASSIFIED}
+	 */
+	public static final String UNCLASSIFIED = "Unclassified";
+
+	/**
 	 * {@link biolockj.Config} File property: {@value #USER_PROFILE}<br>
 	 * Bash profile - may be ~/.bash_profile or ~/.bashrc or others
 	 */
 	public static final String USER_PROFILE = "pipeline.userProfile";
+
+	/**
+	 * Argument to print version info: {@value #VERSION}
+	 */
+	public static final String VERSION = "-version";
 
 	/**
 	 * {@link biolockj.Config} property to define permission settings when running chmod on pipeline root dir:

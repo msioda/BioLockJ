@@ -11,8 +11,6 @@
  */
 package biolockj.node.r16s;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.StringTokenizer;
 import biolockj.Constants;
 import biolockj.node.OtuNodeImpl;
@@ -48,20 +46,6 @@ public class QiimeNode extends OtuNodeImpl {
 		}
 	}
 
-	@Override
-	public Map<String, String> delimToLevelMap() {
-		if( delimToLevelMap.isEmpty() ) {
-			delimToLevelMap.put( DOMAIN_DELIM, Constants.DOMAIN );
-			delimToLevelMap.put( PHYLUM_DELIM, Constants.PHYLUM );
-			delimToLevelMap.put( CLASS_DELIM, Constants.CLASS );
-			delimToLevelMap.put( ORDER_DELIM, Constants.ORDER );
-			delimToLevelMap.put( FAMILY_DELIM, Constants.FAMILY );
-			delimToLevelMap.put( GENUS_DELIM, Constants.GENUS );
-			delimToLevelMap.put( SPECIES_DELIM, Constants.SPECIES );
-		}
-		return delimToLevelMap;
-	}
-
 	/**
 	 * Get the first taxonomy level delim.
 	 * 
@@ -73,8 +57,8 @@ public class QiimeNode extends OtuNodeImpl {
 		for( final String abmiguousDelim: Constants.QIIME_AMBIGUOUS_TAXA )
 			if( taxa.startsWith( abmiguousDelim ) ) return null;
 
-		if( delimToLevelMap.isEmpty() ) if( delimToLevelMap().get( taxa.substring( 0, levelDelimSize ) ) == null ) {
-			delimToLevelMap.clear();
+		if( delimToLevelMap().get( taxa.substring( 0, levelDelimSize ) ) == null ) {
+			delimToLevelMap().clear();
 			levelDelimSize = 5;
 			DOMAIN_DELIM = SILVA_DOMAIN_DELIM;
 			PHYLUM_DELIM = SILVA_PHYLUM_DELIM;
@@ -133,9 +117,7 @@ public class QiimeNode extends OtuNodeImpl {
 	 */
 	protected static final String SILVA_SPECIES_DELIM = "D_6__";
 
-	private static final Map<String, String> delimToLevelMap = new HashMap<>();
 	private static int levelDelimSize = 3;
-
 	private static final String QIIME_DELIM = ";";
 
 	// Override default DOMAIN taxonomy level delimiter (d__) set in OtuNodeImpl with QIIME domain delim (k__)

@@ -17,9 +17,7 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
-import biolockj.module.BioModule;
-import biolockj.module.JavaModule;
-import biolockj.module.ScriptModule;
+import biolockj.module.*;
 import biolockj.module.report.Email;
 import biolockj.module.report.r.R_Module;
 import biolockj.util.*;
@@ -35,29 +33,33 @@ public class Pipeline {
 	/**
 	 * Execute a single pipeline module.
 	 * 
-	 * @param module BioModule current module
 	 * @throws Exception if runtime errors occur
 	 */
-	public static void executeModule( final BioModule module ) throws Exception {
-		ModuleUtil.markStarted( module );
-		// refreshOutputMetadata( ModuleUtil.getPreviousModule( module ) );
-		refreshRCacheIfNeeded( module );
-		module.executeTask();
-
-		final boolean runDetached = module instanceof JavaModule && hasScripts( module )
-			&& Config.getBoolean( module, Constants.DETACH_JAVA_MODULES );
+	public static void executeModule() throws Exception {
+		ModuleUtil.markStarted( exeModule() );
+		refreshRCacheIfNeeded();
+		exeModule().executeTask();
+		final boolean isJava = exeModule() instanceof JavaModule;
+		final boolean hasScripts = ModuleUtil.hasScripts( exeModule() );
+		final boolean detachJava = Config.getBoolean( exeModule(), Constants.DETACH_JAVA_MODULES );
+		final boolean runDetached = isJava && hasScripts && detachJava;
 
 		if( runDetached ) MasterConfigUtil.saveMasterConfig();
+		if( hasScripts && !DockerUtil.inAwsEnv() ) Processor.submit( (ScriptModule) exeModule() );
+		if( hasScripts ) waitForModuleScripts();
+		exeModule().cleanUp();
+		ValidationUtil.validateModule( exeModule() );
+		if( !runDetached ) SummaryUtil.reportSuccess( exeModule() );
+		ModuleUtil.markComplete( exeModule() );
+	}
 
-		if( hasScripts( module ) && !DockerUtil.inAwsEnv() ) Processor.submit( (ScriptModule) module );
-
-		if( hasScripts( module ) ) waitForModuleScripts( (ScriptModule) module );
-
-		module.cleanUp();
-
-		if( !runDetached ) SummaryUtil.reportSuccess( module );
-
-		ModuleUtil.markComplete( module );
+	/**
+	 * Return the BioModule currently being executed
+	 * 
+	 * @return Current BioModule
+	 */
+	public static BioModule exeModule() {
+		return currentModule;
 	}
 
 	/**
@@ -70,17 +72,15 @@ public class Pipeline {
 	}
 
 	/**
-	 * Return {@value Constants#SCRIPT_SUCCESS} if no pipelineException has been thrown, otherwise return
-	 * {@value Constants#SCRIPT_FAILURES}
+	 * Return {@value Constants#SCRIPT_SUCCESS} if no pipelineException has been thrown, otherwise return FAILED
 	 *
-	 * @return pipeline status (success or failed)
+	 * @return pipeline status (SUCCESS or FAILED)
 	 */
 	public static String getStatus() {
-		if( pipelineException != null || getModules() == null || getModules().isEmpty() )
-			return Constants.SCRIPT_FAILURES;
+		if( pipelineException != null || getModules() == null || getModules().isEmpty() ) return "FAILED";
 		for( final BioModule module: getModules() )
-			if( !ModuleUtil.isComplete( module ) && !( module instanceof Email ) ) return Constants.SCRIPT_FAILURES;
-		return Constants.SCRIPT_SUCCESS;
+			if( !ModuleUtil.isComplete( module ) && !( module instanceof Email ) ) return "FAILED";
+		return Constants.SCRIPT_SUCCESS.toUpperCase();
 	}
 
 	/**
@@ -89,10 +89,10 @@ public class Pipeline {
 	 * @throws Exception if errors occur
 	 */
 	public static void initializePipeline() throws Exception {
-		Log.info( Pipeline.class, "Initialize " + ( DockerUtil.isDirectMode() ? "DIRECT module "
-			: DockerUtil.inAwsEnv() ? "AWS ": DockerUtil.inDockerEnv() ? "DOCKER ": "" ) + "pipeline" );
+		Log.info( Pipeline.class, "Initialize " + ( BioLockJUtil.isDirectMode() ? "DIRECT module ":
+			DockerUtil.inAwsEnv() ? "AWS ": DockerUtil.inDockerEnv() ? "DOCKER ": "" ) + "pipeline" );
 		bioModules = BioModuleFactory.buildPipeline();
-		if( !DockerUtil.isDirectMode() )
+		if( !BioLockJUtil.isDirectMode() )
 			Config.setConfigProperty( Constants.INTERNAL_ALL_MODULES, BioLockJUtil.getClassNames( bioModules ) );
 		initializeModules();
 	}
@@ -111,12 +111,13 @@ public class Pipeline {
 			module.runModule();
 			Log.info( Pipeline.class, "DIRECT module ID [" + id + "].runModule() complete!" );
 			module.cleanUp();
+			ValidationUtil.validateModule( module );
 			module.moduleComplete();
 			SummaryUtil.reportSuccess( module );
 			MasterConfigUtil.saveMasterConfig();
 		} catch( final Exception ex ) {
-			Log.error( Pipeline.class, "Errors occurred attempting to run DIRECT module [ ID=" + id + " ] --> "
-				+ module.getClass().getSimpleName(), ex );
+			Log.error( Pipeline.class, "Errors occurred attempting to run DIRECT module [ ID=" + id + " ] --> " +
+				module.getClass().getSimpleName(), ex );
 			module.moduleFailed();
 			SummaryUtil.reportFailure( ex );
 		}
@@ -144,11 +145,12 @@ public class Pipeline {
 				BioModule emailMod = null;
 				boolean foundIncomplete = false;
 				for( final BioModule module: Pipeline.getModules() ) {
+					setExeModule( module );
 					if( module instanceof Email ) emailMod = module;
 					if( !foundIncomplete && !ModuleUtil.isComplete( module ) ) foundIncomplete = true;
 					if( foundIncomplete && emailMod != null ) {
-						Log.warn( Pipeline.class, "Attempting to send failure notification with Email module: "
-							+ emailMod.getModuleDir().getName() );
+						Log.warn( Pipeline.class, "Attempting to send failure notification with Email module: " +
+							emailMod.getModuleDir().getName() );
 						emailMod.executeTask();
 						Log.warn( Pipeline.class, "Attempt appears to be a success!" );
 						break;
@@ -181,10 +183,12 @@ public class Pipeline {
 	 * @throws Exception if script errors occur
 	 */
 	protected static void executeModules() throws Exception {
-		for( final BioModule module: Pipeline.getModules() )
-			if( !ModuleUtil.isComplete( module ) ) executeModule( module );
+		for( final BioModule module: Pipeline.getModules() ) {
+			setExeModule( module );
+			if( !ModuleUtil.isComplete( module ) ) executeModule();
 			else Log.debug( Pipeline.class,
 				"Skipping succssfully completed BioLockJ Module: " + module.getClass().getName() );
+		}
 	}
 
 	/**
@@ -196,7 +200,7 @@ public class Pipeline {
 	 * modules
 	 * <li>Delete incomplete module contents if restarting a failed pipeline
 	 * {@value biolockj.module.BioModule#OUTPUT_DIR} directory<br>
-	 * <li>Call {@link #refreshRCacheIfNeeded(BioModule)} to cache R fields after 1st R module runs<br>
+	 * <li>Call {@link #refreshRCacheIfNeeded()} to cache R fields after 1st R module runs<br>
 	 * <li>Verify dependencies with {@link biolockj.module.BioModule#checkDependencies()}<br>
 	 * </ol>
 	 *
@@ -205,20 +209,22 @@ public class Pipeline {
 	 */
 	protected static boolean initializeModules() throws Exception {
 		for( final BioModule module: getModules() ) {
-			if( ModuleUtil.isIncomplete( module ) && ( !DockerUtil.isDirectMode() || module instanceof Email ) ) {
+			setExeModule( module );
+			if( ModuleUtil.isIncomplete( module ) && ( !BioLockJUtil.isDirectMode() || module instanceof Email ) ) {
 				final String path = module.getModuleDir().getAbsolutePath();
 				Log.info( Pipeline.class, "Reset incomplete module: " + path );
-
 				FileUtils.forceDelete( module.getModuleDir() );
 				new File( path ).mkdirs();
 			}
 
 			info( "Check dependencies for: " + module.getClass().getName() );
 			module.checkDependencies();
+			ValidationUtil.checkDependencies( module );
 
 			if( ModuleUtil.isComplete( module ) ) {
 				module.cleanUp();
-				refreshRCacheIfNeeded( module );
+				if( !BioLockJUtil.isDirectMode() ) ValidationUtil.validateModule( module );
+				refreshRCacheIfNeeded();
 			}
 		}
 
@@ -242,7 +248,6 @@ public class Pipeline {
 	 */
 	protected static boolean poll( final ScriptModule module ) throws Exception {
 		final Collection<File> scriptFiles = getWorkerScripts( module );
-
 		final int numScripts = scriptFiles.size();
 		int numSuccess = 0;
 		int numStarted = 0;
@@ -257,9 +262,9 @@ public class Pipeline {
 			numFailed = numFailed + ( testFailure.isFile() ? 1: 0 );
 		}
 
-		final String logMsg = module.getClass().getSimpleName() + " Status (Total=" + numScripts + "): Success="
-			+ numSuccess + "; Failed=" + numFailed + "; Running=" + ( numStarted - numSuccess - numFailed )
-			+ "; Queued=" + ( numScripts - numStarted );
+		final String logMsg = module.getClass().getSimpleName() + " Status (Total=" + numScripts + "): Success=" +
+			numSuccess + "; Failed=" + numFailed + "; Running=" + ( numStarted - numSuccess - numFailed ) +
+			"; Queued=" + ( numScripts - numStarted );
 
 		if( !statusMsg.equals( logMsg ) ) {
 			statusMsg = logMsg;
@@ -278,13 +283,13 @@ public class Pipeline {
 	/**
 	 * Refresh R cache if about to run the 1st R module.
 	 * 
-	 * @param module BioModule
 	 * @throws Exception if errors occur
 	 */
-	protected static void refreshRCacheIfNeeded( final BioModule module ) throws Exception {
-		if( ModuleUtil.isFirstRModule( module ) ) {
-			Log.info( Pipeline.class, "Refresh R-cache before running 1st R module: " + module.getClass().getName() );
-			RMetaUtil.classifyReportableMetadata( module );
+	protected static void refreshRCacheIfNeeded() throws Exception {
+		if( ModuleUtil.isFirstRModule( exeModule() ) ) {
+			Log.info( Pipeline.class,
+				"Refresh R-cache before running 1st R module: " + exeModule().getClass().getName() );
+			RMetaUtil.classifyReportableMetadata( exeModule() );
 		}
 	}
 
@@ -299,8 +304,8 @@ public class Pipeline {
 	}
 
 	private static Collection<File> getWorkerScripts( final ScriptModule module ) throws Exception {
-		final Collection<
-			File> scriptFiles = FileUtils.listFiles( module.getScriptDir(), getWorkerScriptFilter( module ), null );
+		final Collection<File> scriptFiles =
+			FileUtils.listFiles( module.getScriptDir(), getWorkerScriptFilter( module ), null );
 
 		final File mainScript = module.getMainScript();
 		if( !( module instanceof R_Module ) && mainScript != null ) scriptFiles.remove( mainScript );
@@ -313,41 +318,39 @@ public class Pipeline {
 		return scriptFiles;
 	}
 
-	private static boolean hasScripts( final BioModule module ) {
-		final File scriptDir = new File(
-			module.getModuleDir().getAbsolutePath() + File.separator + Constants.SCRIPT_DIR );
-		return module instanceof ScriptModule && scriptDir.isDirectory() && scriptDir.list().length > 0;
-	}
-
 	private static void info( final String msg ) {
-		if( !DockerUtil.isDirectMode() ) Log.info( Pipeline.class, msg );
+		if( !BioLockJUtil.isDirectMode() ) Log.info( Pipeline.class, msg );
 	}
 
 	private static void logScriptTimeOutMsg( final ScriptModule module ) throws Exception {
 		final String prompt = "------> ";
 		Log.info( Pipeline.class, prompt + "Java program wakes every 60 seconds to check execution progress" );
-		Log.info( Pipeline.class, prompt + "Status determined by existance of indicator files in "
-			+ module.getScriptDir().getAbsolutePath() );
-		Log.info( Pipeline.class, prompt + "Indicator files end with: \"_" + Constants.SCRIPT_STARTED + "\", \"_"
-			+ Constants.SCRIPT_SUCCESS + "\", or \"_" + Constants.SCRIPT_FAILURES + "\"" );
+		Log.info( Pipeline.class, prompt + "Status determined by existance of indicator files in " +
+			module.getScriptDir().getAbsolutePath() );
+		Log.info( Pipeline.class, prompt + "Indicator files end with: \"_" + Constants.SCRIPT_STARTED + "\", \"_" +
+			Constants.SCRIPT_SUCCESS + "\", or \"_" + Constants.SCRIPT_FAILURES + "\"" );
 		Log.info( Pipeline.class,
 			prompt + "If any change to #Success/#Failed/#Running/#Queued changed, new values logged" );
-		if( module.getTimeout() == null || module.getTimeout() > 10 ) Log.info( Pipeline.class, prompt
-			+ "Status message repeats every 10 minutes while scripts are executing (if status remains unchanged)." );
+		if( module.getTimeout() == null || module.getTimeout() > 10 ) Log.info( Pipeline.class, prompt +
+			"Status message repeats every 10 minutes while scripts are executing (if status remains unchanged)." );
 
 		if( module.getTimeout() != null ) Log.info( Pipeline.class,
 			prompt + "Running scripts will time out after the configured SCRIPT TIMEOUT = " + module.getTimeout() );
 		else Log.info( Pipeline.class, prompt + "Running scripts will NEVER TIME OUT." );
 	}
 
+	private static void setExeModule( final BioModule module ) {
+		currentModule = module;
+	}
+
 	/**
 	 * This method calls executes script module scripts and monitors them until complete or timing out after
 	 * {@value #POLL_TIME} seconds.
 	 *
-	 * @param module ScriptModule
 	 * @throws Exception if errors occur
 	 */
-	private static void waitForModuleScripts( final ScriptModule module ) throws Exception {
+	private static void waitForModuleScripts() throws Exception {
+		final ScriptModule module = (ScriptModule) exeModule();
 		logScriptTimeOutMsg( module );
 		int numMinutes = 0;
 		boolean finished = false;
@@ -362,6 +365,7 @@ public class Pipeline {
 	}
 
 	private static List<BioModule> bioModules = null;
+	private static BioModule currentModule = null;
 	private static Exception pipelineException = null;
 	private static int pollCount = 0;
 	private static String statusMsg = "";

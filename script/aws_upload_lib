@@ -4,93 +4,50 @@
 ##  This script is used for uploading data + config to AWS cloud.  ##
 ##                                                                 ##
 #####################################################################
-. "${BLJ_SCRIPT}/aws_config_lib"
-
-AWS_STAGE=~/.aws/stage
-S3_DIR="s3://"
 alias dl_efs="download_dir_from_efs"
-
-# Sync local files to S3 for cloud pipeline execution
-aws_sync_inputs_to_s3() {
-	[ ${#awsS3} -eq 0 ] && exit_script "Error [ aws_upload_lib.aws_sync_inputs_to_s3() ]: Required property \"awsS3\" is undefined in $blj_aws_config"
-	
-	# Upload Config
-	propFiles=( ${configFiles//,/ } )
-	for propFile in ${propFiles[@]}; do upload_s3_file "${BLJ_CONFIG}"/$(basename "${propFile}") config; done
-	
-	upload_s3_dir "${BLJ_DB}" db
-	upload_s3_dir "${BLJ_INPUT}"/$(basename "${inputDirPaths}") input
-	upload_s3_file "${BLJ_META}" metadata
-	upload_s3_file "${BLJ_PRIMER}" primer
-}
-
-# Sync local files to S3 for cloud pipeline execution
-aws_sync_outputs_to_s3() {
-	[ ${#awsS3} -eq 0 ] && exit_script "Error [ aws_upload_lib.aws_sync_outputs_to_s3() ]: Required property \"awsS3\" is undefined in $blj_aws_config"
-	upload_s3_dir $BLJ_PROJ pipelines
-}
-
-# Sync local files to S3 for cloud pipeline execution
-aws_stage_s3_data() {
-	[ ${#awsS3} -eq 0 ] && exit_script "Error [ aws_upload_lib.aws_stage_s3_data() ]: Required property \"awsS3\" is undefined in $blj_aws_config"
-	
-	# Upload Config
-	propFiles=( ${configFiles//,/ } )
-	for propFile in ${propFiles[@]}; do upload_file_to_efs $propFile "${BLJ_CONFIG}"; done
-	
-	# Upload files
-	upload_s3_file $metadataFilePath metadata
-	upload_s3_file $trimPrimersFilePath primers
-
-	# Upload dirs
-	upload_s3_dir $inputDirPaths seq
-	upload_s3_dir $humann2NuclDB db
-	upload_s3_dir $humann2ProtDB db
-	upload_s3_dir $kneaddataDbs db
-	upload_s3_dir $krakenDb db
-	upload_s3_dir $kraken2Db db
-	upload_s3_dir $metaphlan2Db db
-	upload_s3_dir $metaphlan2Mpa_pkl db
-	upload_s3_dir $qiimePynastAlignDB db
-	upload_s3_dir $qiimeRefSeqDB db
-	upload_s3_dir $qiimeTaxaDB db
-	[ -f "$rdpDb" ] && upload_s3_dir $(dirname rdpDb) db
-}
-
-# List all contents of an AWS S3 Bucket
-# Param 1 - S3 bucket folder name
-aws_s3_ls() {
-	aws s3 ls "${S3_DIR}${1}" --recursive --human-readable
-}
 
 # Build start script for given Pipeline Config file and reutnr local path
 # Param 1 - Pipeline Config file
 build_start_script() {
-	ss="$(start_aws_pipeline_script)"
-	[ -f "${metadataFilePath}" ] && meta="-m=${BLJ_META} "
-	
-	echo "${sheBang}" > "${ss}"
+	ss="${HOME}/.aws/start-$(get_config_name).sh" && [ -f "$(get_blj_prop metadata.filePath)" ] && meta="m=${EFS}/metadata "
+	echo '#!/bin/bash' > "${ss}"
 	echo "###################################################################" >> "${ss}"
 	echo "##  Run this script to launch BioLockJ pipeline on AWS           ##" >> "${ss}"
 	echo "##  1) Pull the latest biolockj image from Docker Hub            ##" >> "${ss}"
 	echo "##  2) Clear stale Docker images/containers (if any)             ##" >> "${ss}"
-	echo "##  3) Run dockblj on the AWS Config                             ##" >> "${ss}"
-	echo "##  4) Reset Nextflow-modified EFS dir owner and access privs    ##" >> "${ss}"
+	echo "##  3) Set pipeline.host Config property                         ##" >> "${ss}"
+	echo "##  4) Run dockblj on the AWS Config                             ##" >> "${ss}"
+	echo "##  5) Reset Nextflow-modified EFS dir owner and access privs    ##" >> "${ss}"
+	echo "##  6) Terminate EC2 instance if configured to do so             ##" >> "${ss}"
 	echo "###################################################################" >> "${ss}"
 	echo '. ~/.bash_profile' >> "${ss}"
 	echo "flagFile=${EC2_HOME}/$(get_config_name)-success" >> "${ss}"
 	echo '[ -f "${flagFile}" ] && rm "${flagFile}"' >> "${ss}"
-	echo "docker pull ${dockerUser}/biolockj_controller:${dockerImgVersion}" >> "${ss}"
+	echo "docker pull $(get_blj_prop docker.user)/biolockj_controller:$(get_blj_prop docker.imgVersion)" >> "${ss}"
 	echo "clearDock" >> "${ss}"
-	echo "dockblj -aws ${meta}-i=${BLJ_INPUT}/$(basename $inputDirPaths) -c=$(get_config ec2)" >> "${ss}"
+	echo "dockblj -aws ${meta}i=${BLJ_INPUT}/$(basename $(get_blj_prop input.dirPaths)) c=$(get_config ec2)" >> "${ss}"
 	echo "sudo chown -R ${EC2_USER}:${EC2_USER} ${EFS}" >> "${ss}"
 	echo "sudo chmod -R 777 ${EFS}" >> "${ss}"
-	if [ "${awsEc2EndState}" == "stop" ] || [ "${awsEc2EndState}" == "terminate" ]; then 
-		echo '[ -f "${flagFile}" ] && aws ec2 stop-instances --instance-ids "${awsEc2InstanceID}"' >> "${ss}"
-		[ "${awsEc2EndState}" == "terminate" ] && echo "[ -f \"${flagFile}\" ] && aws ec2 terminate-instances --instance-id \"${awsEc2InstanceID}\"" >> "${ss}"
+	if [ "$(get_blj_prop aws.ec2TerminateHead)" == "Y" ]; then
+		echo '[ -f "${flagFile}" ] && aws ec2 stop-instances --instance-ids "$(get_blj_prop aws.ec2InstanceID)"' >> "${ss}"
+		echo '[ -f "${flagFile}" ] && aws ec2 terminate-instances --instance-id "$(get_blj_prop aws.ec2InstanceID)"' >> "${ss}"
 	fi
-	chmod 770 "${ss}"
-	echo "${ss}"
+	chmod 770 "${ss}" && echo "${ss}"
+}
+
+# File the common parent directory for each input path.  
+# If any input path does not share a common parent dir, an error is thrown.
+# Param array - $@ returns an array of file/dir paths.
+common_parent_dir() {
+	parentDir='' && args=("$@")
+	for arg in ${args[@]}; do
+		[ ${#parentDir} -eq 0 ] && parentDir="${arg}" && continue
+		dir="${arg}" && prevDir=""
+		while [ "${parentDir/$dir}" == "${parentDir}" ] && [ "${dir}" != "${prevDir}" ]; do dir="$(dirname $dir)"; done
+		[ "${dir}" == "${prevDir}" ] && exit_script "Error [ aws_upload_lib.common_parent_dir() ]: ${arg} does not share a common parent directory with ${parentDir}"
+		parentDir="${dir}"
+	done
+	echo "${parentDir}"
 }
 
 # Download EFS directory, if no target dir specified, download to ~/projects/downloads/efs
@@ -98,7 +55,7 @@ build_start_script() {
 # Param 2 - (optional) Local directory-path 
 download_dir_from_efs() {
 	if [ $# -eq 2 ]; then target="${2}"; else target="${HOME}/projects/downloads/efs"; fi
-	aws_log "Downloading EFS directory \"${1}\" to --> \"$target\""
+	aws_log "Downloading EFS directory ${1} to --> $target"
 	echo "Execute EFS-DL-CMD:  [ scp -pro StrictHostKeyChecking=no -i $(key_file) ${EC2_USER}@$(get_ec2_public_ip):$1 ${target} ]"
 	scp -pro StrictHostKeyChecking=no -i $(key_file) ${EC2_USER}@$(get_ec2_public_ip):$1 ${target} 
 }
@@ -106,151 +63,128 @@ download_dir_from_efs() {
 # Execute remote command on the head node
 # Param 1 - Remote command
 exe_remote_cmd() {
-	ssh -o StrictHostKeyChecking=no -i $(key_file) ${EC2_USER}@$(get_ec2_public_ip) "$1"
+	ssh -o StrictHostKeyChecking=no -i $(key_file) ${EC2_USER}@$(get_ec2_public_ip) "${1}"
 }
-
-# Return the AWS profile tag - if undefined, returns [default]
-get_aws_profile() {
-	[ ${#awsProfile} -eq 0 ] && awsProfile=default
-	echo "[${awsProfile}]"
-}
-
-# Get the S3 directory-path
-# Param 1 - S3 bucket folder
-get_s3_dir() {
-	[ ${#1} -eq 0 ] && exit_script "Error [ aws_upload_lib.get_s3_dir() ]:  Missing required parameter - S3 bucket folder name"
-	echo "${S3_DIR}${awsS3}/$1"
-}
-
-# Build the S3 file/dir-path
-# Param 1 - Local Directory of File
-# Param 2 - S3 bucket folder
-get_s3_name() {
-	echo "${S3_DIR}${awsS3}/$2/$(basename $1)"
-}
-
-# Stage data for pipeline onto EFS volume
-stage_input_files_to_efs() {
-	aws_log "Upload pipeline inputs to EFS"
-	[ ! -d "${inputDirPaths}" ] && exit_script "Error [ aws_upload_lib.stage_input_files_to_efs() ]: inputDirPaths=\"${inputDirPaths}\" is not a valid directory"
-	if [ -d "$metaphlan2Db" ] || [ -f "$metaphlan2Mpa_pkl" ]; then
-		if [ -d "$metaphlan2Db" ] && [ -f "$metaphlan2Mpa_pkl" ]; then
-			upload_dir_to_efs ${metaphlan2Db} "${BLJ_DB}"
-			upload_file_to_efs ${metaphlan2Mpa_pkl} "${BLJ_DB}"
-		else
-			exit_script "Error [ aws_upload_lib.stage_input_files_to_efs() ]: Required Config missing - if any defined, all must be defined {\"metaphlan2Db\", \"metaphlan2Mpa_pkl\" }"
-		fi
-	fi
-	if [ -f "$qiimePynastAlignDB" ] || [ -f "$qiimeRefSeqDB" ] || [ -f "$qiimeTaxaDB" ]; then
-		if [ -f "$qiimePynastAlignDB" ] && [ -f "$qiimeRefSeqDB" ] && [ -f "$qiimeTaxaDB" ]; then
-			upload_file_to_efs ${qiimePynastAlignDB} "${BLJ_DB}"
-			upload_file_to_efs ${qiimeRefSeqDB} "${BLJ_DB}"
-			upload_file_to_efs ${qiimeTaxaDB} "${BLJ_DB}"	
-		else
-			exit_script "Error [ aws_upload_lib.stage_input_files_to_efs() ]: Required Config missing - if any defined, all must be defined { \"qiimePynastAlignDB\", \"qiimeRefSeqDB\", \"qiimeTaxaDB\" }"
-		fi
-	fi
-	
-	upload_dir_to_efs "${inputDirPaths}" "${BLJ_INPUT}"
-	upload_dir_to_efs "${BLJ_SCRIPT}" "${EFS}"
-	exe_remote_cmd "sudo chmod -R 777 ${EFS}"
-	
-	[ -f "$metadataFilePath" ] && upload_file_to_efs ${metadataFilePath} "${BLJ_META}"
-	[ -f "$trimPrimersFilePath" ] && upload_file_to_efs ${trimPrimersFilePath} "${BLJ_PRIMER}"
-	[ -d "$kneaddataDbs" ] && upload_dir_to_efs ${kneaddataDbs} "${BLJ_DB}"
-	[ -d "$krakenDb" ] && upload_dir_to_efs ${krakenDb} "${BLJ_DB}"
-	[ -d "$kraken2Db" ] && upload_dir_to_efs ${kraken2Db} "${BLJ_DB}"
-	[ -d "$humann2NuclDB" ] && upload_dir_to_efs ${humann2NuclDB} "${BLJ_DB}"
-	[ -d "$humann2ProtDB" ] && upload_dir_to_efs ${humann2ProtDB} "${BLJ_DB}"
-	[ -f "$rdpDb" ] && upload_dir_to_efs $(dirname ${rdpDb}) "${BLJ_DB}"
-	upload_config_to_aws
-}
-
 
 # Stage AWS config and credentials files to push to AWS cloud
-stage_local_aws() {
+stage_aws_and_nf_config_to_efs() {
+	aws_log "Staging AWS/Nextflow Config on new EC2 Head-Node" && AWS_STAGE=~/.aws/stage 
 	[ ! -d "${AWS_STAGE}" ] && mkdir "${AWS_STAGE}"
-	echo "$(get_aws_profile)" > "${AWS_STAGE}/config"
-	echo "region = ${awsRegion}" >> "${AWS_STAGE}/config"
+	echo "[default]" > "${AWS_STAGE}/config"
+	echo "region = $(aws_region)" >> "${AWS_STAGE}/config"
 	echo "output = text" >> "${AWS_STAGE}/config"
 	echo "Created file:  ${AWS_STAGE}/config"
 	cat "${AWS_STAGE}/config" 
-	echo "$(get_aws_profile)" > "${AWS_STAGE}/credentials"
+	echo "[default]" > "${AWS_STAGE}/credentials"
 	echo "aws_access_key_id = $(get_aws_access_key_id)" >> "${AWS_STAGE}/credentials"
 	echo "aws_secret_access_key = $(get_aws_secret_access_key)" >> "${AWS_STAGE}/credentials"
 	echo "Created file:  ${AWS_STAGE}/credentials"
 	cat "${AWS_STAGE}/credentials"
+	upload_to_efs "${AWS_STAGE}/config" "${EC2_HOME}/.aws"
+	upload_to_efs "${AWS_STAGE}/credentials" "${EC2_HOME}/.aws"
+	upload_to_efs "$(local_nf_conf)" "${EC2_HOME}/.nextflow/config"
+	upload_to_efs "${BLJ}/resources/aws/ec2_head_node_profile"
+	upload_to_efs "${AWS_CONF}" "${EC2_HOME}/.aws"
+	upload_to_efs "${BLJ_SCRIPT}" "${EFS}"
+	exe_remote_cmd 'mv ~/.bash_profile ~/.bash_profile~; mv ~/ec2_head_node_profile ~/.bash_profile'
+	exe_remote_cmd "sudo chmod -R 777 ${EFS}"
 }
 
 # Upload local pipeline inputs and aws/nextflow config files to EFS
-# Param 1 (optional) - Flag to use existing AWS Cloud
 stage_pipeline() {
-	aws_log "Starting --> [  stage_pipeline ${@}  ]"
-	if [ "$systemStatus" == "createEc2" ]; then
-		stage_local_aws
-		upload_file_to_efs "${AWS_STAGE}/config" "${EC2_HOME}/.aws"
-		upload_file_to_efs "${AWS_STAGE}/credentials" "${EC2_HOME}/.aws"
-		upload_file_to_efs "$(local_nf_conf)" "${EC2_HOME}/.nextflow/config"
-		upload_file_to_efs "${BLJ}/resources/aws/ec2_head_node_profile"
-		exe_remote_cmd 'mv ~/.bash_profile ~/.bash_profile~; mv ~/ec2_head_node_profile ~/.bash_profile'
-		#[ -f "$(get_docker_job_def_flag)" ] && upload_file_to_efs "$(get_docker_job_def_flag)"
-	fi
-
-	stage_input_files_to_efs
-	upload_file_to_efs "$(build_start_script)"
-	upload_file_to_efs "$blj_aws_config" "${EC2_HOME}/.aws"
-	
-}
-
-# Get ths AWS script name
-start_aws_pipeline_script() {
-	echo ~/.aws/start-$(get_config_name).sh
+	aws_log "Starting --> [ stage_pipeline ]" && stage_aws_and_nf_config_to_efs 
+	stage_pipeline_config_to_efs
+	stage_pipeline_inputs_to_efs
+	stage_pipeline_dbs_to_efs
 }
 
 # The method creates a new version of the pipeline Config files by replacing 
-upload_config_to_aws() {
-	primaryConfig=$(get_config local)
-	myAwsS3=$(get_prop "$primaryConfig" "aws.s3" "${awsS3}")
-	[ ${#myAwsS3} -eq 0 ] && set_prop "$primaryConfig" "aws.s3" "${awsS3}"
-	configFiles=$(get_blj_prop configFiles)
-	aws_log "Uploaded Config files: $configFiles"
-	propFiles=( ${configFiles//,/ } )
-	for propFile in ${propFiles[@]}; do upload_file_to_efs $propFile ${BLJ_CONFIG}; done
+stage_pipeline_config_to_efs() {
+	aws_log "Uploading pipeline Config files to EFS: $(get_config ec2)"
+	upload_to_efs $(get_blj_prop internal.config) $BLJ_CONFIG
+	localS3=$(get_property $(get_config local) "aws.s3")
+	[ ${#localS3} -eq 0 ] && update_efs_config "aws.s3" "$(get_blj_prop aws.s3)"
+	defaultConf=$(get_property $(get_config local) "pipeline.defaultProps")
+	if [ ${#defaultConf} -gt 0 ]; then
+		upload_to_efs $defaultConf $BLJ_CONFIG
+		update_efs_config "pipeline.defaultProps" "$BLJ_CONFIG/$(basename $defaultConf)"
+	fi 
 }
 
-# Upload local directory up to the ec2 head node, if no target dir specified use EC2 ${HOME}: /Users/mike/git/blj_support/resources/test/data/r16s_fastq
-# Param 1 - Local dir
-# Param 2 - (optional) AWS ec2 directory-path 
-upload_dir_to_efs() {
+# Stage custom database files for pipeline onto EFS volume
+stage_pipeline_dbs_to_efs() {
+	aws_log "Starting --> [  stage_pipeline_dbs_to_efs  ]: Upload custom databases (if configured)..."
+	m2DB="$(get_blj_prop metaphlan2.db)" && m2DbPkl="$(get_blj_prop metaphlan2.mpa_pkl)"
+	if [ -d "${m2DB}" ] || [ -f "${m2DbPkl}" ]; then
+		if [ -d "${m2DB}" ] && [ -f "${m2DbPkl}" ]; then
+			[ "$(dirname $m2DbPkl)" != "${m2DB}"  ] &&
+				exit_script "Error [ aws_upload_lib.stage_input_files_to_efs() ]: metaphlan2Mpa_pkl \"${m2DbPkl}\" should be contained inside of the metaphlan2.db \"${m2DB}\" directory"
+			target="${BLJ_DB}/$(basename $m2DB)" && aws_log "Uploading Metaphlan alternate DB to common parent dir --> \"${target}\""
+			upload_to_efs_and_update_config metaphlan2.db "${m2DB}" "${BLJ_DB}"
+			upload_to_efs_and_update_config metaphlan2.mpa_pkl "${m2DbPkl}" "${target}"
+		else
+			exit_script "Error [ aws_upload_lib.stage_input_files_to_efs() ]: Required Config missing - if any defined, all must be defined {\"metaphlan2.db\", \"metaphlan2.mpa_pkl\" }"
+		fi
+	fi
+	qpDB="$(get_blj_prop qiime.pynastAlignDB)" && qrDB="$(get_blj_prop qiime.refSeqDB)" && qtDB="$(get_blj_prop qiime.taxaDB)"
+	if [ -f "${qpDB}" ] || [ -f "${qrDB}" ] || [ -f "${qtDB}" ]; then
+		if [ -f "${qpDB}" ] && [ -f "${qrDB}" ] && [ -f "${qtDB}" ]; then
+			parentDir="$(common_parent_dir $qpDB $qrDB $qtDB)"
+			target="${BLJ_DB}/$(basename $parentDir)"
+			aws_log "Uploading QIIME 1.9.1 alternate DB to common parent dir = \"${target}\""
+			exe_remote_cmd "mkdir ${target}"
+			upload_to_efs_and_update_config qiime.pynastAlignDB "${qpDB}" "${target}"
+			upload_to_efs_and_update_config qiime.refSeqDB "${qrDB}" "${target}"
+			upload_to_efs_and_update_config qiime.taxaDB "${qtDB}" "${target}"
+		else
+			exit_script "Error [ aws_upload_lib.stage_input_files_to_efs() ]: Required Config missing - if any defined, all must be defined { \"qiime.pynastAlignD\", \"qiime.refSeqDB\", \"qiime.taxaDB\" }"
+		fi
+	fi
+	
+	kdDB="$(get_blj_prop kneaddata.dbs)" && kDB="$(get_blj_prop kraken.db)" && k2DB="$(get_blj_prop kraken2.db)" && rdpDb="$(get_blj_prop rdp.db)"
+	[ -d "${kdDB}" ] && aws_log "Uploading KneadData DBs: ${kdDB}" && upload_to_efs_and_update_config "kneaddata.dbs" "${kdDB}" "${BLJ_DB}"
+	[ -d "${kDB}" ] && aws_log "Uploading Kraken DB: ${kDB}" && upload_to_efs_and_update_config "kraken.db" "${kDB}" "${BLJ_DB}"
+	[ -d "${k2DB}" ] && aws_log "Uploading Kraken2 DB: ${k2DB}" && upload_to_efs_and_update_config "kraken2.db" "${k2DB}" "${BLJ_DB}"
+	if [ -f "${rdpDb}" ]; then
+		filePath="$(upload_to_efs $(dirname $rdpDb) $BLJ_DB)" && echo "Uploading RDP DB: $(dirname $rdpDb) --> ${filePath}"
+		exe_remote_cmd ". ${EC2_HOME}/.bash_profile; set_property $(get_config ec2) rdp.db ${filePath}/$(basename $rdpDb)"
+	fi 
+}
+
+# Stage data for pipeline onto EFS volume
+stage_pipeline_inputs_to_efs() {
+	aws_log "Upload pipeline inputs to EFS"
+	inputDir="$(get_blj_prop input.dirPaths)" && metaFile="$(get_blj_prop metadata.filePath)" && primerFile="$(get_blj_prop trimPrimers.filePath)"
+	[ ! -d "${inputDir}" ] && exit_script "Error [ aws_upload_lib.stage_input_files_to_efs() ]: input.dirPaths=\"${inputDir}\" is not a valid directory"
+	aws_log "Upload inputDir:  ${inputDir}" && upload_to_efs_and_update_config "input.dirPaths" "${inputDir}" "${BLJ_INPUT}"
+	[ -f "${metaFile}" ] && aws_log "Upload metaFile:  ${metaFile}" && upload_to_efs_and_update_config "metadata.filePath" "${metaFile}" "${EFS}/metadata"
+	[ -f "${primerFile}" ] && aws_log "Upload primerFile:  ${primerFile}" && upload_to_efs_and_update_config "trimPrimers.filePath" "${primerFile}" "${BLJ_PRIMER}"
+	upload_to_efs "$(build_start_script)"
+}
+
+# Update EC2 config 
+# Param 1 Config property name
+# Param 2 Config property value
+update_efs_config() {
+	exe_remote_cmd ". ${EC2_HOME}/.bash_profile; set_property $(get_config ec2) ${1} ${2}"
+}
+
+# Upload file/directory to the EC2 head node, if no target dir specified use EC2 ${HOME}.
+# Return the EC2 path
+# Param 1 - Local file or directory
+# Param 2 - (optional) AWS Target EC2 directory-path 
+upload_to_efs() {
 	if [ $# -eq 2 ]; then target="${2}"; else target="${EC2_HOME}"; fi
-	aws_log "Uploading directory \"${1}\" to AWS --> \"$target\""
 	scp -pro StrictHostKeyChecking=no -i $(key_file) "${1}" ${EC2_USER}@$(get_ec2_public_ip):${target}
+	echo "${target}/$(basename $1)"
 }
 
-# Upload local file-path up to the ec2 head node, if no target dir specified use EC2 ${HOME}
-# Param 1 - Local file
-# Param 2 - (optional) AWS ec2 file-path 
-upload_file_to_efs() {
-	if [ $# -eq 2 ]; then target="$2"; else target="${EC2_HOME}"; fi
-	aws_log "Uploading file \"$1\" to AWS --> \"$target\""
-	scp -pro StrictHostKeyChecking=no -i $(key_file) "$1" ${EC2_USER}@$(get_ec2_public_ip):${target}
-}
-
-
-# Upload local directory to AWS S3 Bucket folder (if modified)
-# Param 1 - Local directory
-# Param 2 - S3 bucket folder
-upload_s3_dir() {
-	[ $# -ne 2 ] || [ "${1:0:5}" == "$S3_DIR" ] && return
-	[ ! -d "$1" ] && exit_script "Error [ aws_upload_lib.upload_s3_dir() ]: Local path is not a valid directory -->  $1"
-	aws s3 sync "$1" "$(get_s3_dir $2)/$(basename $1)" --exclude *.DS_Store
-}
- 
-# Upload local file to AWS S3 Bucket folder (if modified)
-# Param 1 - Local file
-# Param 2 - S3 bucket folder
-upload_s3_file() {
-	[ $# -ne 2 ] || [ "${2:0:5}" == "$S3_DIR" ] && return
-	[ ! -f "$1" ] && exit_script "Error [ aws_upload_lib.upload_s3_file() ]: : Local path is not a valid file -->  $1"
-	aws s3 cp "$1" "$(get_s3_dir $2)/$(basename $1)"
+# Upload data to AWS + update Cofig properties on EC2 to reflect EC2 file paths
+# Must source bash profile before setting the property to ensure shell can find target dirs
+# Param 1 - Property name
+# Param 2 - Property value
+# Param 3 - Target path
+upload_to_efs_and_update_config() {
+	filePath="$(upload_to_efs $2 $3)" && echo "Uploaded ${2} --> ${filePath}"
+	update_efs_config "${1}" "${filePath}"
 }

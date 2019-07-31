@@ -80,9 +80,8 @@ public interface BioModule {
 	 * </ul>
 	 * 
 	 * @return Input files
-	 * @throws Exception if unable to obtain input files
 	 */
-	public List<File> getInputFiles() throws Exception;
+	public List<File> getInputFiles();
 
 	/**
 	 * Updated/new metadata files are saved to the module output directory (if created by the module). Use param = FALSE

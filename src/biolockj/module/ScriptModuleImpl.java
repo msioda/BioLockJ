@@ -17,8 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import biolockj.Config;
 import biolockj.Constants;
-import biolockj.exception.ConfigFormatException;
-import biolockj.exception.ConfigNotFoundException;
+import biolockj.exception.*;
 import biolockj.module.report.r.R_Module;
 import biolockj.util.*;
 
@@ -41,20 +40,20 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	/**
 	 * Validate module dependencies:
 	 * <ul>
-	 * <li>Require {@link biolockj.Config}.{@value #SCRIPT_PERMISSIONS} exists
-	 * <li>Require {@link biolockj.Config}.{@value #SCRIPT_BATCH_SIZE} is positive integer
-	 * <li>Require {@link biolockj.Config}.{@value #SCRIPT_NUM_THREADS} is positive integer
-	 * <li>Verify {@link biolockj.Config}.{@value #SCRIPT_TIMEOUT} is positive integer if set
+	 * <li>Require {@link biolockj.Config}.{@value Constants#SCRIPT_PERMISSIONS} exists
+	 * <li>Require {@link biolockj.Config}.{@value Constants#SCRIPT_NUM_WORKERS} is positive integer
+	 * <li>Require {@link biolockj.Config}.{@value Constants#SCRIPT_NUM_THREADS} is positive integer
+	 * <li>Verify {@link biolockj.Config}.{@value Constants#SCRIPT_TIMEOUT} is positive integer if set
 	 * <li>Start the AWS DB sync to S3 if a novel DB has been configure and
 	 * {@value biolockj.util.NextflowUtil#AWS_COPY_DB_TO_S3} is enabled
 	 * </ul>
 	 */
 	@Override
 	public void checkDependencies() throws Exception {
-		Config.requireString( this, SCRIPT_PERMISSIONS );
-		Config.requirePositiveInteger( this, SCRIPT_BATCH_SIZE );
-		Config.requirePositiveInteger( this, SCRIPT_NUM_THREADS );
-		Config.getPositiveInteger( this, SCRIPT_TIMEOUT );
+		Config.requireString( this, Constants.SCRIPT_PERMISSIONS );
+		Config.requirePositiveInteger( this, Constants.SCRIPT_NUM_WORKERS );
+		Config.requirePositiveInteger( this, Constants.SCRIPT_NUM_THREADS );
+		Config.getPositiveInteger( this, Constants.SCRIPT_TIMEOUT );
 	}
 
 	/**
@@ -65,15 +64,15 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	 */
 	@Override
 	public void executeTask() throws Exception {
-		final List<List<String>> data = Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS )
-			? buildScriptForPairedReads( getInputFiles() )
-			: buildScript( getInputFiles() );
+		final List<List<String>> data =
+			SeqUtil.hasPairedReads() ? buildScriptForPairedReads( getInputFiles() ): buildScript( getInputFiles() );
 		BashScriptBuilder.buildScripts( this, data );
 
 	}
 
 	@Override
-	public String[] getJobParams() throws Exception {
+	public String[] getJobParams() {
+		if( getMainScript() == null ) return null;
 		return new String[] { getMainScript().getAbsolutePath() };
 	}
 
@@ -85,7 +84,7 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	 * @return Main script file
 	 */
 	@Override
-	public File getMainScript() throws Exception {
+	public File getMainScript() {
 		final File scriptDir = new File( getModuleDir().getAbsolutePath() + File.separator + Constants.SCRIPT_DIR );
 		if( scriptDir.isDirectory() ) for( final File file: getScriptDir().listFiles() ) {
 			final String name = file.getName();
@@ -143,7 +142,7 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	 */
 	@Override
 	public Integer getTimeout() throws ConfigFormatException {
-		return Config.getPositiveInteger( this, SCRIPT_TIMEOUT );
+		return Config.getPositiveInteger( this, Constants.SCRIPT_TIMEOUT );
 	}
 
 	@Override
@@ -158,9 +157,10 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	 * @param params Runtime parameter
 	 * @param numThreadsParam Number of threads parameter name
 	 * @return all runtime parameters
-	 * @throws Exception if errors occur
+	 * @throws ConfigException if Configuration errors occur
 	 */
-	protected String getRuntimeParams( final List<String> params, final String numThreadsParam ) throws Exception {
+	protected String getRuntimeParams( final List<String> params, final String numThreadsParam )
+		throws ConfigException {
 		final String threadsParam = numThreadsParam == null ? "": numThreadsParam + " " + getNumThreads() + " ";
 		final String paramVals = params == null || params.isEmpty() ? "": BioLockJUtil.join( params );
 		if( threadsParam.isEmpty() && paramVals.isEmpty() ) return "";
@@ -179,7 +179,7 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	}
 
 	private Integer getNumThreads() throws ConfigFormatException, ConfigNotFoundException {
-		return Config.requirePositiveInteger( this, SCRIPT_NUM_THREADS );
+		return Config.requirePositiveInteger( this, Constants.SCRIPT_NUM_THREADS );
 	}
 
 }

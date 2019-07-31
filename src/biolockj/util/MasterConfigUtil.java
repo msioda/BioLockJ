@@ -14,9 +14,7 @@ package biolockj.util;
 import java.io.*;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
+import biolockj.*;
 
 /**
  * Simple utility containing String manipulation and formatting functions.
@@ -63,7 +61,6 @@ public class MasterConfigUtil {
 		boolean foundQiime = false;
 		for( final String mod: configMods )
 			if( mod.toLowerCase().contains( Constants.QIIME ) ) foundQiime = true;
-
 		if( !foundQiime ) usedProps.remove( Constants.QIIME_ALPHA_DIVERSITY_METRICS );
 
 		if( !ModuleUtil.moduleExists( defaultDemux ) && !configMods.contains( defaultDemux ) ) {
@@ -84,12 +81,12 @@ public class MasterConfigUtil {
 
 		if( !Log.doDebug() ) {
 			Log.info( MasterConfigUtil.class,
-				"To view the list of removed Config properties before MASTER config is sanitized in future runs, enable: "
-					+ Constants.LOG_LEVEL_PROPERTY + "=" + Constants.TRUE );
+				"To view the list of removed Config properties before MASTER config is sanitized in future runs, enable: " +
+					Constants.LOG_LEVEL_PROPERTY + "=" + Constants.TRUE );
 			Log.info( MasterConfigUtil.class,
-				"To add DEBUG statements for only this utility class, add the property (this is a list property so multiple"
-					+ " class names could be provided - in this example, wee add a single class): "
-					+ Constants.LIMIT_DEBUG_CLASSES + "=" + MasterConfigUtil.class.getName() );
+				"To add DEBUG statements for only this utility class, add the property (this is a list property so multiple" +
+					" class names could be provided - in this example, wee add a single class): " +
+					Constants.LIMIT_DEBUG_CLASSES + "=" + MasterConfigUtil.class.getName() );
 		}
 
 		usedProps.remove( Constants.INTERNAL_BLJ_MODULE );
@@ -102,8 +99,8 @@ public class MasterConfigUtil {
 			else if( !key.startsWith( INTERNAL_PREFIX ) ) props.put( key, val );
 		}
 
-		Log.info( MasterConfigUtil.class, "The original version of project Config contained: "
-			+ Config.getInitialProperties().size() + " properties" );
+		Log.info( MasterConfigUtil.class, "The original version of project Config contained: " +
+			Config.getInitialProperties().size() + " properties" );
 		Log.info( MasterConfigUtil.class,
 			"The final version of MASTER Config contains: " + props.size() + " properties" );
 
@@ -209,8 +206,8 @@ public class MasterConfigUtil {
 			writer.write( "###   Internal properties are discarded at runtime & refenerated as needed." + RETURN );
 			writer.write( "###" + RETURN );
 			if( !configProps.equals( allProps ) ) {
-				writer.write( "###  Set [ " + Constants.DISABLE_ADD_IMPLICIT_MODULES + "=" + Constants.TRUE
-					+ " ] to run this full list because it includes the implicit BioModules" + RETURN );
+				writer.write( "###  Set [ " + Constants.DISABLE_ADD_IMPLICIT_MODULES + "=" + Constants.TRUE +
+					" ] to run this full list because it includes the implicit BioModules" + RETURN );
 				writer.write( "###" + RETURN );
 			}
 			final TreeSet<String> keys = new TreeSet<>( props.keySet() );
@@ -232,8 +229,8 @@ public class MasterConfigUtil {
 		if( initConfig == null ) {
 			writer.write( PROJ_CONFIG_FLAG + Config.getConfigFilePath() + RETURN );
 			final List<String> defaults = Config.getList( null, Constants.INTERNAL_DEFAULT_CONFIG );
-			if( defaults != null && !defaults.isEmpty() ) for( final String defConfig: defaults )
-				writer.write( DEFAULT_CONFIG_FLAG + defConfig + RETURN );
+			for( int i = defaults.size(); i > 0; i-- )
+				writer.write( DEFAULT_CONFIG_FLAG + defaults.get( i - 1 ) + RETURN );
 		} else for( final String line: initConfig )
 			writer.write( line + RETURN );
 

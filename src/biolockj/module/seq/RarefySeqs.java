@@ -15,9 +15,8 @@ import java.io.*;
 import java.util.*;
 import java.util.stream.LongStream;
 import org.apache.commons.lang.math.NumberUtils;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
+import biolockj.*;
+import biolockj.exception.ConfigFormatException;
 import biolockj.exception.SequnceFormatException;
 import biolockj.module.JavaModuleImpl;
 import biolockj.module.SeqModule;
@@ -45,9 +44,8 @@ public class RarefySeqs extends JavaModuleImpl implements SeqModule {
 		super.checkDependencies();
 		final Integer rarefyingMax = Config.getPositiveInteger( this, INPUT_RAREFYING_MAX );
 		final Integer rarefyingMin = Config.getNonNegativeInteger( this, INPUT_RAREFYING_MIN );
-
-		if( rarefyingMin == null && rarefyingMax == null
-			|| rarefyingMax != null && rarefyingMin != null && rarefyingMin > rarefyingMax )
+		if( rarefyingMin == null && rarefyingMax == null ||
+			rarefyingMax != null && rarefyingMin != null && rarefyingMin > rarefyingMax )
 			throw new Exception(
 				"Invalid parameters!  RarefySeqs requires " + INPUT_RAREFYING_MIN + " <= " + INPUT_RAREFYING_MAX );
 	}
@@ -70,8 +68,7 @@ public class RarefySeqs extends JavaModuleImpl implements SeqModule {
 	@Override
 	public List<String> getPreRequisiteModules() throws Exception {
 		final List<String> preReqs = super.getPreRequisiteModules();
-		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) )
-			preReqs.add( ModuleUtil.getDefaultMergePairedReadsConverter() );
+		if( SeqUtil.hasPairedReads() ) preReqs.add( ModuleUtil.getDefaultMergePairedReadsConverter() );
 		else if( SeqUtil.piplineHasSeqInput() && needsCountModule() ) preReqs.add( RegisterNumReads.class.getName() );
 
 		return preReqs;
@@ -91,8 +88,9 @@ public class RarefySeqs extends JavaModuleImpl implements SeqModule {
 		final int pad = SummaryUtil.getPad( label );
 		String summary = SummaryUtil.getCountSummary( this.readsPerSample, "Reads", true );
 		this.sampleIds.removeAll( this.readsPerSample.keySet() );
-		if( !this.sampleIds.isEmpty() ) summary += BioLockJUtil.addTrailingSpaces( "Removed empty samples:", pad )
-			+ BioLockJUtil.getCollectionAsString( this.sampleIds );
+		if( !this.sampleIds.isEmpty() )
+			summary += BioLockJUtil.addTrailingSpaces( "Removed empty metadata records:", pad ) +
+				BioLockJUtil.getCollectionAsString( this.sampleIds );
 		this.readsPerSample = null;
 		return super.getSummary() + summary;
 	}
@@ -127,8 +125,8 @@ public class RarefySeqs extends JavaModuleImpl implements SeqModule {
 		Log.info( getClass(), "Rarefy [#index=" + indexes.size() + "]: " + input.getAbsolutePath() );
 		Log.debug( getClass(), "indexes: " + BioLockJUtil.getCollectionAsString( indexes ) );
 		final String fileExt = "." + SeqUtil.getSeqType();
-		final String name = getOutputDir().getAbsolutePath() + File.separator + SeqUtil.getSampleId( input.getName() )
-			+ fileExt;
+		final String name =
+			getOutputDir().getAbsolutePath() + File.separator + SeqUtil.getSampleId( input.getName() ) + fileExt;
 		final File output = new File( name );
 		final BufferedReader reader = BioLockJUtil.getFileReader( input );
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( output ) );
@@ -142,7 +140,6 @@ public class RarefySeqs extends JavaModuleImpl implements SeqModule {
 			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
 				if( indexes.contains( index ) ) {
 					if( !usedIndexes.contains( index ) ) Log.debug( getClass(), "Add to usedIndexes: " + index );
-
 					usedIndexes.add( index );
 					writer.write( line + RETURN );
 				}
@@ -177,7 +174,7 @@ public class RarefySeqs extends JavaModuleImpl implements SeqModule {
 		final String sampleId = SeqUtil.getSampleId( seqFile.getName() );
 		final long numReads = getCount( sampleId, RegisterNumReads.getNumReadFieldName() );
 
-		if( maxConfig != null ) max = numReads < maxConfig.longValue() ? numReads: minConfig.longValue();
+		if( maxConfig != null ) max = numReads < maxConfig.longValue() ? numReads: maxConfig.longValue();
 
 		if( minConfig == null ) min = 1L;
 		else min = minConfig.longValue();
@@ -193,21 +190,28 @@ public class RarefySeqs extends JavaModuleImpl implements SeqModule {
 
 			Log.debug( getClass(), "Sample #indexes size #1 -->  [" + indexes.size() + "]" );
 
-			Collections.shuffle( indexes );
+			Collections.shuffle( indexes, getRandomSeed() );
 			indexes.subList( max.intValue(), indexes.size() ).clear();
 
 			Log.debug( getClass(), "Sample #indexes size  #2 -->  [" + indexes.size() + "]" );
 
 			buildRarefiedFile( seqFile, indexes );
 		} else Log.info( getClass(),
-			"Remove sample [" + sampleId + "] - contains (" + numReads + ") reads, which is less than minimum # reads ("
-				+ Config.getNonNegativeInteger( this, INPUT_RAREFYING_MIN ) + ")" );
+			"Remove sample [" + sampleId + "] - contains (" + numReads +
+				") reads, which is less than minimum # reads (" +
+				Config.getNonNegativeInteger( this, INPUT_RAREFYING_MIN ) + ")" );
 	}
 
 	private String getMetaColName() throws Exception {
 		if( this.otuColName == null ) this.otuColName = MetaUtil.getSystemMetaCol( this, NUM_RAREFIED_READS );
 
 		return this.otuColName;
+	}
+
+	private Random getRandomSeed() throws ConfigFormatException {
+		final Integer seed = Config.getPositiveInteger( this, Constants.SET_SEED );
+		if( seed != null ) return new Random( seed );
+		return new Random();
 	}
 
 	private boolean needsCountModule() throws Exception {

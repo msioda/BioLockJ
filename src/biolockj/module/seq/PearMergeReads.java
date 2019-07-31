@@ -11,13 +11,9 @@
  */
 package biolockj.module.seq;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.exception.MetadataException;
 import biolockj.module.SeqModuleImpl;
 import biolockj.module.implicit.RegisterNumReads;
@@ -49,9 +45,9 @@ public class PearMergeReads extends SeqModuleImpl {
 
 		for( final File file: keys ) {
 			final List<String> lines = new ArrayList<>();
-			lines.add( FUNCTION_PEAR_MERGE + " " + SeqUtil.getSampleId( file.getName() ) + " " + file.getAbsolutePath()
-				+ " " + map.get( file ).getAbsolutePath() + " " + getTempDir().getAbsolutePath() + " "
-				+ getOutputDir().getAbsolutePath() );
+			lines.add( FUNCTION_PEAR_MERGE + " " + SeqUtil.getSampleId( file.getName() ) + " " +
+				file.getAbsolutePath() + " " + map.get( file ).getAbsolutePath() + " " +
+				getTempDir().getAbsolutePath() + " " + getOutputDir().getAbsolutePath() );
 
 			data.add( lines );
 		}
@@ -79,11 +75,11 @@ public class PearMergeReads extends SeqModuleImpl {
 
 		if( !SeqUtil.isFastQ() ) throw new Exception( "PAIRED READS CAN ONLY BE ASSEMBLED WITH <FASTQ> FILE INPUT" );
 
-		if( !Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) ) throw new Exception( getClass().getName()
-			+ " requires paired input data as a combined multiplexed file or as separate files named with "
-			+ " matching sample IDs ending in the forward & reverse file suffix values: "
-			+ Config.requireString( this, Constants.INPUT_FORWARD_READ_SUFFIX ) + " & "
-			+ Config.requireString( this, Constants.INPUT_REVERSE_READ_SUFFIX ) );
+		if( !SeqUtil.hasPairedReads() ) throw new Exception( getClass().getName() +
+			" requires paired input data as a combined multiplexed file or as separate files named with " +
+			" matching sample IDs ending in the forward & reverse file suffix values: " +
+			Config.requireString( this, Constants.INPUT_FORWARD_READ_SUFFIX ) + " & " +
+			Config.requireString( this, Constants.INPUT_REVERSE_READ_SUFFIX ) );
 	}
 
 	/**
@@ -99,8 +95,8 @@ public class PearMergeReads extends SeqModuleImpl {
 				"Counting # merged reads/sample for " + getOutputDir().listFiles().length + " files" );
 			for( final File f: getOutputDir().listFiles() ) {
 				final long count = SeqUtil.countNumReads( f );
-				Log.info( getClass(), "Num merged Reads for File:[" + f.getName() + "] ==> ID:["
-					+ SeqUtil.getSampleId( f.getName() ) + "] = " + count );
+				Log.info( getClass(), "Num merged Reads for File:[" + f.getName() + "] ==> ID:[" +
+					SeqUtil.getSampleId( f.getName() ) + "] = " + count );
 				this.readsPerSample.put( SeqUtil.getSampleId( f.getName() ), Long.toString( count ) );
 			}
 
@@ -119,8 +115,9 @@ public class PearMergeReads extends SeqModuleImpl {
 		final int pad = SummaryUtil.getPad( label );
 		String summary = SummaryUtil.getCountSummary( this.readsPerSample, "Paired Reads", true );
 		this.sampleIds.removeAll( this.readsPerSample.keySet() );
-		if( !this.sampleIds.isEmpty() ) summary += BioLockJUtil.addTrailingSpaces( "Removed empty samples:", pad )
-			+ BioLockJUtil.getCollectionAsString( this.sampleIds );
+		if( !this.sampleIds.isEmpty() )
+			summary += BioLockJUtil.addTrailingSpaces( "Removed empty metadata records:", pad ) +
+				BioLockJUtil.getCollectionAsString( this.sampleIds );
 		this.readsPerSample = null;
 		return super.getSummary() + summary;
 	}
@@ -132,11 +129,11 @@ public class PearMergeReads extends SeqModuleImpl {
 	public List<String> getWorkerScriptFunctions() throws Exception {
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_PEAR_MERGE + "() {" );
-		lines.add( Config.getExe( this, EXE_PEAR ) + " "
-			+ getRuntimeParams( Config.getList( this, EXE_PEAR_PARAMS ), NUM_THREADS_PARAM ) + FW_READ_PARAM + "$2 "
-			+ RV_READ_PARAM + "$3 " + OUTPUT_PARAM + "$4" + File.separator + "$1" );
-		lines.add( "mv $4" + File.separator + "$1.assembled." + Constants.FASTQ + " $5" + File.separator + "$1."
-			+ Constants.FASTQ );
+		lines.add( Config.getExe( this, EXE_PEAR ) + " " +
+			getRuntimeParams( Config.getList( this, EXE_PEAR_PARAMS ), NUM_THREADS_PARAM ) + FW_READ_PARAM + "$2 " +
+			RV_READ_PARAM + "$3 " + OUTPUT_PARAM + "$4" + File.separator + "$1" );
+		lines.add( "mv $4" + File.separator + "$1.assembled." + Constants.FASTQ + " $5" + File.separator + "$1." +
+			Constants.FASTQ );
 		lines.add( "}" + RETURN );
 		return lines;
 	}

@@ -11,13 +11,9 @@
  */
 package biolockj.module.implicit.parser;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
+import java.io.*;
 import java.util.*;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.module.BioModule;
 import biolockj.module.JavaModuleImpl;
 import biolockj.node.OtuNode;
@@ -41,30 +37,27 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 
 	@Override
 	public void buildOtuCountFiles() throws Exception {
-		for( final ParsedSample sample: this.parsedSamples ) {
-			final Map<String, Integer> otuCounts = sample.getOtuCounts();
+		for( final ParsedSample sample: getParsedSamples() ) {
+			final TreeMap<String, Long> otuCounts = sample.getOtuCounts();
 			if( otuCounts != null ) {
 				final File outputFile = OtuUtil.getOtuCountFile( getOutputDir(), sample.getSampleId(), null );
-				Log.info( getClass(), "Build output sample: " + sample.getSampleId() + " | #OTUs=" + otuCounts.size()
-					+ "--> " + outputFile.getAbsolutePath() );
+				Log.info( getClass(), "Build output sample: " + sample.getSampleId() + " | #OTUs=" + otuCounts.size() +
+					"--> " + outputFile.getAbsolutePath() );
 				final BufferedWriter writer = new BufferedWriter( new FileWriter( outputFile ) );
 				try {
-					int numOtus = 0;
-					for( final String otu: otuCounts.keySet() ) {
-						this.uniqueOtus.add( otu );
-						final int count = otuCounts.get( otu );
-						writer.write( otu + TAB_DELIM + count + RETURN );
-						numOtus += count;
-					}
-
-					this.hitsPerSample.put( sample.getSampleId(), String.valueOf( numOtus ) );
+					final long numOtus =
+						otuCounts.isEmpty() ? 0L: otuCounts.values().stream().mapToLong( Long::longValue ).sum();
+					getUniqueOtus().addAll( otuCounts.keySet() );
+					for( final String otu: otuCounts.keySet() )
+						writer.write( otu + TAB_DELIM + otuCounts.get( otu ) + RETURN );
+					getHitsPerSample().put( sample.getSampleId(), String.valueOf( numOtus ) );
 
 				} finally {
 					writer.close();
 				}
 			} else Log.error( getClass(),
-				"buildOtuCountFiles should not encounter empty sample files where sample.getOtuCounts() == null!  Found null for: "
-					+ sample.getSampleId() );
+				"buildOtuCountFiles should not encounter empty sample files where sample.getOtuCounts() == null!  Found null for: " +
+					sample.getSampleId() );
 		}
 	}
 
@@ -79,7 +72,7 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 
 	@Override
 	public ParsedSample getParsedSample( final String sampleId ) {
-		for( final ParsedSample sample: this.parsedSamples )
+		for( final ParsedSample sample: getParsedSamples() )
 			if( sample.getSampleId().equals( sampleId ) ) return sample;
 		return null;
 	}
@@ -89,11 +82,11 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 	 */
 	@Override
 	public String getSummary() throws Exception {
-		String summary = SummaryUtil.getCountSummary( this.hitsPerSample, "OTUs", true );
-		this.sampleIds.removeAll( this.hitsPerSample.keySet() );
-		if( !this.sampleIds.isEmpty() ) summary += "Removed empty samples: " + this.sampleIds + RETURN;
+		String summary = SummaryUtil.getCountSummary( getHitsPerSample(), "OTUs", true );
+		getSampleIds().removeAll( getHitsPerSample().keySet() );
+		if( !getSampleIds().isEmpty() ) summary += "Removed empty metadata records: " + getSampleIds() + RETURN;
 
-		summary += "# Unique OTUs: " + this.uniqueOtus.size() + RETURN;
+		summary += "# Unique OTUs: " + getUniqueOtus().size() + RETURN;
 		freeMemory();
 		return super.getSummary() + summary;
 	}
@@ -105,23 +98,48 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 	 * Parsers execute a task with 3 core functions:
 	 * <ol>
 	 * <li>{@link #parseSamples()} - generates {@link biolockj.node.ParsedSample}s
-	 * <li>{@link #buildOtuCountFiles()} - builds OTU tree tables from the {@link biolockj.node.ParsedSample}s
+	 * <li>{@link #buildOtuCountFiles()} - builds OTU tree tables from {@link biolockj.node.ParsedSample}s
 	 * </ol>
 	 */
 	@Override
 	public void runModule() throws Exception {
-		this.sampleIds.addAll( MetaUtil.getSampleIds() );
-		MemoryUtil.reportMemoryUsage( "About to parse samples" );
+		getSampleIds().addAll( MetaUtil.getSampleIds() );
 		parseSamples();
-
-		Log.debug( getClass(), "# Samples parsed: " + this.parsedSamples.size() );
-
-		if( this.parsedSamples.isEmpty() ) throw new Exception( "Parser failed to produce output!" );
-
+		if( getParsedSamples().isEmpty() ) throw new Exception( "Parser failed to produce output!" );
+		Log.debug( getClass(), "# Samples parsed: " + getParsedSamples().size() );
 		buildOtuCountFiles();
 
 		if( Config.getBoolean( this, Constants.REPORT_NUM_HITS ) )
-			MetaUtil.addColumn( NUM_OTUS, this.hitsPerSample, getOutputDir(), true );
+			MetaUtil.addColumn( NUM_OTUS, getHitsPerSample(), getOutputDir(), true );
+	}
+
+	/**
+	 * Add {@link biolockj.node.ParsedSample} to parser cache
+	 * 
+	 * @param parsedSample ParsedSample
+	 * @throws Exception if method is used to add a duplicate sample
+	 */
+	protected void addParsedSample( final ParsedSample parsedSample ) throws Exception {
+		for( final ParsedSample sample: getParsedSamples() )
+			if( sample.getSampleId().equals( parsedSample.getSampleId() ) )
+				throw new Exception( "Attempt to add duplicate sample! " + sample.getSampleId() );
+		getParsedSamples().add( parsedSample );
+	}
+
+	protected Map<String, String> getHitsPerSample() {
+		return this.hitsPerSample;
+	}
+
+	protected TreeSet<ParsedSample> getParsedSamples() {
+		return this.parsedSamples;
+	}
+
+	protected Set<String> getSampleIds() {
+		return this.sampleIds;
+	}
+
+	protected Set<String> getUniqueOtus() {
+		return this.uniqueOtus;
 	}
 
 	/**
@@ -134,8 +152,10 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 	 * @throws Exception if errors occur checking if node is valid
 	 */
 	protected boolean isValid( final OtuNode node ) throws Exception {
-		return node != null && node.getSampleId() != null && !node.getSampleId().isEmpty() && node.getTaxaMap() != null
-			&& !node.getTaxaMap().isEmpty() && node.getCount() > 0;
+		final boolean isValid = node != null && node.getSampleId() != null && !node.getSampleId().isEmpty() &&
+			node.getTaxaMap() != null && !node.getTaxaMap().isEmpty() && node.getCount() > 0;
+		if( !isValid ) Log.debug( getClass(), "Ignore invalid node" );
+		return isValid;
 	}
 
 	/**
@@ -148,16 +168,8 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 		for( final BioModule module: ModuleUtil.getModules( this, true ) )
 			if( module.equals( ModuleUtil.getClassifier( this, true ) ) ) break;
 			else if( module.getClass().getName().startsWith( Constants.MODULE_SEQ_PACKAGE ) )
-				throw new Exception( "Invalid BioModule configuration order! " + module.getClass().getName()
-					+ " must run before the ParserModule." );
-	}
-
-	private void addParsedSample( final ParsedSample newSample ) throws Exception {
-		for( final ParsedSample sample: this.parsedSamples )
-			if( sample.getSampleId().equals( newSample.getSampleId() ) )
-				throw new Exception( "Attempt to add duplicate sample! " + sample.getSampleId() );
-
-		this.parsedSamples.add( newSample );
+				throw new Exception( "Invalid BioModule configuration order! " + module.getClass().getName() +
+					" must run before the ParserModule." );
 	}
 
 	private void freeMemory() {

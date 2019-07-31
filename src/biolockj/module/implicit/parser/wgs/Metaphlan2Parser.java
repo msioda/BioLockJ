@@ -13,11 +13,10 @@ package biolockj.module.implicit.parser.wgs;
 
 import java.io.BufferedReader;
 import java.io.File;
-import biolockj.Constants;
 import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.node.wgs.MetaphlanNode;
 import biolockj.util.BioLockJUtil;
-import biolockj.util.MemoryUtil;
+import biolockj.util.SeqUtil;
 
 /**
  * This BioModules parses Metaphlan2Classifier output reports to build standard OTU abundance tables.
@@ -42,12 +41,11 @@ public class Metaphlan2Parser extends ParserModuleImpl {
 	@Override
 	public void parseSamples() throws Exception {
 		for( final File file: getInputFiles() ) {
-			MemoryUtil.reportMemoryUsage( "Parse " + file.getAbsolutePath() );
 			final BufferedReader reader = BioLockJUtil.getFileReader( file );
 			try {
 				for( String line = reader.readLine(); line != null; line = reader.readLine() )
 					if( !line.startsWith( "#" ) )
-						addOtuNode( new MetaphlanNode( file.getName().replace( Constants.PROCESSED, "" ), line ) );
+						addOtuNode( new MetaphlanNode( SeqUtil.getSampleId( file.getName() ), line ) );
 			} finally {
 				if( reader != null ) reader.close();
 			}

@@ -13,9 +13,7 @@ package biolockj.util;
 
 import java.io.*;
 import java.util.*;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.exception.OtuFileException;
 
 /**
@@ -24,7 +22,7 @@ import biolockj.exception.OtuFileException;
  */
 public class OtuUtil {
 	/**
-	 * This inner class is used to hold a signle line from an OTU count file.
+	 * This inner class is used to hold a single line from an OTU count file.
 	 */
 	public static class OtuCountLine {
 		/**
@@ -138,8 +136,8 @@ public class OtuUtil {
 		if( id != null ) id = "_" + id;
 		else id = "";
 
-		return new File( dir.getAbsolutePath() + File.separator + Config.pipelineName() + myPrefix + Constants.OTU_COUNT
-			+ id + Constants.TSV_EXT );
+		return new File( dir.getAbsolutePath() + File.separator + Config.pipelineName() + myPrefix +
+			Constants.OTU_COUNT + id + Constants.TSV_EXT );
 	}
 
 	/**
@@ -170,8 +168,8 @@ public class OtuUtil {
 		final TreeMap<String, TreeMap<String, Long>> otuCountsBySample = new TreeMap<>();
 		for( final File file: files ) {
 			if( !file.getName().contains( "_" + Constants.OTU_COUNT + "_" ) )
-				throw new Exception( "Module input files must contain sample OTU counts with \"_" + Constants.OTU_COUNT
-					+ "_\" as part of the file name.  Found file: " + file.getAbsolutePath() );
+				throw new Exception( "Module input files must contain sample OTU counts with \"_" +
+					Constants.OTU_COUNT + "_\" as part of the file name.  Found file: " + file.getAbsolutePath() );
 
 			otuCountsBySample.put( getSampleId( file ), compileSampleOtuCounts( file ) );
 		}
@@ -196,7 +194,7 @@ public class OtuUtil {
 				return true;
 			}
 		} catch( final Exception ex ) {
-			Log.error( OtuUtil.class, "File is not a valid OTU count file: " + file.getAbsolutePath() );
+			Log.error( OtuUtil.class, "File is not a valid OTU count file: " + file.getAbsolutePath(), ex );
 		} finally {
 			try {
 				if( reader != null ) reader.close();

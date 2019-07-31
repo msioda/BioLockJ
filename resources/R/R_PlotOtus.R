@@ -96,7 +96,6 @@ buildPlots <- function() {
       parStats = getStatsTable( level, TRUE )
       nonParStats = getStatsTable( level, FALSE )
       r2Stats = getStatsTable( level )
-      metaColColors = getColorsByCategory( metaTable )
 
       pdf( reportFile( level ), paper="letter", width=7, height=10.5 )
       par(mfrow=c(3, 2), las=1, oma=c(1.2,1,4.5,0), mar=c(5, 4, 3, 2), cex=1)
@@ -118,6 +117,7 @@ buildPlots <- function() {
             foundValidPvals = FALSE
 
             for( meta in getReportFields() ) {
+
             	metaVals = metaTable[,meta]
             	parPval = parStats[item, meta]
                	nonParPval = nonParStats[item, meta]
@@ -134,7 +134,7 @@ buildPlots <- function() {
             
                	if( meta %in% binaryCols || meta %in% nominalCols ) {
                   	logInfo( c( "Add Box-Plot [", item, "~", meta, "]" ) )
-                  	addBoxPlot( item, taxaVals, metaVals, metaColColors[[meta]] )
+                  	addBoxPlot( item, taxaVals, metaVals, getColorsByCategory( meta, metaTable ) )
                	}
                	else {
                   	logInfo( c( "Add Scatter-Plot [", item, "~", meta, "]" ) )

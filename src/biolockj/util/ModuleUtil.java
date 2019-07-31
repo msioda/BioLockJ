@@ -14,7 +14,10 @@ package biolockj.util;
 import java.io.File;
 import java.util.*;
 import biolockj.*;
+import biolockj.exception.ConfigFormatException;
+import biolockj.exception.ConfigNotFoundException;
 import biolockj.module.BioModule;
+import biolockj.module.JavaModule;
 import biolockj.module.classifier.ClassifierModule;
 import biolockj.module.implicit.Demultiplexer;
 import biolockj.module.report.r.R_CalculateStats;
@@ -91,6 +94,21 @@ public class ModuleUtil {
 	}
 
 	/**
+	 * Return the min number of samples that can be processed per worker script.
+	 * 
+	 * @param module BioModule
+	 * @return Min # samples/worker
+	 * @throws ConfigFormatException if {@value biolockj.Constants#SCRIPT_NUM_WORKERS} property is not a positive
+	 * integer
+	 * @throws ConfigNotFoundException if {@value biolockj.Constants#SCRIPT_NUM_WORKERS} property is undefined
+	 */
+	public static Integer getMinSamplesPerWorker( final BioModule module )
+		throws ConfigNotFoundException, ConfigFormatException {
+		return new Double( Math.floor( (double) module.getInputFiles().size() / (double) getNumWorkers( module ) ) )
+			.intValue();
+	}
+
+	/**
 	 * Get a module with given className unless a classifier module is found 1st.<br>
 	 * Use checkAhead parameter to determine if we look forward or backwards starting from the given module.
 	 * 
@@ -103,12 +121,13 @@ public class ModuleUtil {
 	public static BioModule getModule( final BioModule module, final String className, final boolean checkAhead )
 		throws Exception {
 		if( module instanceof ClassifierModule ) throw new Exception(
-			"ModuleUtil.getModule( module, className, checkAhead) - Param \"module\" cannot be a ClassifierModule: "
-				+ module.getClass().getName() );
+			"ModuleUtil.getModule( module, className, checkAhead) - Param \"module\" cannot be a ClassifierModule: " +
+				module.getClass().getName() );
 
 		final ClassifierModule classifier = getClassifier( module, checkAhead );
 		for( final BioModule m: getModules( module, checkAhead ) )
 			if( m.getClass().getName().equals( className ) ) {
+				if( classifier == null ) return m;
 				final boolean targetBeforeClassifier = m.getID() < classifier.getID();
 				final boolean targetAfterClassifier = m.getID() > classifier.getID();
 				if( checkAhead && targetBeforeClassifier || !checkAhead && targetAfterClassifier ) return m;
@@ -164,6 +183,36 @@ public class ModuleUtil {
 	}
 
 	/**
+	 * For uneven batch sizes, some workers will process 1 extra script. Return the number of workers that do so.
+	 * 
+	 * @param module BioModule
+	 * @return Number of worker scripts that process 1 extra sequence.
+	 * @throws ConfigFormatException if {@value biolockj.Constants#SCRIPT_NUM_WORKERS} property is not a positive
+	 * integer
+	 * @throws ConfigNotFoundException if {@value biolockj.Constants#SCRIPT_NUM_WORKERS} property is undefined
+	 */
+	public static Integer getNumMaxWorkers( final BioModule module )
+		throws ConfigNotFoundException, ConfigFormatException {
+		return module.getInputFiles().size() - getNumWorkers( module ) * getMinSamplesPerWorker( module );
+	}
+
+	/**
+	 * Get the actual number of worker scripts generated for a given module, minimum value = 1.
+	 * 
+	 * @param module BioModule
+	 * @return Number of worker scripts generated for a given module.
+	 * @throws ConfigFormatException if {@value biolockj.Constants#SCRIPT_NUM_WORKERS} property is not a positive
+	 * integer
+	 * @throws ConfigNotFoundException if {@value biolockj.Constants#SCRIPT_NUM_WORKERS} property is undefined
+	 */
+	public static Integer getNumWorkers( final BioModule module )
+		throws ConfigNotFoundException, ConfigFormatException {
+		if( module instanceof JavaModule ) return 1;
+		final int count = Config.requirePositiveInteger( module, Constants.SCRIPT_NUM_WORKERS );
+		return Math.max( 1, Math.min( count, module.getInputFiles().size() ) );
+	}
+
+	/**
 	 * BioModules are run in the order configured.<br>
 	 * Return the module configured to run before the given module.
 	 *
@@ -183,6 +232,18 @@ public class ModuleUtil {
 	 */
 	public static boolean hasExecuted( final BioModule module ) {
 		return isComplete( module ) || isIncomplete( module );
+	}
+
+	/**
+	 * Check a BioModule for scripts to execute.
+	 * 
+	 * @param module BioModule
+	 * @return TRUE if the module has scripts to run
+	 */
+	public static boolean hasScripts( final BioModule module ) {
+		final File scriptDir =
+			new File( module.getModuleDir().getAbsolutePath() + File.separator + Constants.SCRIPT_DIR );
+		return scriptDir.isDirectory() && scriptDir.list().length > 0;
 	}
 
 	/**
@@ -262,8 +323,8 @@ public class ModuleUtil {
 	 */
 	public static void markComplete( final BioModule module ) throws Exception {
 		BioLockJUtil.createFile( module.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_COMPLETE );
-		final File startFile = new File(
-			module.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_STARTED );
+		final File startFile =
+			new File( module.getModuleDir().getAbsolutePath() + File.separator + Constants.BLJ_STARTED );
 		startFile.delete();
 		Log.info( ModuleUtil.class, Constants.LOG_SPACER );
 		Log.info( ModuleUtil.class,
@@ -296,7 +357,6 @@ public class ModuleUtil {
 	public static boolean moduleExists( final String className ) {
 		for( final BioModule m: Pipeline.getModules() )
 			if( m.getClass().getName().equals( className ) ) return true;
-
 		return false;
 	}
 

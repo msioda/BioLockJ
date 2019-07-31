@@ -13,10 +13,9 @@ package biolockj;
 
 import java.io.File;
 import java.util.*;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
-import biolockj.exception.ConfigFormatException;
-import biolockj.exception.ConfigNotFoundException;
-import biolockj.exception.ConfigPathException;
+import biolockj.exception.*;
 import biolockj.module.BioModule;
 import biolockj.util.*;
 
@@ -42,8 +41,8 @@ public class Config {
 			setConfigProperty( property, Constants.FALSE );
 			Log.debug( Config.class, property + " is undefined, so return: " + Constants.FALSE );
 		} else if( !getString( module, property ).equalsIgnoreCase( Constants.FALSE ) )
-			throw new ConfigFormatException( property, "Boolean properties must be set to either " + Constants.TRUE
-				+ " or " + Constants.FALSE + ".  Update this property in your Config file to a valid option." );
+			throw new ConfigFormatException( property, "Boolean properties must be set to either " + Constants.TRUE +
+				" or " + Constants.FALSE + ".  Update this property in your Config file to a valid option." );
 
 		return false;
 	}
@@ -84,7 +83,7 @@ public class Config {
 			final Double val = Double.parseDouble( getString( module, property ) );
 			return val;
 		} catch( final Exception ex ) {
-			throw new ConfigFormatException( property, "Property only accepts numeric values" );
+			throw new ConfigFormatException( property, "Property only accepts numeric values: " + ex.getMessage() );
 		}
 		return null;
 	}
@@ -95,16 +94,14 @@ public class Config {
 	 * @param module BioModule to check for module-specific form of this property
 	 * @param property Property name
 	 * @return String value of executable
-	 * @throws Exception if property does not start with "exe."
+	 * @throws ConfigViolationException if property name does not start with "exe."
 	 */
-	public static String getExe( final BioModule module, final String property ) throws Exception {
-		if( !property.startsWith( "exe." ) )
-			throw new Exception( "Config.getExe() can only be called for properties that begin with \"exe.\"" );
+	public static String getExe( final BioModule module, final String property ) throws ConfigViolationException {
+		if( !property.startsWith( "exe." ) ) throw new ConfigViolationException(
+			"Config.getExe() can only be called for properties that begin with \"exe.\"" );
 
-		// return name of property after trimming "exe." prefix, for example if exe.Rscript is undefined, return
-		// "Rscript"
+		// property name after trimming "exe." prefix, for example if exe.Rscript is undefined, return "Rscript"
 		if( getString( module, property ) == null ) return property.substring( property.indexOf( "." ) + 1 );
-
 		return getString( module, property );
 	}
 
@@ -209,29 +206,15 @@ public class Config {
 	}
 
 	/**
-	 * Return module specific property if configured, otherwise use the given prop.
+	 * Return property name after substituting the module name as its prefix.
 	 * 
 	 * @param module BioModule
-	 * @param prop Property
-	 * @return Config property
+	 * @param property Property name
+	 * @return BioModule specific property name
 	 */
-	public static String getModuleProp( final BioModule module, final String prop ) {
-		return getModuleProp( module.getClass().getSimpleName(), prop );
-	}
-
-	/**
-	 * Return module specific property if configured, otherwise use the given prop.
-	 * 
-	 * @param moduleName BioModule name
-	 * @param prop Property
-	 * @return property name
-	 */
-	public static String getModuleProp( final String moduleName, final String prop ) {
-		final String moduleProp = moduleName + "." + suffix( prop );
-		final String val = Config.getString( null, moduleProp );
-		if( val == null || val.isEmpty() ) return prop;
-		Log.debug( Config.class, "Use module specific property: [ " + moduleProp + "=" + val + " ]" );
-		return moduleProp;
+	public static String getModulePropName( final BioModule module, final String property ) {
+		if( module != null ) return module.getClass().getSimpleName() + "." + suffix( property );
+		return null;
 	}
 
 	/**
@@ -328,16 +311,12 @@ public class Config {
 	 */
 	public static String getString( final BioModule module, final String property ) {
 		if( props == null ) return null;
-		String propName = property;
-
-		if( module != null ) {
-			final String modPropName = Config.getModuleProp( module, propName );
-			if( props.getProperty( modPropName ) != null ) propName = modPropName;
-		}
-
-		final String val = props.getProperty( propName );
-		usedProps.put( propName, val );
-		if( val == null || val.isEmpty() ) return null;
+		String prop = getModulePropName( module, property );
+		if( prop == null || props.getProperty( prop ) == null ) prop = property;
+		String val = props.getProperty( prop );
+		if( val != null ) val = val.trim();
+		usedProps.put( prop, val );
+		if( val != null && val.isEmpty() ) val = null;
 		return val;
 	}
 
@@ -365,8 +344,9 @@ public class Config {
 	}
 
 	/**
-	 * Initialize {@link biolockj.Config} by reading in properties from config runtime parameter.
-	 * 
+	 * Initialize {@link biolockj.Config} by reading in properties from config runtime parameter. Save a copy of the
+	 * primary Config to the pipeline root directory
+	 *
 	 * @throws Exception if unable to load Props
 	 */
 	public static void initialize() throws Exception {
@@ -374,6 +354,8 @@ public class Config {
 		Log.info( Config.class, "Initialize Config: " + configFile.getAbsolutePath() );
 		props = replaceEnvVars( Properties.loadProperties( configFile ) );
 		setPipelineRootDir();
+		if( !BioLockJUtil.isDirectMode() && !FileUtils.directoryContains( getPipelineDir(), configFile ) )
+			FileUtils.copyFileToDirectory( configFile, getPipelineDir() );
 		Log.info( Config.class, "Total # initial properties: " + props.size() );
 		unmodifiedInputProps.putAll( props );
 		TaxaUtil.initTaxaLevels();
@@ -385,8 +367,8 @@ public class Config {
 	 * @return TRUE if running on the cluster
 	 */
 	public static boolean isOnCluster() {
-		return getString( null, Constants.PIPELINE_ENV ) != null
-			&& getString( null, Constants.PIPELINE_ENV ).equals( Constants.PIPELINE_ENV_CLUSTER );
+		return getString( null, Constants.PIPELINE_ENV ) != null &&
+			getString( null, Constants.PIPELINE_ENV ).equals( Constants.PIPELINE_ENV_CLUSTER );
 	}
 
 	/**
@@ -406,6 +388,16 @@ public class Config {
 	 */
 	public static String pipelinePath() {
 		return getPipelineDir().getAbsolutePath();
+	}
+
+	/**
+	 * Remove a property (probably internal since these are the only that change mid-program).
+	 * 
+	 * @param property Property name
+	 */
+	public static void removeConfigProperty( final String property ) {
+		props.remove( property );
+		usedProps.remove( property );
 	}
 
 	/**
@@ -651,8 +643,8 @@ public class Config {
 		props.setProperty( name, val );
 
 		final boolean hasVal = val != null && !val.isEmpty();
-		if( origProp == null && hasVal || origProp != null && !hasVal
-			|| origProp != null && hasVal && !origProp.equals( val ) ) {
+		if( origProp == null && hasVal || origProp != null && !hasVal ||
+			origProp != null && hasVal && !origProp.equals( val ) ) {
 			Log.info( Config.class, "Set Config property [ " + name + " ] = " + val );
 			usedProps.put( name, val );
 		}
@@ -669,8 +661,8 @@ public class Config {
 		origProp = origProp != null && origProp.isEmpty() ? null: origProp;
 		props.setProperty( name, val );
 		final boolean hasVal = val != null && !val.isEmpty();
-		if( origProp == null && hasVal || origProp != null && !hasVal
-			|| origProp != null && hasVal && !origProp.equals( val ) ) {
+		if( origProp == null && hasVal || origProp != null && !hasVal ||
+			origProp != null && hasVal && !origProp.equals( val ) ) {
 			Log.info( Config.class, "Set Config property [ " + name + " ] = " + val );
 			usedProps.put( name, val );
 		}
@@ -740,7 +732,7 @@ public class Config {
 		if( RuntimeParamUtil.doRestart() ) {
 			setPipelineDir( RuntimeParamUtil.getRestartDir() );
 			Log.info( Config.class, "Assign RESTART_DIR pipeline root directory: " + Config.pipelinePath() );
-		} else if( DockerUtil.isDirectMode() ) {
+		} else if( BioLockJUtil.isDirectMode() ) {
 			setPipelineDir( RuntimeParamUtil.getDirectPipelineDir() );
 			Log.info( Config.class, "Assign DIRECT pipeline root directory: " + Config.pipelinePath() );
 		} else {
@@ -766,9 +758,9 @@ public class Config {
 		try {
 			if( bashVarMap.get( bashVar ) != null ) return bashVarMap.get( bashVar );
 			String bashVal = props == null ? null: props.getProperty( stripBashMarkUp( bashVar ) );
-			if( DockerUtil.inDockerEnv() && stripBashMarkUp( bashVar ).equals( "HOME" ) ) {
+			if( DockerUtil.inDockerEnv() && stripBashMarkUp( bashVar ).equals( "HOME" ) )
 				bashVal = RuntimeParamUtil.getDockerHostHomeDir();
-			} else if( bashVal == null || bashVal.trim().isEmpty() ) if( bashVar.equals( BLJ_BASH_VAR ) ) {
+			else if( bashVal == null || bashVal.trim().isEmpty() ) if( bashVar.equals( BLJ_BASH_VAR ) ) {
 				final File blj = BioLockJUtil.getBljDir();
 				if( blj != null && blj.isDirectory() ) bashVal = blj.getAbsolutePath();
 			} else if( bashVar.equals( BLJ_SUP_BASH_VAR ) ) {
@@ -782,7 +774,8 @@ public class Config {
 			}
 
 		} catch( final Exception ex ) {
-			Log.warn( Config.class, "Error occurred attempting to decode bash var: " + bashVar );
+			Log.warn( Config.class,
+				"Error occurred attempting to decode bash var: " + bashVar + " --> " + ex.getMessage() );
 		}
 
 		return bashVar;
@@ -801,15 +794,15 @@ public class Config {
 			final Integer val = Integer.parseInt( getString( module, property ) );
 			return val;
 		} catch( final Exception ex ) {
-			throw new ConfigFormatException( property, "Property only accepts integer values" );
+			throw new ConfigFormatException( property, "Property only accepts integer values: " + ex.getMessage() );
 		}
 
 		return null;
 	}
 
 	private static boolean hasEnvVar( final String val ) {
-		return val.startsWith( "~" )
-			|| val.contains( "${" ) && val.contains( "}" ) && val.indexOf( "${" ) < val.indexOf( "}" );
+		return val.startsWith( "~" ) ||
+			val.contains( "${" ) && val.contains( "}" ) && val.indexOf( "${" ) < val.indexOf( "}" );
 	}
 
 	private static String stripBashMarkUp( final String bashVar ) {

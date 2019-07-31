@@ -16,9 +16,7 @@ import java.io.File;
 import java.util.*;
 import biolockj.Constants;
 import biolockj.Log;
-import biolockj.util.BioLockJUtil;
-import biolockj.util.MetaUtil;
-import biolockj.util.TaxaUtil;
+import biolockj.util.*;
 
 /**
  * This utility is used to log-transform the raw OTU counts on Log10 or Log-e scales.
@@ -58,7 +56,6 @@ public class LogTransformTaxaTables extends NormalizeTaxaTables {
 				}
 
 				final long rowSum = innerList.stream().mapToLong( Long::longValue ).sum();
-
 				if( rowSum == 0 ) throw new Exception( sampleID + " has all zeros for table counts." );
 				nextLine = reader.readLine();
 			}
@@ -74,15 +71,19 @@ public class LogTransformTaxaTables extends NormalizeTaxaTables {
 		for( int x = 0; x < dataPointsUnnormalized.size(); x++ ) {
 			final List<String> loggedInnerList = dataPointsLogged.get( x );
 			for( int y = 0; y < dataPointsUnnormalized.get( x ).size(); y++ ) {
-				final long val = dataPointsUnnormalized.get( x ).get( y ) + 1;
+				final long val = dataPointsUnnormalized.get( x ).get( y ) + 1L;
 				if( allZeroIndex.contains( x ) ) {
 					// index 0 = col headers, so add + 1
 					final String id = MetaUtil.getSampleIds().get( x + 1 );
 					Log.warn( getClass(), "All zero row will not be transformed - ID ommitted: " + id );
-				} else if( getLogBase().equalsIgnoreCase( LOG_E ) )
-					loggedInnerList.add( new Double( Math.log( val ) ).toString() );
-				else if( getLogBase().equalsIgnoreCase( LOG_10 ) )
-					loggedInnerList.add( new Double( Math.log10( val ) ).toString() );
+				} else if( getLogBase().equalsIgnoreCase( LOG_E ) ) {
+					final String res = new Double( Math.log( val ) ).toString();
+					loggedInnerList.add( res );
+				} else if( getLogBase().equalsIgnoreCase( LOG_10 ) ) {
+					final String res = new Double( Math.log10( val ) ).toString();
+					Log.debug( getClass(), "Math.log10( " + val + ") = " + Math.log10( val ) + " ==> " + res );
+					loggedInnerList.add( res );
+				}
 			}
 		}
 

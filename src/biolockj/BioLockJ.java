@@ -12,9 +12,7 @@
 package biolockj;
 
 import java.io.File;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
-import java.util.Locale;
+import java.util.*;
 import org.apache.commons.io.FileUtils;
 import biolockj.exception.FatalExceptionHandler;
 import biolockj.module.BioModule;
@@ -29,8 +27,6 @@ import biolockj.util.*;
  * indicator file in the pipeline root directory.<br>
  */
 public class BioLockJ {
-
-	private BioLockJ() {}
 
 	/**
 	 * Copy file to pipeline root directory.
@@ -56,9 +52,10 @@ public class BioLockJ {
 	 */
 	public static String getHelpInfo() {
 		final File errFile = FatalExceptionHandler.getErrorLog();
-		return Constants.RETURN + "To view the BioLockJ help menu, run \"biolockj -h\"" + Constants.RETURN
-			+ ( errFile != null ? "Check error logs here --> " + errFile.getAbsolutePath() + Constants.RETURN: "" )
-			+ "For more information, please visit the BioLockJ Wiki:" + Constants.BLJ_WIKI + Constants.RETURN;
+		// TODO: reference the jar help menu: showInfo(Constants.HELP)
+		return Constants.RETURN + "To view the BioLockJ help menu, run \"biolockj -h\"" + Constants.RETURN +
+			( errFile != null ? "Check error logs here --> " + errFile.getAbsolutePath() + Constants.RETURN: "" ) +
+			"For more information, please visit the BioLockJ Wiki:" + Constants.BLJ_WIKI + Constants.RETURN;
 	}
 
 	/**
@@ -86,6 +83,7 @@ public class BioLockJ {
 	 * @param args - String[] runtime parameters passed to the Java program when launching BioLockJ
 	 */
 	public static void main( final String[] args ) {
+		showInfo( args );
 		System.out.println( "Starting BioLockj..." + Constants.APP_START_TIME );
 		try {
 			initBioLockJ( args );
@@ -93,7 +91,7 @@ public class BioLockJ {
 		} catch( final Exception ex ) {
 			FatalExceptionHandler.logFatalError( args, ex );
 		} finally {
-			if( !DockerUtil.isDirectMode() ) pipelineShutDown();
+			if( !BioLockJUtil.isDirectMode() ) pipelineShutDown();
 		}
 	}
 
@@ -107,14 +105,14 @@ public class BioLockJ {
 
 		// Copy input does not need to copy files into pipeline dir if not copying entire pipeline dir
 		// since copy will take place as S3 xFer.
-		if( DockerUtil.inAwsEnv() && Config.getBoolean( null, Constants.PIPELINE_COPY_FILES )
-			&& !Config.getBoolean( null, NextflowUtil.AWS_COPY_PIPELINE_TO_S3 ) ) {
+		if( DockerUtil.inAwsEnv() && Config.getBoolean( null, Constants.PIPELINE_COPY_FILES ) &&
+			!Config.getBoolean( null, NextflowUtil.AWS_COPY_PIPELINE_TO_S3 ) ) {
 			NextflowUtil.awsSyncS3( DockerUtil.DOCKER_INPUT_DIR, false );
 			return;
 		}
 		final File inputDir = BioLockJUtil.pipelineInternalInputDir();
-		final String path = Config.pipelinePath() + File.separator + inputDir.getName() + File.separator
-			+ Constants.BLJ_COMPLETE;
+		final String path =
+			Config.pipelinePath() + File.separator + inputDir.getName() + File.separator + Constants.BLJ_COMPLETE;
 		final File statusFile = new File( path );
 		if( !inputDir.isDirectory() ) inputDir.mkdirs();
 		else if( statusFile.isFile() ) return;
@@ -143,8 +141,8 @@ public class BioLockJ {
 		final String year = String.valueOf( new GregorianCalendar().get( Calendar.YEAR ) );
 		final String month = new GregorianCalendar().getDisplayName( Calendar.MONTH, Calendar.SHORT, Locale.ENGLISH );
 		final String day = BioLockJUtil.formatDigits( new GregorianCalendar().get( Calendar.DATE ), 2 );
-		final String baseString = RuntimeParamUtil.getBaseDir().getAbsolutePath() + File.separator
-			+ RuntimeParamUtil.getProjectName();
+		final String baseString =
+			RuntimeParamUtil.get_BLJ_PROJ().getAbsolutePath() + File.separator + RuntimeParamUtil.getProjectName();
 		final String dateString = "_" + year + month + day;
 		File projectDir = new File( baseString + dateString );
 		int i = 2;
@@ -174,25 +172,24 @@ public class BioLockJ {
 		MemoryUtil.reportMemoryUsage( "INTIAL MEMORY STATS" );
 		RuntimeParamUtil.registerRuntimeParameters( args );
 		Config.initialize();
-		if( isPipelineComplete() ) throw new Exception( "Pipeline Cancelled!  Pipeline already contains status file: "
-			+ Constants.BLJ_COMPLETE + " --> Check directory: " + Config.pipelinePath() );
+		if( isPipelineComplete() ) throw new Exception( "Pipeline Cancelled!  Pipeline already contains status file: " +
+			Constants.BLJ_COMPLETE + " --> Check directory: " + Config.pipelinePath() );
 
 		MetaUtil.initialize();
 
-		if( DockerUtil.isDirectMode() ) Log.initialize( getDirectLogName( RuntimeParamUtil.getDirectModuleDir() ) );
+		if( BioLockJUtil.isDirectMode() ) Log.initialize( getDirectLogName( RuntimeParamUtil.getDirectModuleDir() ) );
 		else Log.initialize( Config.pipelineName() );
-		
+
 		if( RuntimeParamUtil.doRestart() ) initRestart();
 
-		if( !DockerUtil.isDirectMode() ) {
+		if( !BioLockJUtil.isDirectMode() ) {
 			if( MetaUtil.getMetadata() != null ) BioLockJ.copyFileToPipelineRoot( MetaUtil.getMetadata() );
-
 			if( DockerUtil.inAwsEnv() ) NextflowUtil.stageRootConfig();
 		}
 
 		BioLockJUtil.initPipelineInput();
 
-		if( !DockerUtil.isDirectMode() && BioLockJUtil.copyInputFiles() ) copyInputData();
+		if( !BioLockJUtil.isDirectMode() && BioLockJUtil.copyInputFiles() ) copyInputData();
 
 		SeqUtil.initialize();
 	}
@@ -212,17 +209,38 @@ public class BioLockJ {
 	protected static void initRestart() throws Exception {
 		Log.initialize( Config.pipelineName() );
 		Log.warn( BioLockJ.class,
-			Constants.RETURN + Constants.LOG_SPACER + Constants.RETURN + "RESTART_DIR PROJECT DIR --> "
-				+ RuntimeParamUtil.getRestartDir().getAbsolutePath() + Constants.RETURN + Constants.LOG_SPACER
-				+ Constants.RETURN );
+			Constants.RETURN + Constants.LOG_SPACER + Constants.RETURN + "RESTART_DIR PROJECT DIR --> " +
+				RuntimeParamUtil.getRestartDir().getAbsolutePath() + Constants.RETURN + Constants.LOG_SPACER +
+				Constants.RETURN );
 		Log.info( BioLockJ.class, "Initializing Restarted Pipeline - this may take a couple of minutes..." );
 
 		SummaryUtil.updateNumAttempts();
 		if( DownloadUtil.getDownloadListFile().isFile() ) DownloadUtil.getDownloadListFile().delete();
+		if( ValidationUtil.getValidationDir().exists() ) ValidationUtil.getValidationDir().delete();
 		if( NextflowUtil.getMainNf().isFile() ) NextflowUtil.getMainNf().delete();
 
 		final File f = new File( Config.pipelinePath() + File.separator + Constants.BLJ_FAILED );
 		if( f.isFile() ) f.delete();
+	}
+
+	protected static void pipelineShutDown() {
+
+		setPipelineSecurity();
+
+		if( DockerUtil.inAwsEnv() ) {
+			NextflowUtil.saveNextflowLog();
+			NextflowUtil.stopNextflow();
+		}
+
+		if( isPipelineComplete() ) {
+			MasterConfigUtil.sanitizeMasterConfig();
+			if( DockerUtil.inAwsEnv() ) NextflowUtil.saveNextflowSuccessFlag();
+		}
+
+		info( "Log Pipeline Summary..." + Constants.RETURN + SummaryUtil.getSummary() + SummaryUtil.displayAsciiArt() );
+		if( isPipelineComplete() ) System.exit( 0 );
+
+		System.exit( 1 );
 	}
 
 	/**
@@ -260,7 +278,7 @@ public class BioLockJ {
 
 		Pipeline.initializePipeline();
 
-		if( DockerUtil.isDirectMode() )
+		if( BioLockJUtil.isDirectMode() )
 			Pipeline.runDirectModule( getDirectModuleID( RuntimeParamUtil.getDirectModuleDir() ) );
 		else {
 			MasterConfigUtil.saveMasterConfig();
@@ -276,6 +294,15 @@ public class BioLockJ {
 
 			BioLockJUtil.createFile( Config.pipelinePath() + File.separator + Constants.BLJ_COMPLETE );
 			if( Config.getBoolean( null, Constants.RM_TEMP_FILES ) ) removeTempFiles();
+		}
+	}
+
+	protected static void setPipelineSecurity() {
+		try {
+			Processor.setFilePermissions( Config.pipelinePath(), Config.getString( null, Constants.PIPELINE_PRIVS ) );
+		} catch( final Exception ex ) {
+			System.out.println( "Unable to set pipeline filesystem privileges" );
+			ex.printStackTrace();
 		}
 	}
 
@@ -296,35 +323,20 @@ public class BioLockJ {
 	}
 
 	private static void info( final String msg ) {
-		if( !DockerUtil.isDirectMode() ) Log.info( BioLockJ.class, msg );
+		if( !BioLockJUtil.isDirectMode() ) Log.info( BioLockJ.class, msg );
 	}
 
-	private static void pipelineShutDown() {
-
-		setPipelineSecurity();
-
-		if( DockerUtil.inAwsEnv() ) {
-			NextflowUtil.saveNextflowLog();
-			NextflowUtil.stopNextflow();
-		}
-
-		if( isPipelineComplete() ) {
-			MasterConfigUtil.sanitizeMasterConfig();
-			if( DockerUtil.inAwsEnv() ) NextflowUtil.saveNextflowSuccessFlag();
-		}
-
-		info( "Log Pipeline Summary..." + Constants.RETURN + SummaryUtil.getSummary() + SummaryUtil.display_ASCII_Status() );
-		if( isPipelineComplete() ) System.exit( 0 );
-
-		System.exit( 1 );
-	}
-
-	private static void setPipelineSecurity() {
-		try {
-			Processor.setFilePermissions( Config.pipelinePath(), Config.getString( null, Constants.PIPELINE_PRIVS ) );
-		} catch( final Exception ex ) {
-			System.out.println( "Unable to set pipeline filesystem privileges" );
-			ex.printStackTrace();
+	private static void showInfo( final String[] args ) {
+		for( final String arg: args ) {
+			final String lowerArg = arg.replaceAll( "^--", "-" ).toLowerCase();
+			if( lowerArg.equals( Constants.VERSION ) ) {
+				System.out.println( "BioLockJ " + BioLockJUtil.getVersion( true ) );
+				System.exit( 0 );
+			}
+			if( lowerArg.equals( Constants.HELP ) ) {
+				BioLockJUtil.printHelp();
+				System.exit( 0 );
+			}
 		}
 	}
 }

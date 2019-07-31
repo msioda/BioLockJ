@@ -14,7 +14,7 @@ package biolockj.exception;
 /**
  * OtuFileException is thrown if errors occur processing OTU files.
  */
-public class OtuFileException extends Exception {
+public class OtuFileException extends BioLockJException {
 
 	/**
 	 * Create standard error to throw for OTU file errors.

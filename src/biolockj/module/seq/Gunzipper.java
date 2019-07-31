@@ -14,9 +14,7 @@ package biolockj.module.seq;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.module.SeqModuleImpl;
 import biolockj.util.SeqUtil;
 
@@ -62,9 +60,9 @@ public class Gunzipper extends SeqModuleImpl {
 	}
 
 	private String unzip( final File file ) throws Exception {
-		return FUNCTION_GUNZIP + " " + file.getAbsolutePath() + " " + getOutputDir().getAbsolutePath() + File.separator
-			+ SeqUtil.getSampleId( file.getName() ) + SeqUtil.getReadDirectionSuffix( file ) + "."
-			+ Config.requireString( this, Constants.INTERNAL_SEQ_TYPE );
+		return FUNCTION_GUNZIP + " " + file.getAbsolutePath() + " " + getOutputDir().getAbsolutePath() +
+			File.separator + SeqUtil.getSampleId( file.getName() ) + SeqUtil.getReadDirectionSuffix( file ) + "." +
+			Config.requireString( this, Constants.INTERNAL_SEQ_TYPE );
 	}
 
 	/**

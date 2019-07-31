@@ -13,8 +13,7 @@ package biolockj.node;
 
 import java.io.Serializable;
 import java.util.*;
-import biolockj.Constants;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.util.OtuUtil;
 import biolockj.util.TaxaUtil;
 
@@ -41,13 +40,14 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample> {
 	 * @param node OtuNode
 	 */
 	public void addNode( final OtuNode node ) {
-		if( this.otuCounts.get( node.getOtuName() ) == null ) {
-			Log.debug( getClass(), "Add new OtuNode: " + node.getOtuName() + "=" + node.getCount() );
-			this.otuCounts.put( node.getOtuName(), node.getCount() );
+		final String name = node.getOtuName();
+		if( this.otuCounts.get( name ) == null ) {
+			Log.debug( getClass(), "Add new OtuNode: " + name + "=" + node.getCount() );
+			this.otuCounts.put( name, node.getCount() );
 		} else {
-			final int count = this.otuCounts.get( node.getOtuName() ) + node.getCount();
-			Log.debug( getClass(), "Update OtuNode: " + node.getOtuName() + "=" + count );
-			this.otuCounts.put( node.getOtuName(), count );
+			final long count = this.otuCounts.get( name ) + node.getCount();
+			Log.debug( getClass(), "Update OtuNode: " + name + "=" + count );
+			this.otuCounts.put( name, count );
 		}
 	}
 
@@ -57,12 +57,15 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample> {
 	}
 
 	@Override
-	public boolean equals( final Object o ) {
-		if( this.sampleId == null || o == null || !( o instanceof ParsedSample ) ) return false;
-		final ParsedSample ps = (ParsedSample) o;
-		if( ps.getSampleId() == null || ps.getSampleId().isEmpty() ) return false;
-		return ps.getSampleId().equals( this.sampleId );
-
+	public boolean equals( final Object obj ) {
+		if( this == obj ) return true;
+		if( obj == null ) return false;
+		if( !( obj instanceof ParsedSample ) ) return false;
+		final ParsedSample other = (ParsedSample) obj;
+		if( getSampleId() == null ) {
+			if( other.getSampleId() != null ) return false;
+		} else if( !getSampleId().equals( other.getSampleId() ) ) return false;
+		return true;
 	}
 
 	/**
@@ -75,41 +78,44 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample> {
 	 * @return map OTU-count
 	 * @throws Exception if errors occur
 	 */
-	public TreeMap<String, Integer> getOtuCounts() throws Exception {
-		// Log.debug( getClass(), "Calling getOtuCounts() for: " + sampleId );
-		if( this.otuCounts == null ) throw new Exception( getClass().getName()
-			+ ".getOtuCounts() should be called only once - cached data is cleared after 1st call." );
+	public TreeMap<String, Long> getOtuCounts() throws Exception {
+		if( this.otuCounts == null ) throw new Exception( getClass().getName() +
+			".getOtuCounts() should be called only once - cached data is cleared after 1st call." );
 		else if( this.otuCounts.isEmpty() ) {
-			Log.debug( getClass(), "No valid OTUs found for: " + this.sampleId );
+			Log.warn( getClass(), "No valid OTUs found for: " + this.sampleId );
 			return null;
 		}
 
-		final TreeMap<String, Integer> fullPathOtuCounts = new TreeMap<>();
+		final TreeMap<String, Long> fullPathOtuCounts = new TreeMap<>();
 		for( String otu: this.otuCounts.keySet() ) {
 			if( otu.isEmpty() ) continue;
-
 			final Set<String> kids = getChildren( fullPathOtuCounts, otu );
-			final int otuCount = this.otuCounts.get( otu );
+			final long otuCount = this.otuCounts.get( otu );
 			if( kids.isEmpty() ) {
 				Log.debug( getClass(), "Add [ " + this.sampleId + " ] OTU " + otu + "=" + otuCount );
 				fullPathOtuCounts.put( otu, otuCount );
 			} else {
-				final int totalCount = totalCount( fullPathOtuCounts, kids );
+				final long totalCount = totalCount( fullPathOtuCounts, kids );
 				if( totalCount < otuCount ) {
 					String parentTaxa = null;
+					String parentLevel = null;
 					for( final String level: TaxaUtil.getTaxaLevelSpan() )
-						if( otu.contains( level ) ) parentTaxa = TaxaUtil.getTaxaName( otu, level );
-						else if( parentTaxa != null ) otu += Constants.SEPARATOR
-							+ OtuUtil.buildOtuTaxa( level, TaxaUtil.buildUnclassifiedTaxa( parentTaxa ) );
+						if( otu.contains( level ) ) {
+							parentTaxa = TaxaUtil.getTaxaName( otu, level );
+							parentLevel = level;
+						} else if( parentTaxa != null &&
+							Config.getBoolean( Pipeline.exeModule(), Constants.REPORT_UNCLASSIFIED_TAXA ) )
+							otu += Constants.OTU_SEPARATOR +
+								OtuUtil.buildOtuTaxa( level, TaxaUtil.getUnclassifiedTaxa( parentTaxa, parentLevel ) );
 
-					final int diff = otuCount - totalCount;
+					final long diff = otuCount - totalCount;
 					fullPathOtuCounts.put( otu, diff );
-					Log.debug( getClass(),
-						"Add parent remainder count [ " + this.sampleId + " ] Unclassified OTU: " + otu + "=" + diff );
+					Log.debug( getClass(), "Add [ " + this.sampleId + " ] Unclassified OTU: " + otu + "=" + diff );
 				} else if( otuCount >= totalCount )
 					Log.debug( getClass(), "Ignore [" + this.sampleId + " ] Parent OTU " + otu + "=" + otuCount );
 			}
 		}
+
 		this.otuCounts = null;
 		return fullPathOtuCounts;
 	}
@@ -123,21 +129,36 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample> {
 		return this.sampleId;
 	}
 
-	private static Set<String> getChildren( final TreeMap<String, Integer> otuCounts, final String otu ) {
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		return prime * 1 + ( getSampleId() == null ? 0: getSampleId().hashCode() );
+	}
+
+	/**
+	 * Directly assign OtuCounts
+	 * 
+	 * @param overrideOtuCounts Override otuCounts
+	 */
+	public void setOtuCounts( final Map<String, Long> overrideOtuCounts ) {
+		this.otuCounts = overrideOtuCounts;
+	}
+
+	private static Set<String> getChildren( final TreeMap<String, Long> otuCounts, final String otu ) {
 		final Set<String> kids = new HashSet<>();
 		for( final String key: otuCounts.keySet() )
 			if( key.contains( otu ) ) kids.add( key );
 		return kids;
 	}
 
-	private static int totalCount( final TreeMap<String, Integer> otuCounts, final Set<String> otus ) {
-		int count = 0;
+	private static long totalCount( final TreeMap<String, Long> otuCounts, final Set<String> otus ) {
+		long count = 0;
 		for( final String otu: otus )
 			count += otuCounts.get( otu );
 		return count;
 	}
 
-	private Map<String, Integer> otuCounts = new TreeMap<>();
+	private Map<String, Long> otuCounts = new TreeMap<>();
 	private final String sampleId;
 	private static final long serialVersionUID = 4882054401193953055L;
 }

@@ -25,8 +25,8 @@ public class ConfigFormatException extends ConfigException {
 	 * @param msg Exception message details
 	 */
 	public ConfigFormatException( final String property, final String msg ) {
-		super( property, "Current value \"" + Config.getString( null, property )
-			+ "\" does not meet format requirements!" + Constants.RETURN + msg );
+		super( property, "Current value \"" + Config.getString( null, property ) +
+			"\" does not meet format requirements!" + Constants.RETURN + msg );
 	}
 
 	private static final long serialVersionUID = -5659243602699272132L;

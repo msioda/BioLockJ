@@ -40,21 +40,21 @@ public class MetaphlanNode extends OtuNodeImpl {
 	 */
 	public MetaphlanNode( final String id, final String line ) throws Exception {
 		final String[] parts = line.split( "\\s" );
-		if( parts.length != 5 ) throw new Exception( "INVALID FILE FORMAT.  Line should have 5 parts.  LINE =  (" + line
-			+ ") METAPHLAN CLASSIFICATION NOT RUN WITH SWITCH: -t (ANALYSIS_TYPE) rel_ab_w_read_stats.  Add "
-			+ " \"-t rel_ab_w_read_stats\" when calling metaphlan2." );
+		if( parts.length != 5 ) throw new Exception( "INVALID FILE FORMAT.  Line should have 5 parts.  LINE =  (" +
+			line + ") METAPHLAN CLASSIFICATION NOT RUN WITH SWITCH: -t (ANALYSIS_TYPE) rel_ab_w_read_stats.  Add " +
+			" \"-t rel_ab_w_read_stats\" when calling metaphlan2." );
 
 		try {
 			setSampleId( id );
 			setLine( line );
-			setCount( Integer.valueOf( parts[ 4 ] ) );
+			setCount( Long.valueOf( parts[ 4 ] ) );
 
 			final StringTokenizer taxas = new StringTokenizer( parts[ 0 ], METAPHLAN_DELIM );
 			while( taxas.hasMoreTokens() ) {
 				final String token = taxas.nextToken();
-				final String levelDelim = token.substring( 0, 3 );
+				final String level = delimToLevelMap().get( token.substring( 0, 3 ) );
 				final String taxa = token.substring( 3 ).trim();
-				if( !taxa.isEmpty() ) addTaxa( taxa, delimToLevelMap().get( levelDelim ) );
+				if( !taxa.isEmpty() ) addTaxa( taxa, level );
 			}
 		} catch( final Exception ex ) {
 			throw new Exception( "Error parsing Sample ID:" + id + "> line: " + line + ": " + ex.getMessage() );

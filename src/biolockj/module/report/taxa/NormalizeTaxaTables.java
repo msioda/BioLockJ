@@ -13,13 +13,9 @@ package biolockj.module.report.taxa;
 
 import java.io.*;
 import java.util.*;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.exception.ConfigFormatException;
-import biolockj.util.BioLockJUtil;
-import biolockj.util.MetaUtil;
-import biolockj.util.TaxaUtil;
+import biolockj.util.*;
 
 /**
  * This utility is used to normalize and/or log-transform the raw OTU counts using the formulas:
@@ -137,7 +133,7 @@ public class NormalizeTaxaTables extends TaxaCountModule {
 
 		final Set<Integer> allZeroIndex = findAllZeroIndex( dataPointsUnnormalized );
 		final List<String> filteredSampleIDs = filterZeroSampleIDs( sampleIDs, allZeroIndex );
-		final double aveRowSum = tableSum / filteredSampleIDs.size();
+		final double aveRowSum = (double) tableSum / (double) filteredSampleIDs.size();
 
 		Log.debug( getClass(), "Final Table Sum = " + tableSum );
 		Log.debug( getClass(), "Average Row Sum = " + aveRowSum );
@@ -146,9 +142,9 @@ public class NormalizeTaxaTables extends TaxaCountModule {
 		for( int x = 0; x < dataPointsUnnormalized.size(); x++ ) {
 			final long rowSum = dataPointsUnnormalized.get( x ).stream().mapToLong( Long::longValue ).sum();
 			final List<String> loggedInnerList = dataPointsNormalizedThenLogged.get( x );
-
+			Log.debug( getClass(), "Row Sum = " + rowSum );
 			for( int y = 0; y < dataPointsUnnormalized.get( x ).size(); y++ ) {
-				final Double normVal = aveRowSum * dataPointsUnnormalized.get( x ).get( y ) / rowSum + 1;
+				final Double normVal = 1D + aveRowSum * (double) dataPointsUnnormalized.get( x ).get( y ) / rowSum;
 				dataPointsNormalized.get( x ).add( new Long( normVal.longValue() ).toString() );
 				if( allZeroIndex.contains( x ) ) {
 					// index 0 = col headers, so add + 1
@@ -156,8 +152,10 @@ public class NormalizeTaxaTables extends TaxaCountModule {
 					Log.warn( getClass(), "All zero row will not be transformed - ID removed: " + id );
 				} else if( getLogBase().equalsIgnoreCase( LOG_E ) )
 					loggedInnerList.add( new Double( Math.log( normVal ) ).toString() );
-				else if( getLogBase().equalsIgnoreCase( LOG_10 ) )
-					loggedInnerList.add( new Double( Math.log10( normVal ) ).toString() );
+				else if( getLogBase().equalsIgnoreCase( LOG_10 ) ) {
+					final String res = new Double( Math.log10( normVal ) ).toString();
+					loggedInnerList.add( res );
+				}
 			}
 		}
 
@@ -187,7 +185,6 @@ public class NormalizeTaxaTables extends TaxaCountModule {
 	 */
 	protected static List<String> filterZeroSampleIDs( final List<String> sampleIDs, final Set<Integer> allZeroIndex ) {
 		final List<String> zeroSampleIDs = getNonZeroSampleIDs( sampleIDs, allZeroIndex );
-
 		for( final String id: zeroSampleIDs )
 			sampleIDs.remove( id );
 		return sampleIDs;
@@ -204,10 +201,8 @@ public class NormalizeTaxaTables extends TaxaCountModule {
 		for( int x = 0; x < data.size(); x++ )
 			for( int y = 0; y < data.get( x ).size(); y++ ) {
 				long sum = 0;
-
 				for( final Long d: data.get( x ) )
 					sum += d;
-
 				if( sum == 0 ) allZero.add( x );
 			}
 		return allZero;
@@ -225,7 +220,6 @@ public class NormalizeTaxaTables extends TaxaCountModule {
 		st.nextToken(); // skip ID & then strip quotes
 		while( st.hasMoreTokens() )
 			otuNames.add( BioLockJUtil.removeOuterQuotes( st.nextToken() ) );
-
 		return otuNames;
 	}
 

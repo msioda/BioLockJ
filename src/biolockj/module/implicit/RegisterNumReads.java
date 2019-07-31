@@ -41,7 +41,7 @@ public class RegisterNumReads extends JavaModuleImpl implements SeqModule {
 		String summary = SummaryUtil.getCountSummary( this.readsPerSample, "Reads", true );
 		this.sampleIds.removeAll( this.readsPerSample.keySet() );
 		if( !this.sampleIds.isEmpty() )
-			summary += "Removed empty samples: " + BioLockJUtil.getCollectionAsString( this.sampleIds );
+			summary += "Removed empty metadata records: " + BioLockJUtil.getCollectionAsString( this.sampleIds );
 
 		freeMemory();
 		return super.getSummary() + summary;

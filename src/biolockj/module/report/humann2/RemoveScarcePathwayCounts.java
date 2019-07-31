@@ -11,19 +11,13 @@ package biolockj.module.report.humann2;
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU General Public License for more details at http://www.gnu.org *
  */
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
+import java.io.*;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.math.NumberUtils;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
-import biolockj.exception.ConfigFormatException;
-import biolockj.util.BioLockJUtil;
-import biolockj.util.MetaUtil;
-import biolockj.util.PathwayUtil;
+import biolockj.*;
+import biolockj.exception.*;
+import biolockj.util.*;
 
 /**
  * This BioModule removes scarce pathways not found in enough samples.<br>
@@ -36,8 +30,8 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule {
 	@Override
 	public void checkDependencies() throws Exception {
 		super.checkDependencies();
-		if( getScarceCountCutoff() > 1 ) throw new ConfigFormatException( getScarceCountProp(),
-			"Required range 0.0 < " + getScarceCountProp() + " < 1.0 " );
+		if( getScarceCountCutoff() > 1 )
+			throw new ConfigFormatException( Constants.REPORT_SCARCE_CUTOFF, "Required range 0.0 - 1.0 " );
 	}
 
 	/**
@@ -51,7 +45,7 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule {
 		// summary += SummaryUtil.getCountSummary( this.totalPathwaysPerSample, "Total Pathways ", true );
 		// this.sampleIds.removeAll( this.totalPathwaysPerSample.keySet() );
 		// if( !this.sampleIds.isEmpty() ) {
-		// summary += "Removed empty samples: " + this.sampleIds;
+		// summary += "Removed empty metadata records: " + this.sampleIds;
 		// }
 		// }
 		freeMemory();
@@ -95,8 +89,8 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule {
 		}
 
 		Log.info( getClass(),
-			"Found " + map.size() + " samples with scarce pathways to removed- Pathway list saved to --> "
-				+ getScarcePathwayLogFile().getAbsolutePath() );
+			"Found " + map.size() + " samples with scarce pathways to removed- Pathway list saved to --> " +
+				getScarcePathwayLogFile().getAbsolutePath() );
 	}
 
 	/**
@@ -157,9 +151,8 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule {
 
 			if( !badSamplePathways.isEmpty() ) {
 				scarcePathMap.put( id, badSamplePathways );
-				Log.warn( getClass(),
-					id + ": Remove " + badSamplePathways.size() + " Pathways found in % samples below threshold: "
-						+ getScarceCountProp() + "=" + getMetaColName() );
+				Log.warn( getClass(), id + ": Remove " + badSamplePathways.size() +
+					" Pathways found in % samples below threshold: " + getMetaColName() );
 				Log.debug( getClass(), id + ": Removed Pathways: " + badSamplePathways );
 			}
 		}
@@ -171,12 +164,13 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule {
 
 	@SuppressWarnings("unused")
 	private boolean addMetaCol( final File file ) throws Exception {
-		return Config.getBoolean( this, Constants.REPORT_NUM_HITS )
-			&& !Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE )
-			&& file.getName().contains( Constants.HN2_PATH_ABUND_SUM );
+		return Config.getBoolean( this, Constants.REPORT_NUM_HITS ) &&
+			!Config.getBoolean( this, Constants.HN2_DISABLE_PATH_ABUNDANCE ) &&
+			file.getName().contains( Constants.HN2_PATH_ABUND_SUM );
 	}
 
-	private void buildOutputTable( final File file, final List<List<String>> data ) throws Exception {
+	private void buildOutputTable( final File file, final List<List<String>> data )
+		throws ConfigNotFoundException, ConfigFormatException, ConfigViolationException, IOException {
 		final String cutoff = getMetaColName().replaceAll( "%", "per" );
 		final File outFile = PathwayUtil.getPathwayCountFile( getOutputDir(), file, cutoff );
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( outFile ) );
@@ -201,32 +195,24 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule {
 	}
 
 	private int getCutoff() throws Exception {
-		if( this.scarceCountCutoff == null )
-			this.scarceCountCutoff = new Double( Math.ceil( MetaUtil.getSampleIds().size() * getScarceCountCutoff() ) )
-				.intValue();
-
+		if( this.scarceCountCutoff == null ) this.scarceCountCutoff =
+			new Double( Math.ceil( MetaUtil.getSampleIds().size() * getScarceCountCutoff() ) ).intValue();
 		return this.scarceCountCutoff;
 	}
 
-	private String getMetaColName() throws Exception {
+	private String getMetaColName() throws ConfigNotFoundException, ConfigFormatException {
 		return "scarce" + new Double( getScarceCountCutoff() * 100 ).intValue() + "%";
 	}
 
 	private int getSampleCutoff() throws Exception {
-		if( this.scarceSampleCutoff == null ) this.scarceSampleCutoff = new Double(
-			Math.ceil( MetaUtil.getFieldNames().size() * getScarceSampleCutoff() ) ).intValue();
+		if( this.scarceSampleCutoff == null ) this.scarceSampleCutoff =
+			new Double( Math.ceil( MetaUtil.getFieldNames().size() * getScarceSampleCutoff() ) ).intValue();
 
 		return this.scarceSampleCutoff;
 	}
 
-	private Double getScarceCountCutoff() throws Exception {
-		return Config.requirePositiveDouble( this, getScarceCountProp() );
-	}
-
-	private String getScarceCountProp() {
-		if( this.scarceCountCutoffProp == null )
-			this.scarceCountCutoffProp = Config.getModuleProp( this, Constants.REPORT_SCARCE_CUTOFF );
-		return this.scarceCountCutoffProp;
+	private Double getScarceCountCutoff() throws ConfigNotFoundException, ConfigFormatException {
+		return Config.requirePositiveDouble( this, Constants.REPORT_SCARCE_CUTOFF );
 	}
 
 	private File getScarcePathwayLogFile() {
@@ -255,8 +241,8 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule {
 		return scarcePathways;
 	}
 
-	private Double getScarceSampleCutoff() throws Exception {
-		return Config.requirePositiveDouble( this, getScarceSampleProp() );
+	private Double getScarceSampleCutoff() throws ConfigNotFoundException, ConfigFormatException {
+		return Config.requirePositiveDouble( this, Constants.REPORT_SAMPLE_CUTOFF );
 	}
 
 	private Set<String> getScarceSampleIds( final File file, final List<List<String>> table ) throws Exception {
@@ -267,10 +253,8 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule {
 			int count = 0;
 			boolean newRecord = true;
 			for( final String cell: record ) {
-				if( newRecord ) {
-					id = cell;
-					if( id.equals( this.TARGET ) ) Log.info( getClass(), "TARGET " + this.TARGET + " located!" );
-				} else if( NumberUtils.isNumber( cell ) && Double.valueOf( cell ) > 0 ) count++;
+				if( newRecord ) id = cell;
+				else if( NumberUtils.isNumber( cell ) && Double.valueOf( cell ) > 0 ) count++;
 				newRecord = false;
 			}
 
@@ -288,14 +272,9 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule {
 		return new File( getTempDir().getAbsolutePath() + File.separator + "scarceSamples" + TXT_EXT );
 	}
 
-	private String getScarceSampleProp() {
-		if( this.scarceSampleCutoffProp == null )
-			this.scarceSampleCutoffProp = Config.getModuleProp( this, Constants.REPORT_SAMPLE_CUTOFF );
-		return this.scarceSampleCutoffProp;
-	}
-
 	private TreeMap<String, TreeSet<String>> removeScarceSamples( final File file, final Set<String> scarceIds )
-		throws Exception {
+		throws ConfigNotFoundException, ConfigFormatException, ConfigViolationException, FileNotFoundException,
+		IOException {
 		final TreeMap<String, TreeSet<String>> scarceSampleMap = new TreeMap<>();
 		final List<List<String>> table = BioLockJUtil.parseCountTable( file );
 		final List<List<String>> output = new ArrayList<>();
@@ -303,7 +282,6 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule {
 		for( final List<String> record: table ) {
 			final String id = record.get( 0 );
 			if( id.equals( MetaUtil.getID() ) ) pathways = record.subList( 1, record.size() );
-
 			if( scarceIds.contains( id ) && pathways != null ) {
 				scarceSampleMap.put( id, new TreeSet<>() );
 				for( int i = 1; i < record.size(); i++ )
@@ -313,17 +291,12 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule {
 		}
 
 		buildOutputTable( file, output );
-
 		return scarceSampleMap;
 	}
 
 	private final Set<String> sampleIds = new HashSet<>();
-
 	private Integer scarceCountCutoff = null;
-	private String scarceCountCutoffProp = null;
 	private Integer scarceSampleCutoff = null;
-	private String scarceSampleCutoffProp = null;
-	private final String TARGET = "AOX7";
 	private Map<String, String> totalPathwaysPerSample = new HashMap<>();
 	private Map<String, String> uniquePathwaysPerSample = new HashMap<>();
 }

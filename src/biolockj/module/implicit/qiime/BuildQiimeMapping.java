@@ -13,14 +13,10 @@ package biolockj.module.implicit.qiime;
 
 import java.io.*;
 import java.util.*;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.module.ScriptModule;
 import biolockj.module.SeqModuleImpl;
-import biolockj.util.BioLockJUtil;
-import biolockj.util.MetaUtil;
-import biolockj.util.SeqUtil;
+import biolockj.util.*;
 
 /**
  * This BioModule converts the metadata file into a tab delimited QIIME mapping file (if provided).<br>
@@ -143,8 +139,9 @@ public class BuildQiimeMapping extends SeqModuleImpl {
 	 */
 	@Override
 	public String getSummary() throws Exception {
-		final String msg = ( getOutputDir().listFiles().length == 0 ? "QIIME Mapping not found"
-			: "Generated QIIME mapping file" ) + RETURN;
+		final String msg =
+			( getOutputDir().listFiles().length == 0 ? "QIIME Mapping not found": "Generated QIIME mapping file" ) +
+				RETURN;
 
 		return super.getSummary() + msg;
 	}
@@ -164,9 +161,9 @@ public class BuildQiimeMapping extends SeqModuleImpl {
 			this.metaColumns.indexOf( Constants.QIIME_DESC_COL ) );
 
 		String awkBody = "";
-		awkBody += Config.getExe( this, Constants.EXE_AWK ) + " -F'\\" + TAB_DELIM + "' -v OFS=\"\\" + TAB_DELIM
-			+ "\" '{ print $1," + colIndex( this.metaColumns, Constants.QIIME_BARCODE_SEQ_COL ) + ","
-			+ colIndex( this.metaColumns, Constants.QIIME_LINKER_PRIMER_SEQ_COL ) + ",";
+		awkBody += Config.getExe( this, Constants.EXE_AWK ) + " -F'\\" + TAB_DELIM + "' -v OFS=\"\\" + TAB_DELIM +
+			"\" '{ print $1," + colIndex( this.metaColumns, Constants.QIIME_BARCODE_SEQ_COL ) + "," +
+			colIndex( this.metaColumns, Constants.QIIME_LINKER_PRIMER_SEQ_COL ) + ",";
 
 		for( int i = 1; i < this.metaColumns.size(); i++ )
 			if( !skip.contains( i ) ) awkBody += " $" + ( i + 1 ) + ",";
@@ -193,8 +190,8 @@ public class BuildQiimeMapping extends SeqModuleImpl {
 	 * @return Bash script line to save mapping file to output dir
 	 */
 	private String copyMappingToOutputDir() {
-		return " cp " + getMappingDir() + "*" + VALIDATED_MAPPING + " " + getOutputDir().getAbsolutePath()
-			+ File.separator + MetaUtil.getFileName();
+		return " cp " + getMappingDir() + "*" + VALIDATED_MAPPING + " " + getOutputDir().getAbsolutePath() +
+			File.separator + MetaUtil.getFileName();
 	}
 
 	/**
@@ -253,8 +250,8 @@ public class BuildQiimeMapping extends SeqModuleImpl {
 	 * Call validate_mapping_file.py to get corrected QIIME Mapping.
 	 */
 	private String validateMapping() {
-		return SCRIPT_VALIDATE_MAPPING + " -pbm " + MetaUtil.getPath() + " -o " + getMappingDir() + " -j "
-			+ Constants.QIIME_DEMUX_COL;
+		return SCRIPT_VALIDATE_MAPPING + " -pbm " + MetaUtil.getPath() + " -o " + getMappingDir() + " -j " +
+			Constants.QIIME_DEMUX_COL;
 	}
 
 	private static String colIndex( final List<String> cols, final String name ) {
@@ -266,10 +263,10 @@ public class BuildQiimeMapping extends SeqModuleImpl {
 		cols.add( MetaUtil.getID() );
 		cols.addAll( MetaUtil.getFieldNames() );
 
-		if( cols.indexOf( Constants.QIIME_BARCODE_SEQ_COL ) == 1
-			&& cols.indexOf( Constants.QIIME_LINKER_PRIMER_SEQ_COL ) == 2
-			&& cols.indexOf( Constants.QIIME_DEMUX_COL ) == cols.size() - 2
-			&& cols.indexOf( Constants.QIIME_DESC_COL ) == cols.size() - 1 ) return null;
+		if( cols.indexOf( Constants.QIIME_BARCODE_SEQ_COL ) == 1 &&
+			cols.indexOf( Constants.QIIME_LINKER_PRIMER_SEQ_COL ) == 2 &&
+			cols.indexOf( Constants.QIIME_DEMUX_COL ) == cols.size() - 2 &&
+			cols.indexOf( Constants.QIIME_DESC_COL ) == cols.size() - 1 ) return null;
 
 		return cols;
 	}

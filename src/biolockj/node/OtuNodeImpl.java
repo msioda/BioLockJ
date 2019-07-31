@@ -13,8 +13,8 @@ package biolockj.node;
 
 import java.util.HashMap;
 import java.util.Map;
-import biolockj.Constants;
-import biolockj.Log;
+import biolockj.*;
+import biolockj.exception.ConfigFormatException;
 import biolockj.util.OtuUtil;
 import biolockj.util.TaxaUtil;
 
@@ -25,10 +25,12 @@ import biolockj.util.TaxaUtil;
  * one taxa name per taxonomy level.
  */
 public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
+
 	/**
 	 * If called for level not included in {@link biolockj.Config}.{@value biolockj.Constants#REPORT_TAXONOMY_LEVELS},
 	 * check if the top level taxonomy level is already assigned. If so, populate missing levels by passing the parent
-	 * taxa to {@link biolockj.util.TaxaUtil#buildUnclassifiedTaxa(String)} until the given in level is assigned.<br>
+	 * taxa to {@link biolockj.util.TaxaUtil#getUnclassifiedTaxa(String, String)} until the given in level is
+	 * assigned.<br>
 	 * <br>
 	 * This method assumes it is called repeatedly for each OTU (once/level) and that each subsequent call passes a
 	 * lower taxonomy level than the previous.
@@ -40,28 +42,29 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 	@Override
 	public void addTaxa( final String taxa, final String level ) throws Exception {
 		if( level == null || taxa == null || level.trim().isEmpty() || taxa.trim().isEmpty() ) {
-			Log.debug( getClass(), "ID=[ " + this.sampleId + " ] --> Taxa missing for: level=[ " + level + " ]; Taxa=[ "
-				+ taxa + " ]; Line =[ " + this.line + " ]" );
+			Log.debug( getClass(), "ID=[ " + this.sampleId + " ] --> Taxa missing for: level=[ " + level +
+				" ]; Taxa=[ " + taxa + " ]; Line =[ " + this.line + " ]" );
 			return;
 		}
 
+		// Some classifiers report species or genus name but are missing
+		// domain/phylum/class/order/family info.
+		// If top level taxonomy level undefined, we omit the result for lack of context.
 		if( !TaxaUtil.getTaxaLevels().contains( level ) ) {
-			if( !this.taxaMap.containsKey( TaxaUtil.topTaxaLevel() ) ) // Some classifiers report species or genus name
-																		// but are missing
-																		// domain/phylum/class/order/family info.
-				// If top level taxonomy level undefined, we omit the result for lack of context.
-				return;
+			if( !this.taxaMap.containsKey( TaxaUtil.topTaxaLevel() ) ) return;
 
 			// Some classifiers will report a phylum and a lower level (like genus) but are missing in-between levels.
 			// Populate missing levels between top-level and current level
 			String parentTaxa = null;
+			String parentLevel = null;
 			for( final String testLevel: TaxaUtil.getTaxaLevelSpan() ) {
-				if( this.taxaMap.keySet().contains( testLevel ) ) parentTaxa = this.taxaMap.get( testLevel );
-				else if( parentTaxa != null ) {
-					final String unclassifiedTaxa = TaxaUtil.buildUnclassifiedTaxa( parentTaxa );
+				if( this.taxaMap.keySet().contains( testLevel ) ) {
+					parentTaxa = this.taxaMap.get( testLevel );
+					parentLevel = testLevel;
+				} else if( parentTaxa != null &&
+					Config.getBoolean( Pipeline.exeModule(), Constants.REPORT_UNCLASSIFIED_TAXA ) ) {
+					final String unclassifiedTaxa = TaxaUtil.getUnclassifiedTaxa( parentTaxa, parentLevel );
 					this.taxaMap.put( testLevel, unclassifiedTaxa );
-					// Log.debug( getClass(), testLevel + " taxa undefined, inherit parent name as: " + unclassifiedTaxa
-					// );
 				}
 
 				if( level.equals( testLevel ) ) return;
@@ -71,8 +74,8 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 			return;
 		}
 
-		if( this.taxaMap.get( level ) != null ) Log.debug( getClass(), this.sampleId + " overwriting OTU: "
-			+ this.taxaMap.get( level ) + " with " + taxa + "  --> Line = " + this.line );
+		if( this.taxaMap.get( level ) != null ) Log.debug( getClass(), this.sampleId + " overwriting OTU: " +
+			this.taxaMap.get( level ) + " with " + taxa + "  --> Line = " + this.line );
 
 		// Log.debug( getClass(), "taxaMap.put( level=" + level + ", taxa=" + taxa + " )" );
 		this.taxaMap.put( level, taxa );
@@ -91,21 +94,7 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 	}
 
 	@Override
-	public Map<String, String> delimToLevelMap() {
-		if( delimToLevelMap.isEmpty() ) {
-			delimToLevelMap.put( DOMAIN_DELIM, Constants.DOMAIN );
-			delimToLevelMap.put( PHYLUM_DELIM, Constants.PHYLUM );
-			delimToLevelMap.put( CLASS_DELIM, Constants.CLASS );
-			delimToLevelMap.put( ORDER_DELIM, Constants.ORDER );
-			delimToLevelMap.put( FAMILY_DELIM, Constants.FAMILY );
-			delimToLevelMap.put( GENUS_DELIM, Constants.GENUS );
-			delimToLevelMap.put( SPECIES_DELIM, Constants.SPECIES );
-		}
-		return delimToLevelMap;
-	}
-
-	@Override
-	public int getCount() {
+	public long getCount() {
 		return this.count;
 	}
 
@@ -121,13 +110,20 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 		final StringBuffer otu = new StringBuffer();
 		try {
 			String parentTaxa = null;
+			String parentLevel = null;
+
 			for( final String level: TaxaUtil.getTaxaLevels() ) {
 				String taxaName = this.taxaMap.get( level );
-				if( taxaName == null || taxaName.isEmpty() ) taxaName = TaxaUtil.buildUnclassifiedTaxa( parentTaxa );
-				else parentTaxa = taxaName;
+				if( taxaName != null && taxaName.trim().isEmpty() ) taxaName = null;
+				if( taxaName == null && Config.getBoolean( Pipeline.exeModule(), Constants.REPORT_UNCLASSIFIED_TAXA ) )
+					taxaName = TaxaUtil.getUnclassifiedTaxa( parentTaxa, parentLevel );
+				else if( taxaName != null ) {
+					parentTaxa = taxaName;
+					parentLevel = level;
+				}
 
-				if( !otu.toString().isEmpty() ) otu.append( Constants.SEPARATOR );
-
+				if( taxaName == null ) continue;
+				if( !otu.toString().isEmpty() ) otu.append( Constants.OTU_SEPARATOR );
 				otu.append( OtuUtil.buildOtuTaxa( level, taxaName ) );
 			}
 		} catch( final Exception ex ) {
@@ -147,10 +143,10 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 	 * levels are found, they inherit their parent taxa.
 	 */
 	@Override
-	public Map<String, String> getTaxaMap() throws Exception {
+	public Map<String, String> getTaxaMap() throws ConfigFormatException {
 		if( !this.taxaMap.containsKey( TaxaUtil.topTaxaLevel() ) ) {
-			Log.debug( getClass(), "Omit incomplete [ " + this.sampleId + " ] OTU missing the top taxonomy level: "
-				+ TaxaUtil.topTaxaLevel() + ( this.line.isEmpty() ? "": ", classifier output = " + this.line ) );
+			Log.debug( getClass(), "Omit incomplete [ " + this.sampleId + " ] OTU missing the top taxonomy level: " +
+				TaxaUtil.topTaxaLevel() + ( this.line.isEmpty() ? "": ", classifier output = " + this.line ) );
 			return null;
 		}
 
@@ -159,7 +155,7 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 	}
 
 	@Override
-	public void setCount( final int count ) {
+	public void setCount( final long count ) {
 		this.count = count;
 	}
 
@@ -181,25 +177,60 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 		this.sampleId = sampleId;
 	}
 
+	@Override
+	public String toString() {
+		String val = getSampleId();
+		try {
+			if( getTaxaMap() != null ) for( final String level: getTaxaMap().keySet() )
+				val += ":" + level + "-" + getTaxaMap().get( level );
+		} catch( final Exception ex ) {
+			Log.error( getClass(), "Unable to build toString() for " + getSampleId(), ex );
+			ex.printStackTrace();
+		}
+		return val;
+	}
+
 	/**
 	 * Populate missing OTUs if top level taxa is defined and there is a level gap between the top level and the bottom
-	 * level. Missing levels inherit the parent name as "Unclassified (parent-name) OTU".
+	 * level. If configured, missing levels inherit the parent name as "Unclassified (parent-name) OTU".
+	 * 
+	 * @throws ConfigFormatException if Config prop boolean does not contain Y or N
 	 */
-	protected void populateInBetweenTaxa() {
+	protected void populateInBetweenTaxa() throws ConfigFormatException {
 		final int numTaxa = this.taxaMap.size();
 		int numFound = 0;
 		String parentTaxa = null;
-
+		String parentLevel = null;
 		for( final String level: TaxaUtil.getTaxaLevelSpan() )
 			if( this.taxaMap.get( level ) != null ) {
 				numFound++;
 				parentTaxa = this.taxaMap.get( level );
-			} else if( parentTaxa != null && this.taxaMap.get( level ) == null && numFound < numTaxa )
-				this.taxaMap.put( level, TaxaUtil.buildUnclassifiedTaxa( parentTaxa ) );
+				parentLevel = level;
+			} else if( Config.getBoolean( Pipeline.exeModule(), Constants.REPORT_UNCLASSIFIED_TAXA ) &&
+				parentTaxa != null && this.taxaMap.get( level ) == null && numFound < numTaxa )
+				this.taxaMap.put( level, TaxaUtil.getUnclassifiedTaxa( parentTaxa, parentLevel ) );
 			else if( numFound == numTaxa ) break;
 	}
 
-	private int count = 0;
+	/**
+	 * Map level delimeter to level names.
+	 * 
+	 * @return Map delim to level name
+	 */
+	public static Map<String, String> delimToLevelMap() {
+		if( delimToLevelMap.isEmpty() ) {
+			delimToLevelMap.put( DOMAIN_DELIM, Constants.DOMAIN );
+			delimToLevelMap.put( PHYLUM_DELIM, Constants.PHYLUM );
+			delimToLevelMap.put( CLASS_DELIM, Constants.CLASS );
+			delimToLevelMap.put( ORDER_DELIM, Constants.ORDER );
+			delimToLevelMap.put( FAMILY_DELIM, Constants.FAMILY );
+			delimToLevelMap.put( GENUS_DELIM, Constants.GENUS );
+			delimToLevelMap.put( SPECIES_DELIM, Constants.SPECIES );
+		}
+		return delimToLevelMap;
+	}
+
+	private long count = 0;
 	private String line = "";
 	private String name = null;
 	private String sampleId = null;

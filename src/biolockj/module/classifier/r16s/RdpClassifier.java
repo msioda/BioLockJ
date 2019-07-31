@@ -14,15 +14,10 @@ package biolockj.module.classifier.r16s;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
-import biolockj.exception.ConfigNotFoundException;
-import biolockj.exception.ConfigPathException;
+import biolockj.*;
+import biolockj.exception.*;
 import biolockj.module.classifier.ClassifierModuleImpl;
-import biolockj.util.DockerUtil;
-import biolockj.util.ModuleUtil;
-import biolockj.util.SeqUtil;
+import biolockj.util.*;
 
 /**
  * This BioModule uses RDP to assign taxonomy to 16s sequences.
@@ -42,8 +37,8 @@ public class RdpClassifier extends ClassifierModuleImpl {
 	public List<List<String>> buildScript( final List<File> files ) throws Exception {
 		final List<List<String>> data = new ArrayList<>();
 		for( final File file: files ) {
-			final String outputFile = getOutputDir().getAbsolutePath() + File.separator
-				+ SeqUtil.getSampleId( file.getName() ) + Constants.PROCESSED;
+			final String outputFile = getOutputDir().getAbsolutePath() + File.separator +
+				SeqUtil.getSampleId( file.getName() ) + Constants.PROCESSED;
 			final ArrayList<String> lines = new ArrayList<>();
 			lines.add( FUNCTION_RDP + " " + file.getAbsolutePath() + " " + outputFile );
 			data.add( lines );
@@ -64,7 +59,7 @@ public class RdpClassifier extends ClassifierModuleImpl {
 	 * RDP uses java to run a JAR file, so no special command is required
 	 */
 	@Override
-	public String getClassifierExe() throws Exception {
+	public String getClassifierExe() throws ConfigException {
 		return null;
 	}
 
@@ -72,12 +67,12 @@ public class RdpClassifier extends ClassifierModuleImpl {
 	 * Do not accept -t to define a database, since that instead requires the specific property: {@value #RDP_DB}
 	 */
 	@Override
-	public List<String> getClassifierParams() throws Exception {
+	public List<String> getClassifierParams() throws ConfigException {
 		final List<String> validParams = new ArrayList<>();
 		for( final String param: Config.getList( this, RDP_PARAMS ) )
 			if( param.startsWith( DB_PARAM ) )
-				Log.warn( getClass(), "Ignoring " + DB_PARAM + " value: [ " + param + " ] set in Config property "
-					+ RDP_PARAMS + "since this property must be explictily defined in " + RDP_DB );
+				Log.warn( getClass(), "Ignoring " + DB_PARAM + " value: [ " + param + " ] set in Config property " +
+					RDP_PARAMS + "since this property must be explictily defined in " + RDP_DB );
 			else validParams.add( param );
 
 		return validParams;
@@ -85,9 +80,8 @@ public class RdpClassifier extends ClassifierModuleImpl {
 
 	@Override
 	public File getDB() throws ConfigPathException, ConfigNotFoundException {
-		final String path = Config.getString( this, RDP_DB );
-		if( path != null ) {
-			if( DockerUtil.inDockerEnv() ) return new File( path );
+		if( Config.getString( this, RDP_DB ) != null ) {
+			if( DockerUtil.inDockerEnv() ) return new File( Config.getString( this, RDP_DB ) );
 			return Config.requireExistingFile( this, RDP_DB );
 		}
 		return null;
@@ -99,8 +93,7 @@ public class RdpClassifier extends ClassifierModuleImpl {
 	@Override
 	public List<String> getPreRequisiteModules() throws Exception {
 		final List<String> preReqs = new ArrayList<>();
-		if( Config.getBoolean( this, Constants.INTERNAL_PAIRED_READS ) )
-			preReqs.add( ModuleUtil.getDefaultMergePairedReadsConverter() );
+		if( SeqUtil.hasPairedReads() ) preReqs.add( ModuleUtil.getDefaultMergePairedReadsConverter() );
 		preReqs.addAll( super.getPreRequisiteModules() );
 		return preReqs;
 	}
@@ -112,17 +105,19 @@ public class RdpClassifier extends ClassifierModuleImpl {
 	public List<String> getWorkerScriptFunctions() throws Exception {
 		final List<String> lines = super.getWorkerScriptFunctions();
 		lines.add( "function " + FUNCTION_RDP + "() {" );
-		lines
-			.add( Config.getExe( this, Constants.EXE_JAVA ) + " " + getJavaParams() + Constants.JAR_ARG + " " + getJar()
-				+ " " + getRuntimeParams( getClassifierParams(), null ) + getDbParam() + OUTPUT_PARAM + " $2 $1" );
+		lines.add( Config.getExe( this, Constants.EXE_JAVA ) + " " + getJavaParams() + Constants.JAR_ARG + " " +
+			getJar() + " " + getRuntimeParams( getClassifierParams(), null ) + getDbParam() + OUTPUT_PARAM + " $2 $1" );
 		lines.add( "}" + RETURN );
 		return lines;
 	}
 
 	private String getDbParam() throws ConfigPathException, ConfigNotFoundException {
 		if( getDB() == null ) return "";
-		return DB_PARAM + " " + ( DockerUtil.inDockerEnv() ? DockerUtil.getDockerDB( this ).getAbsolutePath()
-			: Config.requireExistingFile( this, RDP_DB ).getAbsolutePath() ) + " ";
+		return DB_PARAM + " " +
+			( DockerUtil.inDockerEnv() ?
+				DockerUtil.getDockerDB( this, Config.requireString( this, RDP_DB ) ).getAbsolutePath():
+				Config.requireExistingFile( this, RDP_DB ).getAbsolutePath() ) +
+			" ";
 	}
 
 	private String getJar() throws Exception {
@@ -151,7 +146,7 @@ public class RdpClassifier extends ClassifierModuleImpl {
 	/**
 	 * {@link biolockj.Config} List property for RDP java executable JAR runtime params: {@value #RDP_PARAMS}
 	 */
-	protected static final String RDP_PARAMS = "exe.rdpParams";
+	protected static final String RDP_PARAMS = "rdp.params";
 
 	private static final String DB_PARAM = "-t";
 	private static final String OUTPUT_PARAM = "-o";

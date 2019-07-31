@@ -16,7 +16,7 @@ import java.io.File;
 /**
  * SequnceFormatException is thrown if errors occur processing fasta/fastq sequence files.
  */
-public class SequnceFormatException extends Exception {
+public class SequnceFormatException extends BioLockJException {
 
 	/**
 	 * Create standard error to throw for fasta/fastq sequence file parsing errors.
@@ -25,7 +25,7 @@ public class SequnceFormatException extends Exception {
 	 * @param msg Exception message details
 	 */
 	public SequnceFormatException( final File seqFile, final String msg ) {
-		super( msg );
+		super( "Error processing SEQ file: " + seqFile.getAbsolutePath() + " --> " + msg );
 	}
 
 	/**

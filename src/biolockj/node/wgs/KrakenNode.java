@@ -45,16 +45,16 @@ public class KrakenNode extends OtuNodeImpl {
 			final StringTokenizer taxas = new StringTokenizer( st.nextToken(), KRAKEN_DELIM );
 			while( taxas.hasMoreTokens() ) {
 				final String token = taxas.nextToken();
-				final String levelDelim = token.substring( 0, 3 );
-				final String taxa = token.substring( 3 );
-				addTaxa( taxa, delimToLevelMap().get( levelDelim ) );
+				final String level = delimToLevelMap().get( token.substring( 0, 3 ) );
+				final String taxa = token.substring( 3 ).trim();
+				if( !taxa.isEmpty() ) addTaxa( taxa, level );
 			}
 		} else {
 			while( st.hasMoreTokens() )
 				Log.warn( getClass(), "Extra Kraken token [ more than expected 2! ]: " + st.nextToken() );
 
-			throw new Exception( "Invalid Record = (" + ( Log.doDebug() ? line: id ) + ")" + Constants.RETURN
-				+ "Kraken output must have exactly 2 tab delimited columns per line. " );
+			throw new Exception( "Invalid Record = (" + ( Log.doDebug() ? line: id ) + ")" + Constants.RETURN +
+				"Kraken output must have exactly 2 tab delimited columns per line. " );
 		}
 	}
 

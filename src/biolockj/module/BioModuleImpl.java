@@ -14,10 +14,11 @@ package biolockj.module;
 import java.io.File;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.comparator.SizeFileComparator;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
+import biolockj.*;
+import biolockj.exception.ConfigFormatException;
+import biolockj.exception.ConfigNotFoundException;
 import biolockj.util.*;
 
 /**
@@ -33,7 +34,7 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule> 
 	public abstract void checkDependencies() throws Exception;
 
 	/**
-	 * By default, no cleanUp code is required.
+	 * If metadata exists in module output directory, refresh MetaUtil.
 	 */
 	@Override
 	public void cleanUp() throws Exception {
@@ -53,11 +54,15 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule> 
 	 * Compared based on ID
 	 */
 	@Override
-	public boolean equals( final Object o ) {
-		if( o == this ) return true;
-		else if( !( o instanceof BioModule ) ) return false;
-
-		return ( (BioModule) o ).getID().equals( getID() );
+	public boolean equals( final Object obj ) {
+		if( this == obj ) return true;
+		if( obj == null ) return false;
+		if( !( obj instanceof BioModuleImpl ) ) return false;
+		final BioModuleImpl other = (BioModuleImpl) obj;
+		if( getID() == null ) {
+			if( other.getID() != null ) return false;
+		} else if( !getID().equals( other.getID() ) ) return false;
+		return true;
 	}
 
 	@Override
@@ -133,6 +138,14 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule> 
 		return ModuleUtil.requireSubDir( this, TEMP_DIR );
 	}
 
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ( getID() == null ? 0: getID().hashCode() );
+		return result;
+	}
+
 	/**
 	 * This method must be called immediately upon instantiation.
 	 * 
@@ -146,10 +159,10 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule> 
 
 		if( !this.moduleDir.isDirectory() ) {
 			this.moduleDir.mkdirs();
-			Log.info( getClass(), "Construct module [ " + ModuleUtil.displayID( this ) + " ] for new "
-				+ this.moduleDir.getAbsolutePath() );
-		} else Log.info( getClass(), "Construct module [ " + ModuleUtil.displayID( this ) + " ] for existing "
-			+ this.moduleDir.getAbsolutePath() );
+			Log.info( getClass(), "Construct module [ " + ModuleUtil.displayID( this ) + " ] for new " +
+				this.moduleDir.getAbsolutePath() );
+		} else Log.info( getClass(), "Construct module [ " + ModuleUtil.displayID( this ) + " ] for existing " +
+			this.moduleDir.getAbsolutePath() );
 	}
 
 	/**
@@ -187,7 +200,9 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule> 
 		this.inputFiles.clear();
 		this.inputFiles.addAll( files );
 		Collections.sort( this.inputFiles );
-		printInputFiles();
+		if( !this.inputFiles.isEmpty() && SeqUtil.isSeqFile( this.inputFiles.get( 0 ) ) )
+			sortCachedInputFilesForEvenBatchSize();
+		else printInputFiles();
 	}
 
 	/**
@@ -211,13 +226,13 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule> 
 				validInput = true;
 			} else {
 				Log.debug( getClass(),
-					"Check previous module for valid input files... # " + previousModule.getClass().getName()
-						+ " ---> dir: " + previousModule.getOutputDir().getAbsolutePath() );
+					"Check previous module for valid input files... # " + previousModule.getClass().getName() +
+						" ---> dir: " + previousModule.getOutputDir().getAbsolutePath() );
 				validInput = isValidInputModule( previousModule );
 				if( validInput ) {
 					Log.debug( getClass(),
-						"Found VALID input in the output dir of: " + previousModule.getClass().getName() + " --> "
-							+ previousModule.getOutputDir().getAbsolutePath() );
+						"Found VALID input in the output dir of: " + previousModule.getClass().getName() + " --> " +
+							previousModule.getOutputDir().getAbsolutePath() );
 					moduleInputFiles.addAll( FileUtils.listFiles( previousModule.getOutputDir(),
 						HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE ) );
 					Log.debug( getClass(), "# Files found: " + moduleInputFiles.size() );
@@ -240,6 +255,27 @@ public abstract class BioModuleImpl implements BioModule, Comparable<BioModule> 
 		Log.info( getClass(), "# Input Files: " + getFileCache().size() );
 		for( int i = 0; i < getFileCache().size(); i++ )
 			Log.info( getClass(), "Input File [" + i + "]: " + this.inputFiles.get( i ).getAbsolutePath() );
+	}
+
+	private void sortCachedInputFilesForEvenBatchSize() {
+		try {
+			final Map<Integer, List<File>> map = new HashMap<>();
+			final int numWorkers = ModuleUtil.getNumWorkers( this );
+			final List<File> sortedList = new SizeFileComparator().sort( new ArrayList<>( this.inputFiles ) );
+			for( int i = 0; i < sortedList.size(); i++ ) {
+				final List<File> files =
+					map.get( i % numWorkers ) == null ? new ArrayList<>(): map.get( i % numWorkers );
+				files.add( sortedList.get( i ) );
+				map.put( i % numWorkers, files );
+			}
+			this.inputFiles.clear();
+			for( final Integer batchNum: map.keySet() )
+				this.inputFiles.addAll( map.get( batchNum ) );
+			Log.info( getClass(),
+				"List seqFiles sorted for equal batch sizes " + BioLockJUtil.printLongFormList( this.inputFiles ) );
+		} catch( ConfigFormatException | ConfigNotFoundException ex ) {
+			Log.error( getClass(), "Failed sort by size, return alphabetical list instead", ex );
+		}
 	}
 
 	private final List<File> inputFiles = new ArrayList<>();

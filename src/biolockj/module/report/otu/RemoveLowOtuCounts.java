@@ -11,14 +11,10 @@ package biolockj.module.report.otu;
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE. See the GNU General Public License for more details at http://www.gnu.org *
  */
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
+import java.io.*;
 import java.util.*;
 import org.apache.commons.io.FileUtils;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.module.implicit.parser.ParserModuleImpl;
 import biolockj.util.*;
 
@@ -53,12 +49,12 @@ public class RemoveLowOtuCounts extends OtuCountModule {
 		final String label = "OTUs";
 		final int pad = SummaryUtil.getPad( label );
 		String summary = "Remove OTU below count --> " + getMetaColName() + RETURN;
-		summary += BioLockJUtil.addTrailingSpaces( "# Unique OTUs removed:", pad ) + this.uniqueOtuRemoved.size()
-			+ RETURN;
+		summary +=
+			BioLockJUtil.addTrailingSpaces( "# Unique OTUs removed:", pad ) + this.uniqueOtuRemoved.size() + RETURN;
 		summary += BioLockJUtil.addTrailingSpaces( "# Total OTUs removed:", pad ) + this.totalOtuRemoved + RETURN;
 		summary += SummaryUtil.getCountSummary( this.hitsPerSample, label, false );
 		this.sampleIds.removeAll( this.hitsPerSample.keySet() );
-		if( !this.sampleIds.isEmpty() ) summary += "Removed empty samples: " + this.sampleIds;
+		if( !this.sampleIds.isEmpty() ) summary += "Removed empty metadata records: " + this.sampleIds;
 		this.hitsPerSample = null;
 		return super.getSummary() + summary;
 	}
@@ -98,8 +94,8 @@ public class RemoveLowOtuCounts extends OtuCountModule {
 		}
 
 		Log.info( getClass(),
-			"Found " + lowCountOtus.size() + " samples with low count OTUs removed - OTU list saved to --> "
-				+ getLowCountOtuLogFile().getAbsolutePath() );
+			"Found " + lowCountOtus.size() + " samples with low count OTUs removed - OTU list saved to --> " +
+				getLowCountOtuLogFile().getAbsolutePath() );
 	}
 
 	/**
@@ -109,8 +105,8 @@ public class RemoveLowOtuCounts extends OtuCountModule {
 	 * @return TreeMap(SampleId, TreeMap(OTU, count)) Updated sampleOtuCounts after removal of low counts.
 	 * @throws Exception if errors occur
 	 */
-	protected TreeMap<String, TreeSet<String>> removeLowOtuCounts(
-		final TreeMap<String, TreeMap<String, Long>> sampleOtuCounts ) throws Exception {
+	protected TreeMap<String, TreeSet<String>>
+		removeLowOtuCounts( final TreeMap<String, TreeMap<String, Long>> sampleOtuCounts ) throws Exception {
 		final TreeMap<String, TreeSet<String>> lowCountOtus = new TreeMap<>();
 		Log.debug( getClass(), "Build low count files for total # files: " + sampleOtuCounts.size() );
 		for( final String sampleId: sampleOtuCounts.keySet() ) {
@@ -143,9 +139,8 @@ public class RemoveLowOtuCounts extends OtuCountModule {
 
 				if( numOtuRemoved == 0 ) FileUtils.copyFileToDirectory( getFileMap().get( sampleId ), getOutputDir() );
 				else {
-
-					Log.warn( getClass(), sampleId + ": Removed " + badOtus.size() + " low OTU counts (below "
-						+ getProp() + "=" + getMinCount() + ") --> " + badOtus );
+					Log.warn( getClass(), sampleId + ": Removed " + badOtus.size() + " low OTU counts (below " +
+						getMinCount() + ") --> " + badOtus );
 
 					final File otuFile = OtuUtil.getOtuCountFile( getOutputDir(), sampleId, getMetaColName() );
 					final BufferedWriter writer = new BufferedWriter( new FileWriter( otuFile ) );
@@ -182,17 +177,11 @@ public class RemoveLowOtuCounts extends OtuCountModule {
 	}
 
 	private Integer getMinCount() throws Exception {
-		return Config.requirePositiveInteger( this, getProp() );
-	}
-
-	private String getProp() {
-		if( this.prop == null ) this.prop = Config.getModuleProp( this, Constants.REPORT_MIN_COUNT );
-		return this.prop;
+		return Config.requirePositiveInteger( this, Constants.REPORT_MIN_COUNT );
 	}
 
 	private Map<String, File> fileMap = null;
 	private Map<String, String> hitsPerSample = new HashMap<>();
-	private String prop = null;
 	private final Set<String> sampleIds = new HashSet<>();
 	private long totalOtuRemoved = 0;
 	private final Set<String> uniqueOtuRemoved = new HashSet<>();

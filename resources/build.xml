@@ -1,5 +1,11 @@
 <project name="BioLockJ" default="build-jar" basedir="..">
 
+	<loadfile property="blj_version" srcfile=".version">
+	    			<filterchain><striplinebreaks/></filterchain>
+	    		</loadfile>
+	
+	<available file=".git" type="dir" property="git.present"/>
+	
 	<taskdef resource="net/sf/antcontrib/antlib.xml">
 		<classpath>
 			<pathelement location="lib/ant-contrib-0.6.jar"/>
@@ -35,9 +41,6 @@
 				<delete file="dist/BioLockJ.jar"/>
 			</then>
 		</if>
-		<loadfile property="blj_version" srcfile=".version">
-    			<filterchain><striplinebreaks/></filterchain>
-    		</loadfile>
     		<property name="release_tar" value="dist/biolockj_${blj_version}.tgz"/>
 	</target>
 
@@ -47,11 +50,27 @@
     		<copy file="resources/log4j.properties" todir="bin"/>
     </target>
 	
-	<target name="build-jar" depends="compile-source">
+	<target name="git.revision" if="git.present">
+	    <exec executable="git" outputproperty="git.revision" failifexecutionfails="false" errorproperty="">
+	        <arg value="describe"/>
+	    	<arg value="--tags"/>
+	        <arg value="--always"/>
+	    	<arg value="--long"/>
+	        <arg value="HEAD"/>
+	    </exec>
+	</target>
+	
+	<target name="build-jar" depends="compile-source,git.revision">
 		<jar basedir="bin" destfile="dist/BioLockJ.jar">
 			<zipgroupfileset dir="lib" includes="*.jar"/>
 			<manifest>
-				<attribute name="Version" value="1.0"/>
+				<attribute name="Specification-Title" value="BioLockJ"/>
+				<attribute name="Specification-Version" value="${blj_version}"/>
+				<attribute name="Specification-Vendor" value="UNCC Fodor Lab"/>
+				<attribute name="Implementation-Title" value="BioLockJ"/>
+				<attribute name="Implementation-Version" value="${git.revision}"/>
+				<attribute name="Implementation-Vendor" value="UNCC Fodor Lab"/>
+				<attribute name="Version" value="${blj_version}"/>
 				<attribute name="Main-Class" value="biolockj.BioLockJ"/>
 			</manifest>
 		</jar>

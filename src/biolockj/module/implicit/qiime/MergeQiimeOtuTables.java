@@ -17,6 +17,7 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import biolockj.Constants;
 import biolockj.Log;
+import biolockj.module.BioModule;
 import biolockj.module.ScriptModuleImpl;
 import biolockj.module.classifier.r16s.QiimeClosedRefClassifier;
 import biolockj.util.ModuleUtil;
@@ -56,8 +57,8 @@ public class MergeQiimeOtuTables extends ScriptModuleImpl {
 	public void checkDependencies() throws Exception {
 		super.checkDependencies();
 		if( !( ModuleUtil.getPreviousModule( this ) instanceof QiimeClosedRefClassifier ) )
-			throw new Exception( "Module order exception!  " + RETURN + getClass().getName()
-				+ " must run immediately after " + QiimeClosedRefClassifier.class.getName() + " (if configured)" );
+			throw new Exception( "Module order exception!  " + RETURN + getClass().getName() +
+				" must run immediately after " + QiimeClosedRefClassifier.class.getName() + " (if configured)" );
 	}
 
 	/**
@@ -73,6 +74,11 @@ public class MergeQiimeOtuTables extends ScriptModuleImpl {
 				"Previous module only output 1 " + QiimeClassifier.OTU_TABLE + "so there is nothing to merge" );
 			FileUtils.copyFileToDirectory( getInputFiles().get( 0 ), getOutputDir() );
 		} else throw new Exception( "No " + Constants.OTU_TABLE_PREFIX + " files to merge" );
+	}
+
+	@Override
+	public boolean isValidInputModule( final BioModule module ) {
+		return module instanceof QiimeClosedRefClassifier;
 	}
 
 	/**

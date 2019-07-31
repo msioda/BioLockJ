@@ -11,9 +11,8 @@
  */
 package biolockj;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import biolockj.exception.ConfigFormatException;
 import biolockj.module.BioModule;
 import biolockj.module.implicit.ImportMetadata;
 import biolockj.module.implicit.RegisterNumReads;
@@ -26,7 +25,7 @@ import biolockj.util.*;
  */
 public class BioModuleFactory {
 	private BioModuleFactory() throws Exception {
-		if( DockerUtil.isDirectMode() ) this.moduleCache = Config.getList( null, Constants.INTERNAL_ALL_MODULES );
+		if( BioLockJUtil.isDirectMode() ) this.moduleCache = Config.getList( null, Constants.INTERNAL_ALL_MODULES );
 		else initModules();
 	}
 
@@ -103,8 +102,8 @@ public class BioModuleFactory {
 	private int getCountModIndex() throws Exception {
 		int i = -1;
 		final boolean addMod = requireCountMod();
-		if( addMod ) if( this.moduleCache.size() == 1
-			|| !this.moduleCache.get( 1 ).equals( ModuleUtil.getDefaultDemultiplexer() ) ) i = 1;
+		if( addMod ) if( this.moduleCache.size() == 1 ||
+			!this.moduleCache.get( 1 ).equals( ModuleUtil.getDefaultDemultiplexer() ) ) i = 1;
 		else if( this.moduleCache.get( 1 ).equals( ModuleUtil.getDefaultDemultiplexer() ) ) i = 2;
 
 		Log.debug( getClass(), addMod ? "ADD count module at index: " + i: "No need to add count mdoule" );
@@ -158,17 +157,19 @@ public class BioModuleFactory {
 		for( final String module: this.moduleCache ) {
 			if( finalModules.size() == i ) {
 				finalModules.add( SeqFileValidator.class.getName() );
-				info( "Config property [ " + Constants.REPORT_NUM_READS + "=" + Constants.TRUE + " ] & [ "
-					+ Constants.INTERNAL_SEQ_TYPE + "=" + Config.requireString( null, Constants.INTERNAL_SEQ_TYPE )
-					+ " ] --> Adding module: " + SeqFileValidator.class.getName() );
+				info( "Config property [ " + Constants.REPORT_NUM_READS + "=" + Constants.TRUE + " ] & [ " +
+					Constants.INTERNAL_SEQ_TYPE + "=" + Config.requireString( null, Constants.INTERNAL_SEQ_TYPE ) +
+					" ] --> Adding module: " + SeqFileValidator.class.getName() );
+				this.foundSeqMod = true;
 			}
-			if( requireGunzip( module ) ) {
-				info( "Qiime does not accept \"" + Constants.GZIP_EXT + "\" format, so adding required pre-req module: "
-					+ Gunzipper.class.getName() + " before " + module );
-
+			if( isSeqProcessingModule( module ) ) this.foundSeqMod = true;
+			else if( requireGunzip( module ) ) {
+				info(
+					"Qiime does not accept \"" + Constants.GZIP_EXT + "\" format, so adding required pre-req module: " +
+						Gunzipper.class.getName() + " before " + module );
 				this.foundSeqMod = true;
 				finalModules.add( Gunzipper.class.getName() );
-			} else if( isSeqProcessingModule( module ) ) this.foundSeqMod = true;
+			}
 
 			finalModules.add( module );
 		}
@@ -177,13 +178,13 @@ public class BioModuleFactory {
 	}
 
 	private boolean requireCountMod() throws Exception {
-		return !this.foundCountMod && Collections.disjoint( this.moduleCache, getCountModules() )
-			&& Config.getBoolean( null, Constants.REPORT_NUM_READS ) && SeqUtil.piplineHasSeqInput();
+		return !this.foundCountMod && Collections.disjoint( this.moduleCache, getCountModules() ) &&
+			Config.getBoolean( null, Constants.REPORT_NUM_READS ) && SeqUtil.piplineHasSeqInput();
 	}
 
-	private boolean requireGunzip( final String module ) {
-		return !this.foundSeqMod && hasGzippedInput() && isSeqProcessingModule( module )
-			&& module.toLowerCase().contains( Constants.QIIME );
+	private boolean requireGunzip( final String module ) throws ConfigFormatException {
+		return !this.foundSeqMod && hasGzippedInput() && isSeqProcessingModule( module ) &&
+			module.toLowerCase().contains( Constants.QIIME );
 	}
 
 	/**
@@ -194,7 +195,6 @@ public class BioModuleFactory {
 	 */
 	public static List<BioModule> buildPipeline() throws Exception {
 		if( factory == null ) initFactory();
-
 		return factory.buildModules();
 	}
 
@@ -225,10 +225,10 @@ public class BioModuleFactory {
 
 		for( final String module: configModules )
 			if( isImplicitModule( module ) && !Config.getBoolean( null, Constants.DISABLE_ADD_IMPLICIT_MODULES ) )
-				warn( "Ignoring configured module [" + module
-					+ "] since implicit BioModules are added to the pipeline by the system if needed.  "
-					+ "To override this behavior and ignore implicit designation, udpate project Config: ["
-					+ Constants.DISABLE_ADD_IMPLICIT_MODULES + "=" + Constants.TRUE + "]" );
+				warn( "Ignoring configured module [" + module +
+					"] since implicit BioModules are added to the pipeline by the system if needed.  " +
+					"To override this behavior and ignore implicit designation, udpate project Config: [" +
+					Constants.DISABLE_ADD_IMPLICIT_MODULES + "=" + Constants.TRUE + "]" );
 			else modules.add( module );
 
 		return modules;
@@ -244,13 +244,14 @@ public class BioModuleFactory {
 
 	}
 
-	private static boolean hasGzippedInput() {
-		return !BioLockJUtil.getPipelineInputFiles().isEmpty()
-			&& SeqUtil.isGzipped( BioLockJUtil.getPipelineInputFiles().iterator().next().getName() );
+	private static boolean hasGzippedInput() throws ConfigFormatException {
+		return !BioLockJUtil.getPipelineInputFiles().isEmpty() &&
+			SeqUtil.isGzipped( BioLockJUtil.getPipelineInputFiles().iterator().next().getName() ) &&
+			!Config.getBoolean( null, Constants.REPORT_NUM_READS );
 	}
 
 	private static void info( final String msg ) {
-		if( !DockerUtil.isDirectMode() ) Log.info( BioModuleFactory.class, msg );
+		if( !BioLockJUtil.isDirectMode() ) Log.info( BioModuleFactory.class, msg );
 	}
 
 	private static void initFactory() throws Exception {
@@ -269,7 +270,7 @@ public class BioModuleFactory {
 	}
 
 	private static void warn( final String msg ) {
-		if( !DockerUtil.isDirectMode() ) Log.warn( BioModuleFactory.class, msg );
+		if( !BioLockJUtil.isDirectMode() ) Log.warn( BioModuleFactory.class, msg );
 	}
 
 	private boolean branchClassifier = false;

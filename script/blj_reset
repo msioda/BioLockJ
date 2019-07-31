@@ -1,9 +1,7 @@
 #!/bin/bash
 ###############################################################################
-##                                                                           ##
 ##  This script manually resets current module and pipeline status.          ##
 ##  All modules numbered higher than the current module will also be reset.  ##
-##                                                                           ##
 ###############################################################################
 . "${BLJ_LIB}"
 

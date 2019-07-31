@@ -1,3 +1,4 @@
+#!/bin/bash
 ###################################################################
 ##                                                               ##
 ##  This script contains common functions used in BioLockJ.      ##
@@ -21,15 +22,18 @@ build_blj_only() {
 }
 
 # Remove old Docker images
+# docker stop = SIG TERM, after timeout period, tries SIG KILL
 clearDock() {
 	echo "Stop/remove all containers & remove old images..."
 	containers=$(docker ps -aq)
 	runningProcs=$(docker ps -q)
 	images=$(docker images -f "dangling=true" -q) 
-	[ ${#runningProcs} -gt 0 ] && docker kill $runningProcs
-	[ ${#containers} -gt 0 ] && docker rm $containers
-	[ ${#images} -gt 0 ] && docker rmi $images
-	echo "All containers + stale images = REMOVED..."
+	[ ${#runningProcs} -gt 0 ] && echo "run CMD [ docker stop -t 30 $runningProcs ]" && docker stop -t 30 $runningProcs && runningProcs=$(docker ps -q)
+	[ ${#runningProcs} -gt 0 ] && echo "run CMD [ docker kill -s SIGINT $runningProcs ]" && docker kill -s SIGINT $runningProcs && runningProcs=$(docker ps -q)
+	[ ${#runningProcs} -gt 0 ] && echo "run CMD [ docker kill $runningProcs ]" && docker kill $runningProcs
+	[ ${#containers} -gt 0 ] && echo "run CMD [ docker rm $containers ]" && docker rm $containers
+	[ ${#images} -gt 0 ] && echo "run CMD [ docker rmi $images ]" && docker rmi $images
+	echo "All containers + stale images = REMOVED"
 	dockls
 }
 
@@ -43,12 +47,6 @@ dock() {
 	args="" && [ ${#3} -gt 0 ] && args="${3} "
 	echo -e  "Run Docker CMD -->  [ docker run --rm ${args}${inDir}-v \"${DOCK_SOCK}\":\"${DOCK_SOCK}\" -v \"${HOME}\":\"${BLJ_HOST_HOME}\" -v \"${BLJ_PROJ}\":\"${EFS_PROJ}\":delegated -it $(dock_id)/${img} /bin/bash  ]"
 	docker run --rm ${args}${inDir}-v "${DOCK_SOCK}":"${DOCK_SOCK}" -v "${HOME}":"${BLJ_HOST_HOME}" -v "${BLJ_PROJ}":"${EFS_PROJ}":delegated -it $(dock_id)/${img} /bin/bash
-}
-
-# Deploy only Docker images that contain $BLJ/dist/BioLockJ.jar
-push_blj_only() {
-	$(get_cmd push java_module)
-	$(get_cmd push biolockj_controller)
 }
 
 # Instantiate Docker bash shell for biolockj_controller with  
@@ -76,27 +74,26 @@ docker_dir() {
 docker_cmd() {
 	ind=0 && startInd=1 && num=${2} && displayNum=${2} && [ $# -eq 3 ] && startInd=${3}
 	[ $# -eq 1 ] && displayNum="ALL" && num=100
-	aws_log "STARTED Docker ${1} ${displayNum} Docker images starting with index #${startInd}..."
+	echo "STARTED Docker ${1} ${displayNum} Docker images starting with index #${startInd}..."
 	ind=$((ind+1)) && $(exe_cmd) && echo "${1} blj_basic" && $(get_cmd ${1} blj_basic)
 	ind=$((ind+1)) && $(exe_cmd) && echo "${1} blj_bash" && $(get_cmd ${1} blj_bash)
 	ind=$((ind+1)) && $(exe_cmd) && echo "${1} blj_basic_py2" && $(get_cmd ${1} blj_basic_py2)
 	ind=$((ind+1)) && $(exe_cmd) && echo "${1} blj_basic_java" && $(get_cmd ${1} blj_basic_java)
-	ind=$((ind+1)) && $(exe_cmd) && echo "${1} java_module" && $(get_cmd ${1} java_module)
+	ind=$((ind+1)) && $(exe_cmd) && echo "${1} java_module" && $(get_cmd ${1} java_module) #5
 	ind=$((ind+1)) && $(exe_cmd) && echo "${1} biolockj_controller" && $(get_cmd ${1} biolockj_controller)
 	ind=$((ind+1)) && $(exe_cmd) && echo "${1} kraken2_classifier_dbfree" && $(get_cmd ${1} kraken2_classifier_dbfree)
 	ind=$((ind+1)) && $(exe_cmd) && echo "${1} kraken_classifier_dbfree" && $(get_cmd ${1} kraken_classifier_dbfree)
 	ind=$((ind+1)) && $(exe_cmd) && echo "${1} knead_data_dbfree" && $(get_cmd ${1} knead_data_dbfree)
-	ind=$((ind+1)) && $(exe_cmd) && echo "${1} metaphlan2_classifier_dbfree" && $(get_cmd ${1} metaphlan2_classifier_dbfree)
+	ind=$((ind+1)) && $(exe_cmd) && echo "${1} metaphlan2_classifier_dbfree" && $(get_cmd ${1} metaphlan2_classifier_dbfree) #10
 	ind=$((ind+1)) && $(exe_cmd) && echo "${1} r_module" && $(get_cmd ${1} r_module)
 	ind=$((ind+1)) && $(exe_cmd) && echo "${1} rdp_classifier" && $(get_cmd ${1} rdp_classifier)
 	ind=$((ind+1)) && $(exe_cmd) && echo "${1} qiime_classifier" && $(get_cmd ${1} qiime_classifier)
 	ind=$((ind+1)) && $(exe_cmd) && echo "${1} metaphlan2_classifier" && $(get_cmd ${1} metaphlan2_classifier)
-	ind=$((ind+1)) && $(exe_cmd) && echo "${1} humann2_classifier_dbfree" && $(get_cmd ${1} humann2_classifier_dbfree)
-	ind=$((ind+1)) && $(exe_cmd) && echo "${1} knead_data" && $(get_cmd ${1} knead_data)
+	ind=$((ind+1)) && $(exe_cmd) && echo "${1} knead_data" && $(get_cmd ${1} knead_data) #15
 	ind=$((ind+1)) && $(exe_cmd) && echo "${1} kraken2_classifier" && $(get_cmd ${1} kraken2_classifier)
 	ind=$((ind+1)) && $(exe_cmd) && echo "${1} kraken_classifier" && $(get_cmd ${1} kraken_classifier)
-	#ind=$((ind+1)) && $(exe_cmd) && echo "${1} humann2_classifier" && $(get_cmd ${1} humann2_classifier)
-	aws_log "COMPLETED Docker ${1} for ${displayNum} modules starting with index #${startInd}!"
+	ind=$((ind+1)) && $(exe_cmd) && echo "${1} humann2_classifier" && $(get_cmd ${1} humann2_classifier) #18
+	echo "COMPLETED Docker ${1} for ${displayNum} modules starting with index #${startInd}!"
 }
 
 # Used by docker_cmd to build and push number of modules given, or all modules if no params
@@ -139,6 +136,12 @@ goDock() {
 	count=$(docker ps -q| head -1)
 	if [ $# -eq 0 ]; then id="$(docker ps -q | head -n 1)"; else id="${1}"; fi
 	docker exec -ti ${id} /bin/bash
+}
+
+# Deploy only Docker images that contain $BLJ/dist/BioLockJ.jar
+push_blj_only() {
+	$(get_cmd push java_module)
+	$(get_cmd push biolockj_controller)
 }
 
 # Run a clone of the last biolockj_controller container

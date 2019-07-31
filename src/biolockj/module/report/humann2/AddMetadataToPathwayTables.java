@@ -12,15 +12,9 @@
 package biolockj.module.report.humann2;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.StringTokenizer;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
-import biolockj.util.BioLockJUtil;
-import biolockj.util.MetaUtil;
-import biolockj.util.PathwayUtil;
+import java.util.*;
+import biolockj.*;
+import biolockj.util.*;
 
 /**
  * This BioModule is used to add metadata columns to the HumanN2 pathway abundance, pathway coverage, and gene family
@@ -37,6 +31,8 @@ public class AddMetadataToPathwayTables extends Humann2CountModule {
 	public void cleanUp() throws Exception {
 		super.cleanUp();
 		Config.setConfigProperty( Constants.R_INTERNAL_RUN_HN2, Constants.TRUE );
+		Log.info( getClass(), "Update Config to set " + Constants.R_INTERNAL_RUN_HN2 + " = " + Constants.TRUE );
+		MasterConfigUtil.saveMasterConfig();
 	}
 
 	/**

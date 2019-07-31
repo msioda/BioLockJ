@@ -1,23 +1,9 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: >-
   AWSBatchGenomicsStack_Template
-  This is an AWS CloudFormation Template for BioLockJ Genomics pipeline using AWS Batch 
-  This file only creates the roles, vpcs, and subnets necssary for deployment
-  Note: this cloudformation stack requires one parameter, your public IP address
-  which is automatically queried from inside the main script.  This is to only
-  allow access from the user's current IP Address The other scripts pull the
-  ARNs of these resources to: 1.) Create a keypair 2.) Create an AMI with
-  expanded Docker storage space and miniconda 3.) setup a compute environment
-  and queue Usage: CreateRolesAndComputeEnvironment.sh [arguments]
+  This is an AWS CloudFormation Template for BioLockJ v1.2 genomics pipieline on July 31, 2019.
+  This file is used to create the AWS template AIM roles, vpcs, subnets, stacks, and batch queues.
 Parameters:
-  NetworkAccessIP:
-    Description: Source that has SSH access to the bastion host. (i.e. 50.32.108.38/32)
-    Type: String
-    MinLength: '9'
-    MaxLength: '18'
-    Default: 0.0.0.0/32
-    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
-    ConstraintDescription: must be a valid CIDR range of the form x.x.x.x/x.
   SpotBidPercentage:
     Description: Maximum bid percentage for Spot Compute Environment
     Type: Number
@@ -32,17 +18,31 @@ Parameters:
     Description: Max number of vCPUs for Batch environments
     Type: Number
     Default: 256
+  EbsRootVolumeSizeBatchNode:
+    Description: Root Ebs Volume Size for batch nodes to 
+      modify AMZN Linux 1 AMIs, 22GB (+ 8GB). For AMZN Linux2 AMIs, which 
+      uses one partition of 30GB, /dev/xvdcz must be changed to /dev/xvda 
+      in the launch template(s) below and default value changed to 40GB.
+    Type: Number
+    MinValue: 22
+    MaxValue: 16000
+    Default: 42
   VolumeName:
     Description: The name to be used for the EFS volume
     Type: String
     MinLength: '1'
     Default: myEFSvolume
+  BatchAMIcustomID:
+    Description: AMI to use in batchnode launch template
+    Type: String
+    Default: ami-007571470797b8ffa
   MountPoint:
     Description: The Linux mount point for the EFS volume
     Type: String
     MinLength: '1'
     Default: myEFSvolume
   CloudformationTemplateName:
+    Description: Do not change this, it provides a way to categorize stacks
     Type: String
     Default: AWSBatchGenomicsStack
 Resources:
@@ -101,26 +101,8 @@ Resources:
             - - !Ref 'AWS::StackName'
               - '-bastion-sg'
       SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: '22'
-          ToPort: '22'
-          CidrIp: !Ref NetworkAccessIP
-        - IpProtocol: tcp
-          FromPort: '80'
-          ToPort: '80'
-          CidrIp: !Ref NetworkAccessIP
-        - IpProtocol: tcp
-          FromPort: '443'
-          ToPort: '443'
-          CidrIp: !Ref NetworkAccessIP
-        - IpProtocol: tcp
-          FromPort: '8080'
-          ToPort: '8080'
-          CidrIp: !Ref NetworkAccessIP
-        - IpProtocol: icmp
-          FromPort: '-1'
-          ToPort: '-1'
-          CidrIp: !Ref NetworkAccessIP
+        - IpProtocol: '-1'
+          CidrIp: 0.0.0.0/0
       SecurityGroupEgress:
         - IpProtocol: '-1'
           CidrIp: 0.0.0.0/0
@@ -311,7 +293,7 @@ Resources:
           - SpotComputeEnv
       ComputeResources:
         MinvCpus: 0
-        MaxvCpus: 1024
+        MaxvCpus: 512
         DesiredvCpus: 0
         SecurityGroupIds:
           - Ref: BastionSecurityGroup
@@ -361,7 +343,7 @@ Resources:
           - OnDemandComputeEnv
       ComputeResources:
         MinvCpus: 0
-        MaxvCpus: 256
+        MaxvCpus: 512
         DesiredvCpus: 0
         SecurityGroupIds:
           - Ref: BastionSecurityGroup
@@ -489,7 +471,25 @@ Resources:
 
             - yum remove -y ecs-init
 
-            - yum install -y bzip2 wget
+            - yum install -y bzip2 wget rsync
+
+            - CLOCK=/etc/sysconfig/clock
+
+            - wget -q https://ipapi.co/timezone -P /
+
+            - TZ=$(cat /timezone)
+
+            - rm ${!CLOCK} 
+
+            - touch ${!CLOCK}
+
+            - chmod 777 ${!CLOCK}
+
+            - echo ZONE="${!TZ}" >> ${!CLOCK}
+
+            - echo UTC=true >> ${!CLOCK}
+
+            - ln -sf /usr/share/zoneinfo/${!TZ} /etc/localtime
 
             - runuser -l  ec2-user -c 'wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh'
 
@@ -531,11 +531,18 @@ Resources:
         - - !Ref 'AWS::StackName'
           - BatchNodeTemplateWithEFS
       LaunchTemplateData:
+        ImageId: !Ref BatchAMIcustomID
         TagSpecifications:
           - ResourceType: 'instance'
             Tags:
               - Key: 'StackName'
                 Value: !Ref 'AWS::StackName'
+        BlockDeviceMappings:
+          -
+            DeviceName: /dev/xvda
+            Ebs: 
+              VolumeSize: !Ref EbsRootVolumeSizeBatchNode
+              VolumeType: gp2
         UserData:
           'Fn::Base64': !Sub >
             MIME-Version: 1.0
@@ -570,7 +577,25 @@ Resources:
 
             - chmod g+s ${!efs_directory}
 
-            - yum install -y bzip2 wget
+            - yum install -y bzip2 wget rsync
+
+            - CLOCK=/etc/sysconfig/clock
+
+            - wget -q https://ipapi.co/timezone -P /
+
+            - TZ=$(cat /timezone)
+
+            - rm ${!CLOCK} 
+
+            - touch ${!CLOCK}
+
+            - chmod 777 ${!CLOCK}
+
+            - echo ZONE="${!TZ}" >> ${!CLOCK}
+
+            - echo UTC=true >> ${!CLOCK}
+
+            - ln -sf /usr/share/zoneinfo/${!TZ} /etc/localtime
 
             - runuser -l  ec2-user -c 'wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh'
 
@@ -579,8 +604,10 @@ Resources:
             - runuser -l  ec2-user -c '/home/ec2-user/miniconda/bin/conda install -c conda-forge -y awscli'
 
             - runuser -l  ec2-user -c 'rm Miniconda3-latest-Linux-x86_64.sh'
-            
+
             - runuser -l  ec2-user -c 'echo "export PATH=/home/ec2-user/miniconda/bin:$PATH" >> ~/.bashrc'
+
+            - echo 'DOCKER_STORAGE_OPTIONS="--storage-opt dm.basesize=50G"' >> /etc/sysconfig/docker-storage
 
             - runuser -l  ec2-user -c 'mkdir /mnt/efs/config'
 

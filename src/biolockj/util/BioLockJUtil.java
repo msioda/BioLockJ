@@ -13,8 +13,10 @@ package biolockj.util;
 
 import java.io.*;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.text.DecimalFormat;
 import java.util.*;
+import java.util.jar.Manifest;
 import java.util.zip.GZIPInputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
@@ -65,15 +67,15 @@ public class BioLockJUtil {
 	 * "N" value
 	 */
 	public static boolean copyInputFiles() throws ConfigNotFoundException, ConfigFormatException {
-		final boolean hasMixedInputs = pipelineInputType( PIPELINE_R_INPUT_TYPE )
-			|| pipelineInputType( PIPELINE_HUMANN2_COUNT_TABLE_INPUT_TYPE )
-			|| pipelineInputType( PIPELINE_NORMAL_TAXA_COUNT_TABLE_INPUT_TYPE )
-			|| pipelineInputType( PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE )
-			|| pipelineInputType( PIPELINE_STATS_TABLE_INPUT_TYPE );
+		final boolean hasMixedInputs = pipelineInputType( PIPELINE_R_INPUT_TYPE ) ||
+			pipelineInputType( PIPELINE_HUMANN2_COUNT_TABLE_INPUT_TYPE ) ||
+			pipelineInputType( PIPELINE_NORMAL_TAXA_COUNT_TABLE_INPUT_TYPE ) ||
+			pipelineInputType( PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE ) ||
+			pipelineInputType( PIPELINE_STATS_TABLE_INPUT_TYPE );
 
 		if( hasMixedInputs ) Log.warn( BioLockJ.class,
-			"Non-sequence inputs found - copy input files from " + Config.requireString( null, Constants.INPUT_DIRS )
-				+ " to:" + pipelineInternalInputDir().getAbsolutePath() );
+			"Non-sequence inputs found - copy input files from " + Config.requireString( null, Constants.INPUT_DIRS ) +
+				" to:" + pipelineInternalInputDir().getAbsolutePath() );
 		return Config.getBoolean( null, Constants.PIPELINE_COPY_FILES ) || hasMixedInputs;
 	}
 
@@ -115,8 +117,9 @@ public class BioLockJUtil {
 
 				return true;
 			} catch( final IOException ex ) {
-				Log.info( BioLockJUtil.class,
-					"Failed while still waiting for resource to become free [" + i + "]: " + file.getAbsolutePath() );
+				Log.error( BioLockJUtil.class,
+					"Failed while still waiting for resource to become free [" + i + "]: " + file.getAbsolutePath(),
+					ex );
 			}
 
 		Log.warn( BioLockJUtil.class, "Failed to delete file: " + file.getAbsolutePath() );
@@ -301,9 +304,9 @@ public class BioLockJUtil {
 	 * @throws IOException if unable to read or write the file
 	 */
 	public static BufferedReader getFileReader( final File file ) throws FileNotFoundException, IOException {
-		return SeqUtil.isGzipped( file.getName() )
-			? new BufferedReader( new InputStreamReader( new GZIPInputStream( new FileInputStream( file ) ) ) )
-			: new BufferedReader( new FileReader( file ) );
+		return SeqUtil.isGzipped( file.getName() ) ?
+			new BufferedReader( new InputStreamReader( new GZIPInputStream( new FileInputStream( file ) ) ) ):
+			new BufferedReader( new FileReader( file ) );
 	}
 
 	/**
@@ -356,9 +359,9 @@ public class BioLockJUtil {
 				prof = getProfile( DockerUtil.ROOT_HOME + File.separator + Constants.BASH_PROFILE );
 			if( prof == null && DockerUtil.inDockerEnv() )
 				prof = getProfile( DockerUtil.ROOT_HOME + File.separator + Constants.BASH_RC );
-			final String path = Config.getString( null, Constants.USER_PROFILE );
-			if( prof == null && path != null ) prof = getProfile( path );
-			if( prof == null ) prof = getProfile( Processor.submit( DEFAULT_PROFILE_CMD, "Detect-profile" ) );
+			final File prop = Config.getExistingFile( null, Constants.USER_PROFILE );
+			if( prop != null ) prof = prop;
+			if( prof == null ) prof = getProfile( Processor.submitQuery( DEFAULT_PROFILE_CMD, "Detect-profile" ) );
 		} catch( final Exception ex ) {
 			Log.error( LogUtil.class, "Failed to find user shell profile ", ex );
 		}
@@ -367,23 +370,23 @@ public class BioLockJUtil {
 		return prof;
 	}
 
-	/**
-	 * Method returns the current version of BioLockJ.
-	 * 
-	 * @return BioLockJ version
-	 * @throws Exception if errors occur
-	 */
-	public static String getVersion() throws Exception {
-		final String missingMsg = "undetermined - missing $BLJ/.version file";
-		final File file = new File( getBljDir().getAbsoluteFile() + File.separator + VERSION_FILE );
-		if( file.isFile() ) {
-			final BufferedReader reader = getFileReader( file );
-			for( final String line = reader.readLine(); line != null; )
-				return line;
-			reader.close();
-		}
+	public static String getVersion() {
+		return getVersion( false );
+	}
 
-		return missingMsg;
+	/**
+	 * Method returns the current version of BioLockJ - or undefined message.
+	 * 
+	 * @param getBuildId boolean - should the returned string include the git revision hash
+	 * @return BioLockJ version
+	 */
+	public static String getVersion( final boolean getBuildId ) {
+		try {
+			if( BioLockJUtil.getSource().isFile() ) return getVersionFromManefest( getBuildId );
+			return getVersionFromVersionFile();
+		} catch( IOException | URISyntaxException ex ) {
+			return "Version not found: " + ex.getMessage();
+		}
 	}
 
 	/**
@@ -432,6 +435,15 @@ public class BioLockJUtil {
 	}
 
 	/**
+	 * Return TRUE if runtime parameters indicate attempt to run in direct mode
+	 * 
+	 * @return boolean
+	 */
+	public static boolean isDirectMode() {
+		return RuntimeParamUtil.getDirectModuleDir() != null;
+	}
+
+	/**
 	 * Merge the collection into a String with 1 space between each element.toString() value.
 	 * 
 	 * @param collection Collection of objects
@@ -473,9 +485,10 @@ public class BioLockJUtil {
 	 * 
 	 * @param file Path abundance file
 	 * @return List of Lists - each inner list 1 line
-	 * @throws Exception if errors occur
+	 * @throws IOException if errors occur reading path abundance file
+	 * @throws FileNotFoundException if path abundance file not found
 	 */
-	public static List<List<String>> parseCountTable( final File file ) throws Exception {
+	public static List<List<String>> parseCountTable( final File file ) throws FileNotFoundException, IOException {
 		final List<List<String>> data = new ArrayList<>();
 		final BufferedReader reader = BioLockJUtil.getFileReader( file );
 		try {
@@ -513,6 +526,20 @@ public class BioLockJUtil {
 	 */
 	public static File pipelineInternalInputDir() {
 		return new File( Config.pipelinePath() + File.separator + "input" );
+	}
+
+	public static void printHelp() {
+		System.err.println( Constants.RETURN + "BioLockJ " + getVersion() + " java help menu:" );
+		System.err.println( "The BioLockJ.jar file is not intended to be called directly," + Constants.RETURN +
+			"it should be called through the biolockj command." );
+		System.err.println(
+			Constants.RETURN + "Developers: When calling java directly, the following parameters are recognized: " );
+		System.err.println( "Stand alone arguments:" + Constants.RETURN + Constants.HELP + Constants.TAB_DELIM +
+			"print this help menu" + Constants.RETURN + Constants.VERSION + Constants.TAB_DELIM +
+			"print version number" );
+		RuntimeParamUtil.printArgsDescriptions();
+		System.err.println( Constants.RETURN + "Users: please use the biolockj command." );
+		System.err.println( "See: \"biolockj -h\" " );
 	}
 
 	/**
@@ -572,17 +599,7 @@ public class BioLockJUtil {
 	 */
 	public static String removeQuotes( final String value ) {
 		if( value == null ) return null;
-
 		return value.replaceAll( "'", "" ).replaceAll( "\"", "" );
-	}
-
-	/**
-	 * Setter for pipeline input files.
-	 * 
-	 * @param files List of input files
-	 */
-	public static void setPipelineInputFiles( final List<File> files ) {
-		inputFiles = files;
 	}
 
 	private static Collection<File> findDups( final Collection<File> files, final Collection<File> newFiles )
@@ -592,8 +609,8 @@ public class BioLockJUtil {
 			names.put( f.getName(), f.getAbsolutePath() );
 		for( final File f: newFiles ) {
 			if( names.keySet().contains( f.getName() ) )
-				throw new ConfigViolationException( "Pipeline input file names must be unique [ " + f.getAbsolutePath()
-					+ " ] has the same file name as [ " + names.get( f.getName() ) + " ]" );
+				throw new ConfigViolationException( "Pipeline input file names must be unique [ " +
+					f.getAbsolutePath() + " ] has the same file name as [ " + names.get( f.getName() ) + " ]" );
 			names.put( f.getName(), f.getAbsolutePath() );
 		}
 		return newFiles;
@@ -601,10 +618,64 @@ public class BioLockJUtil {
 
 	private static File getProfile( final String path ) {
 		if( path != null ) {
-			final File prof = new File( path );
+			final File prof = new File( Config.replaceEnvVar( path ) );
 			if( prof.isFile() ) return prof;
 		}
 		return null;
+	}
+
+	/**
+	 * Method returns the current version of BioLockJ - or undefined message.
+	 * 
+	 * @param getBuildId boolean - should the returned string include the git revision hash
+	 * @return BioLockJ version
+	 * @throws IOException if the manifest file cannot be found
+	 */
+	private static String getVersionFromManefest( final boolean getBuildId ) throws IOException {
+		String version = "";
+		try {
+			final Enumeration<URL> resources = BioLockJ.class.getClassLoader().getResources( "META-INF/MANIFEST.MF" );
+			while( resources.hasMoreElements() ) {
+				final Manifest manifest = new Manifest( resources.nextElement().openStream() );
+				final String mainClass = manifest.getMainAttributes().getValue( "Main-Class" );
+				if( mainClass != null && mainClass.equals( BioLockJ.class.getName() ) ) {
+					version = manifest.getMainAttributes().getValue( "Version" );
+					final String gitRev = manifest.getMainAttributes().getValue( "Implementation-Version" );
+					if( gitRev != null && getBuildId ) version = version + " Build: " + gitRev;
+					return version;
+				}
+			}
+			throw new IOException();
+		} catch( final IOException E ) {
+			System.err.print( "Cannot access BioLockJ.jar manefest file." );
+			E.printStackTrace();
+			throw E;
+		}
+	}
+
+	/**
+	 * Method returns the current version of BioLockJ - or undefined message - based on the .version file.
+	 * 
+	 * @return BioLockJ version
+	 */
+	private static String getVersionFromVersionFile() {
+		BufferedReader reader = null;
+		try {
+			reader = getFileReader( new File( getBljDir().getAbsoluteFile() + File.separator + VERSION_FILE ) );
+			return reader.readLine();
+		} catch( IOException | ConfigPathException ex ) {
+			Log.error( BioLockJUtil.class, "Cannot read BioLockJ version file: ${BLJ}" + File.separator + VERSION_FILE,
+				ex );
+		} finally {
+			try {
+				if( reader != null ) reader.close();
+			} catch( final IOException ex ) {
+				Log.error( BioLockJUtil.class,
+					"Cannot failed to close BufferedReader for version file: ${BLJ}" + File.separator + VERSION_FILE,
+					ex );
+			}
+		}
+		return "Version Unknown - missing file \"${BLJ}/.version\"";
 	}
 
 	private static void setPipelineInputFileTypes() {

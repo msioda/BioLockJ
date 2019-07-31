@@ -51,52 +51,6 @@ getColIndexes <- function( countTable, colNames ) {
 	return( cols )
 }
 
-# Return r.colorHighlight if any of the input values meet the r.pvalCutoff, otherwise return r.colorBase
-getColor <- function( v ) {
-	for( i in 1:length(v) ) {
-		if( grepl("e", v[i]) || !is.na(v[i]) && !is.nan(v[i]) && ( v[i] <= getProperty("r.pvalCutoff", 0.05) ) ) {
-			return( getProperty("r.colorHighlight", "red") )
-		} 
-	}
-	return( getProperty("r.colorBase", "black") )
-}
-
-# Return n colors using the palette defined in the MASTER Config
-# If the r.colorPalette property is a palette name rather than a list of colors
-# rearrange the colors so that very similar colors are not less likley to 
-# be next to each other, thus less likely to be the alternatives in the same category.
-getColors <- function( n, reorder=TRUE) {
-	palette = getProperty("r.colorPalette", "npg")
-	colors = get_palette( palette, n )
-	
-	if (length(palette) == 1 && reorder){
-		flipFrom = (1:length(colors))[(1:length(colors)%%2)==0]
-		flipTo = flipFrom[length(flipFrom):1]
-		colors[flipTo] = colors[flipFrom]
-	}
-	return( colors )
-}
-
-# Select colors for each category so each category is different even across different metadata fields.
-# Returns a named list (named for meta data columns) of named vecotors (named for levels in column)
-getColorsByCategory <- function( metaTable ){
-	categoricals = c(getBinaryFields(), getNominalFields())
-	metaTable = metaTable[names(metaTable) %in% categoricals]
-	if (ncol(metaTable) < 1){
-		logInfo( "No categorical metadata fields.  Returning null." )
-		return(NULL)
-	}
-	numBoxes = sapply(metaTable, function(x){length(levels(as.factor(x)))})
-	boxColors = getColors( sum(numBoxes))
-	logInfo ( paste( "Selected", length(boxColors), "colors to describe", ncol(metaTable), "categorical variables." ) )
-	f = mapply(x=names(numBoxes), each=numBoxes, rep, SIMPLIFY = FALSE)
-	metaColColors = split(boxColors, f=do.call(c, f))
-	for (field in names(metaColColors)){
-		names(metaColColors[[field]]) = levels(as.factor(metaTable[,field]))
-	}
-	return(metaColColors)
-}
-
 # Parse MASTER config for property value, if undefined return default defaultVal
 # save all properties in propCache upon 1st request
 getConfig <- function( name, defaultVal=NULL ) {
@@ -105,28 +59,22 @@ getConfig <- function( name, defaultVal=NULL ) {
 	}
 	
 	prop = propCache[[ name ]]
+	value=str_trim( prop )
+
+	if( is.null( prop ) ) return( defaultVal )
 	
-	if( is.null( prop ) ) {
-		return( defaultVal )
-	}
+	if( value == "Y" ) return( TRUE )
+	if( value == "N" ) return( FALSE )
 	
-	if( str_trim( prop ) == "Y" ) {
-		return( TRUE )
-	}
-	if( str_trim( prop ) == "N" ) {
-		return( FALSE )
-	}
-	if( !is.na( as.numeric( prop ) ) && grepl( ",", prop ) ) {
+	if( !is.na( as.numeric( value ) ) && grepl( ",", prop ) ) {
 		return( as.numeric( unlist( strsplit( prop, "," ) ) ) )
 	}
-	if( is.character( prop ) && grepl( ",", prop ) ) {
-		return( str_trim( unlist( strsplit( prop, "," ) ) ) )
+	if( is.character( value ) && grepl( ",", value ) ) {
+		return( str_trim( unlist( strsplit( value, "," ) ) ) )
 	}
-	if( !is.na( as.numeric( prop ) ) ) {
-		return( as.numeric( prop ) )
-	}
+	if( !is.na( as.numeric( value ) ) ) return( as.numeric( value ) )
 	
-	return( str_trim( prop ) )
+	return( value )	
 }
 
 # Return the data columns (no metadata)
@@ -193,7 +141,7 @@ getMasterConfigFile <- function() {
 }
 
 # Return a data frame of the metadata from a biolockj data table with merged metadata.
-getMetaData <- function( level ){
+getMetaData <- function( level=taxaLevels()[1] ){
 	fullTable = getCountMetaTable( level )
 	if( is.null( fullTable ) ) return( NULL )
 	firstMetaCol = ncol(fullTable) - numMetaCols() + 1
@@ -428,24 +376,126 @@ taxaLevels <- function() {
 	levels = c()
 	errMsg = "No levels found"
 	if( getProperty( "R_internal.runHumann2", FALSE ) ) {
-		if( !getProperty( "humann2.disablePathAbundance", FALSE ) ) {
-			levels[length(levels) + 1] = "pAbund" 
-		}
-		if( !getProperty( "humann2.disablePathCoverage", FALSE ) ) {
-			levels[length(levels) + 1] = "pCovg" 
-		}
-		if( !getProperty( "humann2.disableGeneFamilies", FALSE ) ) {
-			levels[length(levels) + 1] = "geneFam" 
-		}
+		if( !getProperty( "humann2.disablePathAbundance", FALSE ) ) levels[length(levels) + 1] = "pAbund" 
+		if( !getProperty( "humann2.disablePathCoverage", FALSE ) ) levels[length(levels) + 1] = "pCovg" 
+		if( !getProperty( "humann2.disableGeneFamilies", FALSE ) ) levels[length(levels) + 1] = "geneFam" 
 		errMsg = "No HumanN2 Pathway or Gene Family reports found"
-	} else {
-		levels = getProperty( "report.taxonomyLevels" )
-	}
-	if( length( levels ) == 0 ) {
-		writeErrors( c( errMsg ) )
-	}
+	} else levels = getProperty( "report.taxonomyLevels" )
+
+	logInfo( c( "Found levels --> ", levels ) )
+	if( length( levels ) == 0 ) writeErrors( c( errMsg ) )
 	return( levels )
 }
+
+
+getColorFile <- function(){
+  fileName = file.path(getPipelineDir(), "Colors.tsv")
+  return( fileName )
+}
+
+readColorFile <- function(){
+  fileName = getColorFile()
+  if (!file.exists(fileName)){
+    initColorFile(fileName)
+  }
+  return( read.table( fileName, sep = "\t", header=TRUE, comment.char = "", as.is=TRUE) )
+}
+
+writeColorFile <- function(df){
+  fileName = getColorFile()
+  logInfo("Updating color file: ", fileName)
+  write.table(df, file=fileName, sep = "\t", col.names = TRUE, row.names = FALSE, quote=FALSE)
+}
+
+# Create the color file and add initial values
+initColorFile <- function(fileName){
+  premadeFile = getProperty("r.colorFile")
+  if (!is.null(premadeFile) && file.exists(premadeFile) ){
+    # note: the format of this file is checked in the java method: checkColorFile
+    logInfo( c("Pulling in color reference file from: ", premadeFile) )
+    file.copy(from=getProperty("r.colorFile"), to=getColorFile() )
+  }else{
+    df = data.frame(key=0, color=0)[0,]
+    if (getProperty("r.useUniqueColors", FALSE)){
+      df = getAllUniqueColors(df)
+    }
+    writeColorFile(df)
+  }
+}
+
+# append rows to the color file giving the colors for the values of a particular metadata column
+appendColorRef <- function(metaColumn, metaTable){
+  levels = levels(as.factor(metaTable[,metaColumn]))
+  keys = paste0(metaColumn, ":", levels)
+  colors = setColors( length(levels) )
+  df = data.frame(key=keys, color=colors)
+  logInfo( c( "Assigning colors: ", paste(colors, "for", keys, collapse= ", ")) )
+  df=rbind(readColorFile(), df)
+  writeColorFile(df)
+  return( readColorFile() )
+}
+
+# Return n colors using the palette defined in the MASTER Config
+setColors <- function( n ) {
+  if (n == 1 ){
+    palette = getProperty("r.colorPalette", "#00AF66FF")
+  }else if (n < 4 ){
+    palette = getProperty("r.colorPalette", c("#5C88DAFF", "#84BD00FF", "#FFCD00FF"))
+  }else if (n < 10){
+    palette = getProperty("r.colorPalette", "Set1")
+  }else{
+    palette = getProperty("r.colorPalette", "ucscgb")
+  }
+  logInfo( c("Using \"", palette , "\" for property r.colorPalette.") )
+  colors = get_palette( palette, n )
+  return( colors )
+}
+
+# get the colors to use for a particular metadata column
+getColorsByCategory <- function( metaColumn, metaTable=getMetaData()){
+  colorRef = readColorFile()
+  rowsWanted = grep(paste0(metaColumn, ":"), colorRef$key)
+  if (length(rowsWanted)==0){
+    colorRef = appendColorRef(metaColumn, metaTable)
+    rowsWanted = grep(paste0(metaColumn, ":"), colorRef$key)
+  }
+  colorRef = colorRef[rowsWanted,]
+  colors = colorRef$color
+  names(colors) = gsub(paste0(metaColumn, ":"), "", colorRef$key)
+  logInfo( c( "Using colors: ", paste(colors, "for", names(colors), collapse= ", ")) )
+  return(colors)
+}
+
+# Return r.colorHighlight if any of the input values meet the r.pvalCutoff, otherwise return r.colorBase
+getColor <- function( v ) {
+  for( i in 1:length(v) ) {
+    if( grepl("e", v[i]) || !is.na(v[i]) && !is.nan(v[i]) && ( v[i] <= getProperty("r.pvalCutoff", 0.05) ) ) {
+      return( getProperty("r.colorHighlight", "red") )
+    } 
+  }
+  return( getProperty("r.colorBase", "black") )
+}
+
+# Select colors for each category so each category is different even across different metadata fields.
+# Returns a named list (named for meta data columns) of named vecotors (named for levels in column)
+getAllUniqueColors <- function( df ){
+  metaTable = getMetaData()
+  categoricals = c(getBinaryFields(), getNominalFields())
+  metaTable = metaTable[names(metaTable) %in% categoricals]
+  if (ncol(metaTable) < 1){
+    logInfo( "No categorical metadata fields.  Returning null." )
+    return(NULL)
+  }
+  allLevels = unlist(sapply(metaTable, function(x){levels(as.factor(x))}))
+  boxColors = setColors( length(allLevels) )
+  levelsPerField = sapply(metaTable, function(x){length(levels(as.factor(x)))})
+  logInfo ( paste( "Selected", length(boxColors), "colors to describe", ncol(metaTable), "categorical variables." ) )
+  f = mapply(x=names(levelsPerField), each=levelsPerField, rep, SIMPLIFY = FALSE)
+  keys = paste0(f, ":", allLevels)
+  newRows = data.frame(key=keys, color=boxColors)
+  return( rbind(df, newRows) )
+}
+
 
 # Import standard shared libraries
 importLibs( c( "properties", "stringr", "ggpubr" ) )

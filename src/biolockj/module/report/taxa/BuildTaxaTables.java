@@ -11,9 +11,7 @@
  */
 package biolockj.module.report.taxa;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
+import java.io.*;
 import java.util.*;
 import biolockj.Log;
 import biolockj.module.report.otu.OtuCountModule;
@@ -52,14 +50,14 @@ public class BuildTaxaTables extends OtuCountModule {
 		Log.info( getClass(), "Write " + otus.size() + " unique OTUs for: " + sampleOtuCounts.size() + " samples" );
 		report( "OTU Count", sampleOtuCounts );
 		report( "Unique OTU", otus );
-		this.summary += BioLockJUtil.addTrailingSpaces( "# Samples:", pad )
-			+ BioLockJUtil.formatNumericOutput( new Integer( sampleOtuCounts.size() ).longValue(), false ) + RETURN;
+		this.summary += BioLockJUtil.addTrailingSpaces( "# Samples:", pad ) +
+			BioLockJUtil.formatNumericOutput( new Integer( sampleOtuCounts.size() ).longValue(), false ) + RETURN;
 		long totalOtus = 0;
 		boolean topLevel = true;
 		for( final String level: TaxaUtil.getTaxaLevels() ) {
 			final TreeSet<String> levelTaxa = TaxaUtil.findUniqueTaxa( otus, level );
-			final TreeMap<String,
-				TreeMap<String, Long>> levelTaxaCounts = TaxaUtil.getLevelTaxaCounts( sampleOtuCounts, level );
+			final TreeMap<String, TreeMap<String, Long>> levelTaxaCounts =
+				TaxaUtil.getLevelTaxaCounts( sampleOtuCounts, level );
 			final Map<String, Long> uniqueOtus = new HashMap<>();
 
 			uniqueOtus.put( level, new Integer( levelTaxa.size() ).longValue() );
@@ -96,16 +94,16 @@ public class BuildTaxaTables extends OtuCountModule {
 					writer.write( RETURN );
 				}
 
-				this.summary += BioLockJUtil.addTrailingSpaces( "# Unique " + level + " OTUs:", pad )
-					+ BioLockJUtil.formatNumericOutput( uniqueOtus.get( level ), false ) + RETURN;
+				this.summary += BioLockJUtil.addTrailingSpaces( "# Unique " + level + " OTUs:", pad ) +
+					BioLockJUtil.formatNumericOutput( uniqueOtus.get( level ), false ) + RETURN;
 			} finally {
 				writer.close();
 			}
 			topLevel = false;
 		}
 
-		this.summary += BioLockJUtil.addTrailingSpaces( "# Total OTUs:", pad )
-			+ BioLockJUtil.formatNumericOutput( totalOtus, false );
+		this.summary += BioLockJUtil.addTrailingSpaces( "# Total OTUs:", pad ) +
+			BioLockJUtil.formatNumericOutput( totalOtus, false );
 	}
 
 	private void report( final String label, final Collection<String> col ) {

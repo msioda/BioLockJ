@@ -13,9 +13,7 @@ package biolockj.util;
 
 import java.io.*;
 import java.util.*;
-import biolockj.Config;
-import biolockj.Constants;
-import biolockj.Log;
+import biolockj.*;
 import biolockj.exception.ConfigPathException;
 import biolockj.exception.MetadataException;
 import biolockj.module.BioModule;
@@ -240,7 +238,7 @@ public class MetaUtil {
 			} else setFile( new File( Config.getString( null, META_FILE_PATH ) ) );
 			Log.debug( MetaUtil.class, "Returning new metadata file path: " + getPath() );
 		} catch( final Exception ex ) {
-			throw new MetadataException( "Faile to get handle to metadata file:  " + ex.getMessage() );
+			throw new MetadataException( "Failed to get handle to metadata file:  " + ex.getMessage() );
 		}
 		return metadataFile;
 	}
@@ -392,11 +390,11 @@ public class MetaUtil {
 			metadataMap.clear();
 			cacheMetadata( parseMetadataFile() );
 
-			if( !DockerUtil.isDirectMode() ) report();
+			if( !BioLockJUtil.isDirectMode() ) report();
 
 			reportedMetadata = getMetadata();
-		} else Log.debug( MetaUtil.class, "Skip metadata refresh cache, path unchanged: "
-			+ ( getMetadata() == null ? "<NO_METADATA_PATH>": getPath() ) );
+		} else Log.debug( MetaUtil.class, "Skip metadata refresh cache, path unchanged: " +
+			( getMetadata() == null ? "<NO_METADATA_PATH>": getPath() ) );
 	}
 
 	/**
@@ -501,8 +499,8 @@ public class MetaUtil {
 
 	private static boolean isUpdated() {
 		try {
-			final boolean foundNewReport = getMetadata() != null && reportedMetadata != null
-				&& !reportedMetadata.getAbsolutePath().equals( getPath() );
+			final boolean foundNewReport = getMetadata() != null && reportedMetadata != null &&
+				!reportedMetadata.getAbsolutePath().equals( getPath() );
 			final boolean noReport = getMetadata() != null && reportedMetadata == null;
 			return foundNewReport || noReport;
 		} catch( final MetadataException ex ) {

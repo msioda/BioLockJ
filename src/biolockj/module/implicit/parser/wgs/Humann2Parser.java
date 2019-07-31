@@ -11,9 +11,7 @@
  */
 package biolockj.module.implicit.parser.wgs;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
+import java.io.*;
 import java.util.*;
 import biolockj.Config;
 import biolockj.Constants;
@@ -43,12 +41,12 @@ public class Humann2Parser extends ParserModuleImpl {
 		final String longestLabel = "# Abundance File Pathways:";
 		final int pad = longestLabel.length() + 4;
 
-		String summary = SummaryUtil.getOutputDirSummary( this )
-			+ ( hasScripts() ? SummaryUtil.getScriptDirSummary( this ): "" );
+		String summary =
+			SummaryUtil.getOutputDirSummary( this ) + ( hasScripts() ? SummaryUtil.getScriptDirSummary( this ): "" );
 		if( this.numPathwayAbund != null )
 			summary += BioLockJUtil.addTrailingSpaces( longestLabel, pad ) + this.numPathwayAbund + RETURN;
-		if( this.numPathwayCovg != null ) summary += BioLockJUtil.addTrailingSpaces( "# Coverage File Pathways:", pad )
-			+ this.numPathwayCovg + RETURN;
+		if( this.numPathwayCovg != null ) summary +=
+			BioLockJUtil.addTrailingSpaces( "# Coverage File Pathways:", pad ) + this.numPathwayCovg + RETURN;
 		if( this.numGeneFamilies != null )
 			summary += BioLockJUtil.addTrailingSpaces( "# Gene Families:", pad ) + this.numGeneFamilies + RETURN;
 		if( !Config.getBoolean( this, HN2_KEEP_UNMAPPED ) )
@@ -77,6 +75,7 @@ public class Humann2Parser extends ParserModuleImpl {
 	@Override
 	public void parseSamples() throws Exception {
 		int count = 0;
+		MemoryUtil.reportMemoryUsage( "Begin parsing Humann2Classifier output" );
 		for( final File file: getInputFiles() ) {
 			final String[][] data = transpose( assignSampleIDs( BioLockJUtil.parseCountTable( file ) ) );
 			final File outFile = PathwayUtil.getPathwayCountFile( getOutputDir(), file, HN2_PARSED );
@@ -91,8 +90,8 @@ public class Humann2Parser extends ParserModuleImpl {
 						final String cell = BioLockJUtil.removeQuotes( record[ i ] );
 						if( headerRow && cell.equals( UNMAPPED ) && !Config.getBoolean( this, HN2_KEEP_UNMAPPED ) )
 							skipCols.add( i );
-						else if( headerRow && cell.equals( UNINTEGRATED )
-							&& !Config.getBoolean( this, HN2_KEEP_UNINTEGRATED ) ) skipCols.add( i );
+						else if( headerRow && cell.equals( UNINTEGRATED ) &&
+							!Config.getBoolean( this, HN2_KEEP_UNINTEGRATED ) ) skipCols.add( i );
 						else if( skipCols.contains( i ) ) skipCols.add( i );
 						else writer.write( ( !newRecord ? Constants.TAB_DELIM: "" ) + cell );
 
@@ -113,7 +112,7 @@ public class Humann2Parser extends ParserModuleImpl {
 			else if( PathwayUtil.getHn2Type( file ).equals( Constants.HN2_GENE_FAM_SUM ) )
 				this.numGeneFamilies = data[ 0 ].length - 1;
 
-			MemoryUtil.reportMemoryUsage( "Parsed " + file.getAbsolutePath() );
+			MemoryUtil.reportMemoryUsage( "Parsed file: " + file.getAbsolutePath() );
 		}
 	}
 
