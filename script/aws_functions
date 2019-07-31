@@ -45,7 +45,7 @@ build_s3() {
 cache_key_pair() {
 	[ -f "$(key_file)" ] && aws_log "Found existing: $(key_file)" && return
 	keys=$(aws ec2 describe-key-pairs) && [ "${keys/$keyPair}" == "$keys" ]
-	aws ec2 create-key-pair --key-name "$(get_blj_prop aws.stack)" --query "KeyMaterial" > "$(key_file)" 
+	aws ec2 create-key-pair --key-name "$(head_name)" --query "KeyMaterial" > "$(key_file)" 
 	chmod 400 "$(key_file)" && aws_log "Security keys created --> private key: $(key_file)"
 }
 
@@ -85,6 +85,14 @@ get_ami() {
 get_aws_user() {
 	aws iam get-user --query User.UserName
 }
+
+# Get EC2 head node name formatted as "Head-$USER-biolockj
+head_name() {
+	name="$(get_blj_prop aws.stack)"
+	[ "${name}" == "${name/$(get_aws_user)}" ] && name="$(get_aws_user)-${name}"
+	echo "Head-${name}"
+}
+
 
 # Check status of Cloud Formation Stack
 is_stack_complete() {
