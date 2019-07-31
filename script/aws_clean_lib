@@ -39,6 +39,7 @@ aws_rm_key_pairs() {
 		id=$(get_id $ids) && count=$[$count+1] && [ ${#id} -eq 0 ] && break
 		aws_log "Deleting key-pair ARN #${count}: ${id}" && aws ec2 delete-key-pair --key-name "${id}"
 		[ "${ids/$id}" == "${ids}" ] && aws_log "UNEXPECTED error - invalid ID: ${id}" && break
+		rm -rf ~/.aws/*.pem
 		ids="${ids/$id}" && ((numComplete++))
 	done
 	aws_log "Deleted $numComplete/$count key-pairs" && myKey=$(key_file)
@@ -128,9 +129,8 @@ has_data() {
 	[ ${#1} -gt 0 ] && [ "${1}" != "None" ] && ! $(is_empty $1)
 }
 
-# Amazon EC2 deletes all EBS volumes that were attached when the instance launched. 
-# Also clear the associated key_pair file on AWS and local system
-kill_head_node() {
+# Delee all EC2 instances and pem files locally and on AWS console.
+kill_head_nodes() {
 	ids=$(aws ec2 describe-instances --query "Reservations[].Instances[?State.Name!='terminated'].InstanceId")
 	aws_log "Kill EC2 instances...${ids}" && runningIDs=$(aws ec2 describe-instances --query "Reservations[].Instances[?State.Name=='running'].InstanceId")
 	[ ${#runningInstances} -gt 0 ] && aws ec2 stop-instances --instance-ids ${runningIDs} && aws_log "The following EC2 instances have been stopped --> ${runningIDs}"
@@ -144,5 +144,5 @@ kill_head_node() {
 # This should stop all charges - but verify in the AWS console nothing is still running to be sure.
 # Param 1 (optional) - Also remove S3 buckets if = s3
 reset_aws() {
-	kill_head_node && aws_deregister_job_defs && aws_rm_stacks && [ "${1}" == "s3" ] && aws_rm_s3_buckets
+	kill_head_nodes && aws_deregister_job_defs && aws_rm_stacks && [ "${1}" == "s3" ] && aws_rm_s3_buckets
 }

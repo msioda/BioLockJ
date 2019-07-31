@@ -29,7 +29,7 @@ build_s3() {
 	[ ${#awsS3} -eq 0 ] && awsS3="$(get_aws_user)-biolockj"
 	testAws=$(aws s3api list-buckets --region $(aws_region) --query "Buckets[?Name=='$awsS3']|[*].Name")
 	if [ ${#testAws} -eq 0 ] || [ "${testAws}" == "None" ]; then
-		testAws=$(aws s3api create-bucket --region $(aws_region) --bucket ${awsS3})
+		testAws=$(aws s3api create-bucket --region $(aws_region) --bucket ${awsS3} --tagging $(get_aws_user))
 		[ ${#testAws} -eq 0 ] || [ "${testAws}" == "None" ] && exit_script "Error [ aws_functions.build_s3() ]:  Failed to create S3 bucket: ${awsS3}"
 		aws_log "Set aws.s3=${awsS3}"
 	else
