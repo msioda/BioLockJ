@@ -461,10 +461,10 @@ public class SeqUtil {
 			final String header = SeqUtil.scanFirstLine( reader, file );
 			final String idChar = header.substring( 0, 1 );
 			String seq = reader.readLine();
-			info( "header: " + header );
-			info( "seq: " + seq );
+			info( "header: " + ( header.length() <= MAX_DISPLAY_LEN ? header : header.substring( 0, MAX_DISPLAY_LEN ) ) );
+			info( "seq: " + ( seq.length() <= MAX_DISPLAY_LEN ? seq : seq.substring( 0, MAX_DISPLAY_LEN ) ) );
 			if( FASTA_HEADER_DELIMS.contains( idChar ) || idChar.equals( FASTQ_HEADER_DELIM ) ) {
-				if( seq != null && !seq.trim().isEmpty() ) {
+				if( !seq.trim().isEmpty() ) {
 					seq = seq.trim().toLowerCase().replaceAll( "a", "" ).replaceAll( "c", "" ).replaceAll( "g", "" )
 						.replaceAll( "t", "" ).replaceAll( "n", "" );
 					isSeq = seq.trim().isEmpty();
@@ -528,7 +528,7 @@ public class SeqUtil {
 			else if( curr == 'G' ) out += 'C';
 			else throw new Exception( "ERROR: Input is not a DNA Sequence: " + dna );
 		}
-		Log.debug( SeqUtil.class, "Reverse compliment for:" + dna + " = " + out );
+		//Log.debug( SeqUtil.class, "Reverse compliment for:" + dna + " = " + out );
 		return out;
 	}
 
@@ -778,7 +778,7 @@ public class SeqUtil {
 	private static final String FASTQ_HEADER_DELIM = "@";
 	private static final Map<String, Boolean> fileSeqMap = new HashMap<>();
 	private static Integer numMultiSeqLines = 0;
-
+	private static final Integer MAX_DISPLAY_LEN = 200;
 	static {
 		// IUPAC DNA BASE Substitutions
 		// http://www.dnabaser.com/articles/IUPAC%20ambiguity%20codes.html

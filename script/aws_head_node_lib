@@ -75,12 +75,14 @@ get_stack_param() {
 }
 
 head_name() {
-	echo "Head-$(aws_profile)-$(get_blj_prop aws.stack)"
+	name="$(get_blj_prop aws.stack)"
+	[ "${name}" == "${name/$(get_aws_user)}" ] && name="$(get_aws_user)-${name}"
+	echo "Head-${name}"
 }
 
 # Start Head node if stopped, create if not found, and set awsEc2InstanceID
 init_ec2_head_node() {
-	aws_log "Starting --> [  init_ec2_head_node ]"
+	aws_log "Starting --> [ init_ec2_head_node ]"
 	ec2Type="$(get_blj_prop aws.ec2InstanceType)" && ec2Id="$(get_blj_prop aws.ec2InstanceID)" && ec2Label="EC2 instance \"${ec2Id}\"" && cache_key_pair
 	[ ${#ec2Id} -gt 0 ] && aws_log "Found ${ec2Label}" &&
 		instances=$(aws ec2 describe-instances --instance-ids "$ec2Id" --query "Reservations[].Instances[].[State.Name, InstanceId]")

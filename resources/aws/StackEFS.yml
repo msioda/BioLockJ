@@ -1,11 +1,8 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: >-
   AWSBatchGenomicsStack_Template
-  This is an AWS CloudFormation Template for BioLockJ v1.0 genomics pipieline on May 26, 2019.
+  This is an AWS CloudFormation Template for BioLockJ v1.2 genomics pipieline on July 31, 2019.
   This file is used to create the AWS template AIM roles, vpcs, subnets, stacks, and batch queues.
-  Required Param: user's public IP (looked up via BLJ-AWS scripts) stored as Stack parameter for security.
-  Future commands on a stack will only be accppeted if issued from the very same IP commands address.
-  If working from a new location, the IP params must be updated from the AWS console, otherwise a new stack is required.
 Parameters:
   SpotBidPercentage:
     Description: Maximum bid percentage for Spot Compute Environment
