@@ -38,82 +38,82 @@ display_help() {
 
 # Get dockblj scripts formatted named arg params
 docker_args() {
-	args='' && [ ${#gui} -gt 0 ] && args="-gui"
-	[ ${#config} -gt 0 ] && args="c=${config}" && [ ${#newPass} -gt 0 ] && args="${args} p=${newPass}"
-	[ ${#restart} -gt 0 ] && args="${args} r=${restart}"
-	[ ${#blj} -gt 0 ] && args="${args} blj"
-	[ ${#blj_sup} -gt 0 ] && args="${args} blj_sup"
+	args='' && [ ${#runGui} -gt 0 ] && args="$runGui "
+	[ ${#config} -gt 0 ] && args="${args}c=${config} "
+	[ ${#newPass} -gt 0 ] && args="${args}p=${newPass} "
+	[ ${#restart} -gt 0 ] && args="${args}r=${restart} "
+	[ ${#blj} -gt 0 ] && args="${args}blj "
+	[ ${#blj_sup} -gt 0 ] && args="${args}blj_sup "
 	echo "${args}"
 }
 
 # Convert input parameters to array with values "name=value"
 get_params() {
-	count=0 && i=0 && conf='' && restartDir='' && args=( "$@" )
+	returnVals='' && count=0 && i=0 && conf='' && restartDir='' && args=( "$@" )
 	numArgs=${#args[*]}
     for arg in ${args[@]}; do
-    	count=$((count+1))
-    	a="${arg//-}"
-    	[ $a == blj ] && echo blj && continue
-   	 	[ $a == blj_sup ] && echo blj_sup && continue
-		i=$((i+1)) && [ $((i%2)) -eq 1 ] && name=$a
-		[ $((i%2)) -eq 1 ] && ! $(lastArgMustBeConfig $count $numArgs) && $(is_flag_arg $name) && echo "${name:0:1}" && name='' && i=$((i+1)) && continue
+    	a="${arg//-}" && count=$((count+1))
+    	if [ "${a}" == "docker" ] || [ "${a}" == "blj" ] || [ "${a}" == "blj_sup" ] || [ "${a}" == "gui" ] || [ "${a}" == "aws" ]; then
+    	 	[ ${#returnVals} -gt 0 ] && returnVals="${returnVals} "
+    	 	returnVals="${returnVals}${a}" && continue
+    	fi
+		i=$((i+1)) && [ $((i%2)) -eq 1 ] && name="${a}"
 		if [ $((i%2)) -eq 0 ]; then
-			echo "${name}=${arg}" && x="${name}" && name=''
-			[ "${x:0:1}" == "r" ] && restartDir="${arg}"
-			[ "${x:0:1}" == "c" ] && conf="${arg}"
+			[ ${#returnVals} -gt 0 ] && returnVals="${returnVals} "
+			returnVals="${returnVals}${name}=${arg}"
+			[ "${name:0:1}" == "r" ] && restartDir="${arg}"
+			[ "${name:0:1}" == "c" ] && conf="${arg}"
+			name=''
     	fi
     done
-     [ ${#name} -gt 0 ] && [ ${#conf} -eq 0 ] && echo "c=${name}"
-}
 
-# Determine if given arg is a flag arg that will not be matched with the next arg
-# Param 1 - script arg
-is_flag_arg() {
-	[ $(echo ${1:0:1} | egrep -c 'a|b|d|g') -gt 0 ]
+    if [ ${#name} -gt 0 ] && [ ${#conf} -eq 0 ] && [ ${#restartDir} -eq 0 ]; then
+    	[ ${#returnVals} -gt 0 ] && returnVals="${returnVals} "
+		returnVals="${returnVals}c=${name}"
+    fi
+    echo "${returnVals}"
 }
 
 # The last arg must be the config path, if config & restart dir are undefined and we are looking at the last parameter
 # Param 1 - Current script input param number
 # Param 2 - Total number of script input params
 lastArgMustBeConfig() {
-	[ $1 -eq $2 ] && [ ${#conf} -eq 0 ] && [ ${#restartDir} -eq 0 ]
+	[ $1 -eq $2 ] && [ ${#conf} -eq 0 ] && [ ${#restart} -eq 0 ]
 }
 
 # Initialize script, read in script arguments
-# Param 1 -  All script args ${@}
+# Param 1 -  All script params
 read_input_args() {
-	args=$(get_params $@)
-	blj=$(arg_exists $args blj)
-	blj_sup=$(arg_exists $args blj_sup)
-	runAws=$(arg_exists $args a)
-	runGui=$(arg_exists $args g)
-	displayHelp=$(arg_exists $args h)
-	displayVersion=$(arg_exists $args v)
-	runDocker=$(arg_exists $args d)
-	config=$(named_arg $args c)
-	newPass=$(named_arg $args p)
-	restart=$(named_arg $args r)
-	
+	blj=$(arg_exists ${@} blj)
+	blj_sup=$(arg_exists ${@} blj_sup)
+	runAws=$(arg_exists ${@} aws)
+	runGui=$(arg_exists ${@} gui)
+	runDocker=$(arg_exists ${@} docker)
+	config=$(named_arg ${@} c)
+	newPass=$(named_arg ${@} p)
+	restart=$(named_arg ${@} r)
 	if [ ${#runDocker} -eq 0 ]; then 
-		[ ${#runGui} -gt 0 ] && runDocker="d" && echo "Arg \"gui\" is only applicable in Docker mode --> starting Docker biolockj_controller container"
+		[ ${#runGui} -gt 0 ] && runDocker="docker" && echo "Arg \"gui\" is only applicable in Docker mode --> starting Docker biolockj_controller container"
 		[ ${#blj} -gt 0 ] && echo "Arg \"blj\" is only applicable in Docker mode so will be ignored"
 		[ ${#blj_sup} -gt 0 ] && echo "Arg \"blj_sup\" is only applicable in Docker mode so will be ignored"
 	fi
 }
 
 # Run biolockj by locally, on AWS, or in Docker mode based on script args
+# Param 1 - args output by read_input_args $@ 
 run_biolockj() {
 	if [ ${#runAws} -gt 0 ]; then
-		if [ ${#gui} -gt 0 ]; then
+		if [ ${#runGui} -gt 0 ]; then
 			run_aws_gui
 		else
 			run_aws "${config}"
 		fi
 	elif [ ${#runDocker} -gt 0 ]; then
+	 	[ ${#config} -gt 0 ] && echo "found config: $config"
 		dockblj $(docker_args)
 	else
 		[ ${#config} -gt 0 ] && args="c=${config}" && [ ${#newPass} -gt 0 ] && args="${args} p=${newPass}"
-		[ ${#runGui} -eq 0 ] && [ ${#restart} -eq 0 ] && [ ! -f "${config}" ] && 
+		[ ${#runGui} -eq 0 ] && [ ${#restartDir} -eq 0 ] && [ ! -f "${config}" ] && 
 			${BLJ}/script/biolockj -h && exit_script "Error [ biolockj ]:  \"${config}\" not found on filesystem"
 		[ ! -d "${BLJ_PROJ}" ] && exit_script "Error [ biolockj ]: Required env variable BLJ_PROJ undefined: \"${BLJ_PROJ}\""
 		[ ! -f "${BLJ_JAR}" ] && exit_script "Error [ biolockj ]: BioLockJ Jar file \"${BLJ_JAR}\" not found"
@@ -152,6 +152,7 @@ elif [ $# -eq 1 ] && [ "${arg:0:1}" == "h" ]; then
 	display_help
 else
 	printf "\n ---------> Execute CMD [  biolockj $(echo ${@})  ]\n"
-	read_input_args "${@}"
-	run_biolockj "${@}"
+	args=$(get_params $@)
+	read_input_args "${args}"
+	run_biolockj "${args}"
 fi

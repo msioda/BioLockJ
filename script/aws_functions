@@ -17,8 +17,9 @@ build_stack() {
 	ec2SpotPer=$(get_blj_prop aws.ec2SpotPer)
 	[ ${#ec2SpotPer} -eq 0 ] && ec2SpotPer=80
 	params="ParameterKey=SpotBidPercentage,ParameterValue=${ec2SpotPer}"
-	aws_log "aws cloudformation create-stack --template-body ${stackYml} --stack-name ${stack} --capabilities CAPABILITY_IAM --parameters ${params}"
-	aws cloudformation create-stack --template-body "${stackYml}" --stack-name "${stack}" --capabilities CAPABILITY_IAM --parameters ${params}
+	aws_log "aws cloudformation create-stack --tags \"Name=owner,Values=$(get_aws_user)\" --template-body ${stackYml} --stack-name ${stack} --capabilities CAPABILITY_IAM --parameters ${params}"
+	aws cloudformation create-stack --tags "Key=owner,Value=$(get_aws_user)" --template-body "${stackYml}" --stack-name "${stack}" --capabilities CAPABILITY_IAM --parameters ${params}
+	#aws cloudformation create-stack --template-body "${stackYml}" --stack-name "${stack}" --capabilities CAPABILITY_IAM --parameters ${params}
 	while [ $(is_stack_complete) != "true" ]; do printf "." && sleep 5s && numSecs=$((numSecs+5)); done
 	aws_log "New AWS Stack: ${stack} created in ${numSecs} seconds"
 }
@@ -30,6 +31,7 @@ build_s3() {
 	testAws=$(aws s3api list-buckets --region $(aws_region) --query "Buckets[?Name=='$awsS3']|[*].Name")
 	if [ ${#testAws} -eq 0 ] || [ "${testAws}" == "None" ]; then
 		testAws=$(aws s3api create-bucket --region $(aws_region) --bucket ${awsS3})
+		aws s3api put-object --bucket "${awsS3}" --key OWNER --tagging $(get_aws_user)
 		[ ${#testAws} -eq 0 ] || [ "${testAws}" == "None" ] && exit_script "Error [ aws_functions.build_s3() ]:  Failed to create S3 bucket: ${awsS3}"
 		aws_log "Set aws.s3=${awsS3}"
 	else
@@ -45,7 +47,7 @@ build_s3() {
 cache_key_pair() {
 	[ -f "$(key_file)" ] && aws_log "Found existing: $(key_file)" && return
 	keys=$(aws ec2 describe-key-pairs) && [ "${keys/$keyPair}" == "$keys" ]
-	aws ec2 create-key-pair --key-name "$(get_blj_prop aws.stack)" --query "KeyMaterial" > "$(key_file)" 
+	aws ec2 create-key-pair --key-name "$(head_name)" --query "KeyMaterial" > "$(key_file)" 
 	chmod 400 "$(key_file)" && aws_log "Security keys created --> private key: $(key_file)"
 }
 
@@ -79,11 +81,6 @@ get_ami() {
 		awsAmi=$(aws ec2 describe-images --image-ids $awsAmi --query "Images[?State=='available'].ImageId")
 	[ ${#awsAmi} -eq 0 ] || [ $awsAmi == "None" ] && exit_script "Error [ aws_functions.get_ami() ]:  Unable to use configured AWS AMI: $ami"
 	echo "${awsAmi}"
-}
-
-# Get the current IAM user name
-get_aws_user() {
-	aws iam get-user --query User.UserName
 }
 
 # Check status of Cloud Formation Stack
@@ -138,7 +135,7 @@ set_stack_name() {
 	enabledStacks=$(aws_stacks CREATE_COMPLETE)
 	if [ "${enabledStacks/$stack}" == "${enabledStacks}" ]; then
 		stacks=$(aws cloudformation list-stacks --query "StackSummaries[].StackName")
-		stack=$(generate_name $(get_blj_prop aws.stack) "${stacks}") 
+		set_blj_prop aws.stack $(generate_name $(get_blj_prop aws.stack) "${stacks}")
 	fi
 	aws_log "Cloudformation: \"aws.stack=$(get_blj_prop aws.stack)\""
 }
