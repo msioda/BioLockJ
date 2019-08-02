@@ -48,6 +48,8 @@ public class MasterConfigUtil {
 	 * 
 	 */
 	public static void sanitizeMasterConfig() {
+		
+		try {
 		Log.info( MasterConfigUtil.class,
 			"Sanitizing MASTER Config file so only properties accessed during pipeline execution are retained." );
 
@@ -105,6 +107,9 @@ public class MasterConfigUtil {
 			"The final version of MASTER Config contains: " + props.size() + " properties" );
 
 		saveMasterConfig( props );
+		}catch( Exception ex  ) {
+			ex.printStackTrace();
+		}
 	}
 
 	/**

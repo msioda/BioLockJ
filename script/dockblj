@@ -116,13 +116,13 @@ run_docker() {
 # Read script args and bash env vars
 # Param 1 - Array of dockblj script args
 scan_script_and_env_args() {
-	runGui=$(arg_exists "$@" g)
-	runAws=$(arg_exists "$@" -aws)
-	blj=$(arg_exists "$@" blj)
-	blj_sup=$(arg_exists "$@" blj_sup)
-	config=$(named_arg "$@" c)
-	newPass=$(named_arg "$@" p)
-	restartDir=$(named_arg "$@" r)
+	runGui=$(arg_exists $@ gui)
+	runAws=$(arg_exists $@ aws)
+	blj=$(arg_exists $@ blj)
+	blj_sup=$(arg_exists $@ blj_sup)
+	config=$(named_arg $@ c)
+	newPass=$(named_arg $@ p)
+	restartDir=$(named_arg $@ r)
 	! $(null_var $blj) && blj="${BLJ}"
 	! $(null_var $blj_sup) && blj_sup="${BLJ_SUP}"
 	if $(null_var $runGui); then
@@ -161,7 +161,7 @@ verify_file() {
 # Verify paths are valid, if dockblj is not run inside a Docker container
 verify_inputs() {
 	! $(null_var $inputDir) && dirPath=( ${inputDir//, } )
-	$(null_var $inputDir) || [ ${#dirPath[@]} -gt 1 ] && exit_script "Error [ dockblj ]: The -i parameter must reference a single input directory"
+	$(null_var $inputDir) || [ ${#dirPath[@]} -gt 1 ] && exit_script "Error [ dockblj ]: The \"i\" parameter must reference a single input directory"
 	verify_dir $dirPath
 	verify_dir $BLJ_PROJ
 	! $(null_var $restartDir) && verify_dir $restartDir
