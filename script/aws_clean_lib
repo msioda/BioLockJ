@@ -39,7 +39,6 @@ aws_rm_key_pairs() {
 		id=$(get_id $ids) && count=$[$count+1] && [ ${#id} -eq 0 ] && break
 		aws_log "Deleting key-pair ARN #${count}: ${id}" && aws ec2 delete-key-pair --key-name "${id}"
 		[ "${ids/$id}" == "${ids}" ] && aws_log "UNEXPECTED error - invalid ID: ${id}" && break
-		rm -rf ~/.aws/*.pem
 		ids="${ids/$id}" && ((numComplete++))
 	done
 	aws_log "Deleted $numComplete/$count key-pairs" && myKey=$(key_file)
@@ -48,8 +47,16 @@ aws_rm_key_pairs() {
 }
 
 # Remove AWS Stacks
+# Param 1 - (Optional) Set to "-all" to Remove all Ec2 for all StackNames
 aws_rm_stacks() {
-	count=0 && numComplete=0 && ids=$(aws cloudformation describe-stacks --query "Stacks[*].StackId")
+	count=0 && numComplete=0 
+	if [ "${1}" == "-all" ]; then
+		ids=$(aws cloudformation describe-stacks --query "Stacks[*].StackId")
+	else
+		echo "TBD handle delete onwer stacks only"
+		#ids=$(aws cloudformation describe-stacks --query "Stacks[*].Tags[?Key!='owner']|Stacks[*].StackId")
+	fi
+
 	aws_log "Deleting cloudformation stacks...${ids}" 
 	while $(has_data $ids); do
 		id=$(get_id $ids) && count=$[$count+1] && status=$(aws cloudformation describe-stacks --stack-name "${id}" --query "Stacks[*].StackStatus")
@@ -65,8 +72,16 @@ aws_rm_stacks() {
 }
 
 # Remove S3 buckets
+# Param 1 - (Optional) Set to "-all" to Remove all S3 buckets
 aws_rm_s3_buckets() {
-	count=0 && numComplete=0 && ids=$(aws s3api list-buckets --query "Buckets[*].Name")
+	count=0 && numComplete=0 
+	if [ "${1}" == "-all" ]; then
+		ids=$(aws s3api list-buckets --query "Buckets[*].Name")
+	else
+		echo "TBD handle delete owner stacks only - still currently deleting all"
+		ids=$(aws s3api list-buckets --query "Buckets[*].Name")
+	fi
+
 	! $(has_data $ids) && aws_log "No S3 buckets to remove" && return
 	aws_log "Deleting S3 buckets...${ids}" && buckets=( "$ids" )
 	for bucket in ${buckets[@]}; do
@@ -130,8 +145,13 @@ has_data() {
 }
 
 # Delee all EC2 instances and pem files locally and on AWS console.
+# Param 1 - (Optional) Set to "-all" to Remove all EC2 instances for all StackNames
 kill_head_nodes() {
-	ids=$(aws ec2 describe-instances --query "Reservations[].Instances[?State.Name!='terminated'].InstanceId")
+	if [ "${1}" == "-all" ]; then
+		ids=$(aws ec2 describe-instances --query "Reservations[].Instances[?State.Name!='terminated'].InstanceId")
+	else
+		ids=$(aws ec2 describe-instances --filter "Name=tag:StackName,Values=$(get_blj_prop aws.stack)" --query "Reservations[].Instances[?State.Name!='terminated'].InstanceId")
+	fi
 	aws_log "Kill EC2 instances...${ids}" && runningIDs=$(aws ec2 describe-instances --query "Reservations[].Instances[?State.Name=='running'].InstanceId")
 	[ ${#runningInstances} -gt 0 ] && aws ec2 stop-instances --instance-ids ${runningIDs} && aws_log "The following EC2 instances have been stopped --> ${runningIDs}"
 	[ ${#ids} -gt 0 ] && aws ec2 terminate-instances --instance-id "${ids}" && aws_log "The following EC2 instances have been terminated --> ${ids}"
@@ -142,7 +162,8 @@ kill_head_nodes() {
 
 # De-register, disable, and remove all AWS objects.  
 # This should stop all charges - but verify in the AWS console nothing is still running to be sure.
-# Param 1 (optional) - Also remove S3 buckets if = s3
+# Param 1 (optional) - Also remove S3 buckets if = "-s3"
+# Param 2 (optional) - 
 reset_aws() {
-	kill_head_nodes && aws_deregister_job_defs && aws_rm_stacks && [ "${1}" == "s3" ] && aws_rm_s3_buckets
+	kill_head_nodes && aws_deregister_job_defs && aws_rm_stacks && [ "${1}" == "-s3" ] && aws_rm_s3_buckets ${2}
 }

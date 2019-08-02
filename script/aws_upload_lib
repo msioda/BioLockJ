@@ -25,7 +25,7 @@ build_start_script() {
 	echo '[ -f "${flagFile}" ] && rm "${flagFile}"' >> "${ss}"
 	echo "docker pull $(get_blj_prop docker.user)/biolockj_controller:$(get_blj_prop docker.imgVersion)" >> "${ss}"
 	echo "clearDock" >> "${ss}"
-	echo "dockblj -aws ${meta}i=${BLJ_INPUT}/$(basename $(get_blj_prop input.dirPaths)) c=$(get_config ec2)" >> "${ss}"
+	echo "dockblj aws ${meta}i=${BLJ_INPUT}/$(basename $(get_blj_prop input.dirPaths)) c=$(get_config ec2)" >> "${ss}"
 	echo "sudo chown -R ${EC2_USER}:${EC2_USER} ${EFS}" >> "${ss}"
 	echo "sudo chmod -R 777 ${EFS}" >> "${ss}"
 	if [ "$(get_blj_prop aws.ec2TerminateHead)" == "Y" ]; then

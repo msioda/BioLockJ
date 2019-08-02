@@ -42,6 +42,7 @@ aws_profile() {
 	echo "$(get_blj_prop aws.profile default)"
 }
 
+# Return user AWS region
 aws_region() {
 	echo "$(get_blj_prop aws.region $(aws configure get region))"
 }

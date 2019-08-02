@@ -17,6 +17,11 @@ package biolockj;
 public class Constants {
 
 	/**
+	 * {@link biolockj.Config} property for GenMod to set its Docker container name: {@value #DOCKER_CONTAINER_NAME} 
+	 */
+	public static final String DOCKER_CONTAINER_NAME = "genMod.dockerContainerName";
+	
+	/**
 	 * Captures the application start time
 	 */
 	public static final long APP_START_TIME = System.currentTimeMillis();

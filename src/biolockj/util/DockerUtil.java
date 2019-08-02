@@ -18,6 +18,7 @@ import biolockj.*;
 import biolockj.exception.*;
 import biolockj.module.*;
 import biolockj.module.classifier.r16s.RdpClassifier;
+import biolockj.module.diy.GenMod;
 import biolockj.module.implicit.qiime.*;
 import biolockj.module.report.r.R_Module;
 import biolockj.module.seq.*;
@@ -188,9 +189,15 @@ public class DockerUtil {
 	 * 
 	 * @param module BioModule
 	 * @return Docker Image Name
+	 * @throws ConfigNotFoundException if Docker container is undefiend for GenMod
 	 */
-	public static String getImageName( final BioModule module ) {
+	public static String getImageName( final BioModule module ) throws ConfigNotFoundException {
 		final String className = module.getClass().getName();
+		
+		if( module instanceof GenMod ) {
+			return Config.requireString( module, Constants.DOCKER_CONTAINER_NAME );
+		}
+		
 		if( useBasicBashImg( module ) ) {
 			Log.info( DockerUtil.class, "Map: Class [" + className + "] <--> Docker Image [ " + BLJ_BASH + " ]" );
 			return BLJ_BASH;
