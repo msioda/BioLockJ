@@ -116,13 +116,13 @@ run_docker() {
 # Read script args and bash env vars
 # Param 1 - Array of dockblj script args
 scan_script_and_env_args() {
-	runGui=$(arg_exists "$@" gui)
-	runAws=$(arg_exists "$@" aws)
-	blj=$(arg_exists "$@" blj)
-	blj_sup=$(arg_exists "$@" blj_sup)
-	config=$(named_arg "$@" c)
-	newPass=$(named_arg "$@" p)
-	restartDir=$(named_arg "$@" r)
+	runGui=$(arg_exists $@ gui)
+	runAws=$(arg_exists $@ aws)
+	blj=$(arg_exists $@ blj)
+	blj_sup=$(arg_exists $@ blj_sup)
+	config=$(named_arg $@ c)
+	newPass=$(named_arg $@ p)
+	restartDir=$(named_arg $@ r)
 	! $(null_var $blj) && blj="${BLJ}"
 	! $(null_var $blj_sup) && blj_sup="${BLJ_SUP}"
 	if $(null_var $runGui); then

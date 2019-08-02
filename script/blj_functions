@@ -238,7 +238,7 @@ named_arg() {
 	args=("$@") && numArgs=${#@} && target=${args[$((numArgs-1))]}
 	args=${args[@]:0:$((numArgs-1))}
 	for arg in ${args}; do
-		tokens=( "${arg//=}" ) && [ "${tokens[0]}" == "${target}" ] && echo "${tokens[1]}" && return
+		tokens=( ${arg//=/ } ) && [ "${tokens[0]}" == "${target}" ] && echo "${tokens[1]}" && return
 	done
 }
 
