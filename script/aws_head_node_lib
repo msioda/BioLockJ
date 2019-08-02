@@ -74,6 +74,12 @@ get_stack_param() {
 	aws cloudformation describe-stacks --stack-name "$(get_blj_prop aws.stack)" --query "Stacks[*].Outputs[?OutputKey=='$1'].OutputValue"
 }
 
+
+# Get EC2 head node name formatted as "Head-$USER-biolockj
+head_name() {
+	echo "Head-$(get_blj_prop aws.stack)"
+}
+
 # Start Head node if stopped, create if not found, and set awsEc2InstanceID
 init_ec2_head_node() {
 	aws_log "Starting --> [ init_ec2_head_node ]"
