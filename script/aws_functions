@@ -47,7 +47,7 @@ build_s3() {
 cache_key_pair() {
 	[ -f "$(key_file)" ] && aws_log "Found existing: $(key_file)" && return
 	keys=$(aws ec2 describe-key-pairs) && [ "${keys/$keyPair}" == "$keys" ]
-	aws ec2 create-key-pair --key-name "$(head_name)" --query "KeyMaterial" > "$(key_file)" 
+	aws ec2 create-key-pair --key-name "$(get_blj_prop aws.stack)" --query "KeyMaterial" > "$(key_file)" 
 	chmod 400 "$(key_file)" && aws_log "Security keys created --> private key: $(key_file)"
 }
 

@@ -74,6 +74,12 @@ get_stack_param() {
 	aws cloudformation describe-stacks --stack-name "$(get_blj_prop aws.stack)" --query "Stacks[*].Outputs[?OutputKey=='$1'].OutputValue"
 }
 
+
+# Get EC2 head node name formatted as "Head-$USER-biolockj
+head_name() {
+	echo "Head-$(get_blj_prop aws.stack)"
+}
+
 # Start Head node if stopped, create if not found, and set awsEc2InstanceID
 init_ec2_head_node() {
 	aws_log "Starting --> [ init_ec2_head_node ]"
@@ -97,8 +103,8 @@ init_ec2_head_node() {
 			secureGroup="$(get_stack_param BastionSecurityGroup)" && templateId="$(get_stack_param HeadNodeLaunchTemplateId)"
 		[ "$(get_blj_prop aws.stack)" == "" ] || [ ${#secureGroup} -eq 0 ] || [ ${#subnet} -eq 0 ] || [ ${#templateId} -eq 0 ] &&
 			exit_script "Error [ aws_head_node_lib.init_ec2_head_node() ]: Cannot launch EC2 - required aws.stack parameters undefined in ${AWS_CONF}"
-		set_blj_prop aws.ec2InstanceID $(aws ec2 run-instances --count 1 --key-name $(head_name) --image-id $(get_ami) --security-group-ids ${secureGroup} \
-			--tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value='$(head_name)'},{Key=Owner,Value='$(get_aws_user)'}] " --subnet-id "${subnet}" \
+		set_blj_prop aws.ec2InstanceID $(aws ec2 run-instances --count 1 --key-name $(get_blj_prop aws.stack) --image-id $(get_ami) --security-group-ids ${secureGroup} \
+			--tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$(head_name)},{Key=Owner,Value=$(get_aws_user)}]" --subnet-id "${subnet}" \
 			--launch-template LaunchTemplateId="${templateId}" --instance-type "${ec2Type}" --query "Instances[].InstanceId" )
 		printf "Launching EC2 Head Node $(head_name), please wait..."
 	fi

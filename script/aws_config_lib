@@ -111,13 +111,6 @@ get_config_name() {
 	echo $(echo $(basename $(get_config local)) | cut -f1 -d".")
 }
 
-# Get EC2 head node name formatted as "Head-$USER-biolockj
-head_name() {
-	name="$(get_blj_prop aws.stack)"
-	[ "${name}" == "${name/$(get_aws_user)}" ] && name="$(get_aws_user)-${name}"
-	echo "Head-${name}"
-}
-
 # Init AWS Config properties file ${AWS_CONF} with pipeline Config, AWS config, and standard defaults
 # Check BLJ pipeline Config files + all nested default Config files
 # Add docker.properties if not already in list of nested Config files
@@ -146,8 +139,8 @@ init_aws_config() {
 
 # Get the ec2 key file for the ec2 head node
 key_file() {
-	[ "$(head_name)" == "" ] && exit_script "Error [ aws_config_lib.key_file() ]: Required AWS Config \"aws.stack\" is undefined!"
-	echo "${HOME}/.aws/$(head_name).pem"
+	[ "$(get_blj_prop aws.stack)" == "" ] && exit_script "Error [ aws_config_lib.key_file() ]: Required AWS Config \"aws.stack\" is undefined!"
+	echo "${HOME}/.aws/$(get_blj_prop aws.stack).pem"
 }
 
 # Get local Nextflow <base> config file
