@@ -103,7 +103,7 @@ public class NormalizeTaxaTables extends TaxaCountModule {
 			String nextLine = reader.readLine();
 
 			while( nextLine != null ) {
-				final StringTokenizer st = new StringTokenizer( nextLine, Constants.TAB_DELIM );
+				final StringTokenizer st = new StringTokenizer( nextLine, TAB_DELIM );
 				final String sampleID = st.nextToken();
 				final List<Long> innerList = new ArrayList<>();
 				sampleIDs.add( sampleID );
@@ -216,7 +216,7 @@ public class NormalizeTaxaTables extends TaxaCountModule {
 	 */
 	protected static List<String> getOtuNames( final String header ) {
 		final List<String> otuNames = new ArrayList<>();
-		final StringTokenizer st = new StringTokenizer( header, Constants.TAB_DELIM );
+		final StringTokenizer st = new StringTokenizer( header, TAB_DELIM );
 		st.nextToken(); // skip ID & then strip quotes
 		while( st.hasMoreTokens() )
 			otuNames.add( BioLockJUtil.removeOuterQuotes( st.nextToken() ) );
@@ -239,18 +239,18 @@ public class NormalizeTaxaTables extends TaxaCountModule {
 		writer.write( MetaUtil.getID() );
 
 		for( final String s: taxaNames )
-			writer.write( Constants.TAB_DELIM + s );
+			writer.write( TAB_DELIM + s );
 
-		writer.write( Constants.RETURN );
+		writer.write( RETURN );
 
 		final int size = sampleNames.size();
 		for( int x = 0; x < size; x++ ) {
 			writer.write( sampleNames.get( x ) );
 
 			for( int y = 0; y < taxaNames.size(); y++ )
-				writer.write( Constants.TAB_DELIM + taxaCounts.get( x ).get( y ) );
+				writer.write( TAB_DELIM + taxaCounts.get( x ).get( y ) );
 
-			if( x + 1 != size ) writer.write( Constants.RETURN );
+			if( x + 1 != size ) writer.write( RETURN );
 		}
 
 		writer.close();

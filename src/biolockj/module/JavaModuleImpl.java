@@ -64,7 +64,7 @@ public abstract class JavaModuleImpl extends ScriptModuleImpl implements JavaMod
 	public List<String> getWorkerScriptFunctions() throws Exception {
 		final List<String> lines = new ArrayList<>();
 		if( DockerUtil.inDockerEnv() )
-			lines.add( BLJ_OPTIONS + "=\"" + RuntimeParamUtil.getJavaModuleArgs( this ) + "\"" + Constants.RETURN );
+			lines.add( BLJ_OPTIONS + "=\"" + RuntimeParamUtil.getJavaModuleArgs( this ) + "\"" + RETURN );
 
 		return lines;
 	}

@@ -110,9 +110,9 @@ public class ImportMetadata extends BioModuleImpl {
 		BufferedWriter writer = null;
 		try {
 			writer = new BufferedWriter( new FileWriter( getMetadata() ) );
-			writer.write( MetaUtil.getID() + Constants.RETURN );
+			writer.write( MetaUtil.getID() + RETURN );
 			for( final String id: getSampleIds() )
-				writer.write( id + Constants.RETURN );
+				writer.write( id + RETURN );
 		} catch( final Exception ex ) {
 			ex.printStackTrace();
 			throw new MetadataException( "Unable to find module input sequence files: " + ex.getMessage() );
@@ -249,7 +249,7 @@ public class ImportMetadata extends BioModuleImpl {
 
 			Log.debug( getClass(), "====> Set Row # [" + this.rowNum + "] - Column#[" + colNum + "] = " + cell );
 			sb.append( cell );
-			if( colNum++ < cells.length ) sb.append( Constants.TAB_DELIM );
+			if( colNum++ < cells.length ) sb.append( TAB_DELIM );
 		}
 		this.rowNum++;
 		return sb.toString() + RETURN;
@@ -274,7 +274,7 @@ public class ImportMetadata extends BioModuleImpl {
 		if( !ids.isEmpty() ) throw new ConfigViolationException( MetaUtil.USE_EVERY_ROW,
 			"This property requires every Sample ID in the metadata file " + MetaUtil.getFileName() +
 				" map to one of the sequence files in an input directory: " +
-				Config.getString( this, Constants.INPUT_DIRS ) + Constants.RETURN + "The following " + ids.size() +
+				Config.getString( this, Constants.INPUT_DIRS ) + RETURN + "The following " + ids.size() +
 				" Sample IDs  do not map to a sequence file: " + BioLockJUtil.printLongFormList( ids ) );
 	}
 

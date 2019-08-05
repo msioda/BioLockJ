@@ -128,7 +128,7 @@ public class QiimeParser extends ParserModuleImpl {
 	 * @throws Exception If {@value biolockj.Constants#QIIME_DEMUX_COL} not found.
 	 */
 	protected int getFileNameColumn( final String line ) throws Exception {
-		final StringTokenizer header = new StringTokenizer( line, Constants.TAB_DELIM );
+		final StringTokenizer header = new StringTokenizer( line, TAB_DELIM );
 		int colNum = 0;
 		while( header.hasMoreTokens() ) {
 			final String token = header.nextToken();
@@ -166,7 +166,7 @@ public class QiimeParser extends ParserModuleImpl {
 		final BufferedReader reader = BioLockJUtil.getFileReader( MetaUtil.getMetadata() );
 
 		for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
-			final String qiimeId = new StringTokenizer( line, Constants.TAB_DELIM ).nextToken();
+			final String qiimeId = new StringTokenizer( line, TAB_DELIM ).nextToken();
 			if( isHeaderRow ) {
 				isHeaderRow = false;
 				fileNameCol = getFileNameColumn( line );

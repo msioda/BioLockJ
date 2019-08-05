@@ -12,7 +12,6 @@
 package biolockj.exception;
 
 import biolockj.Config;
-import biolockj.Constants;
 
 /**
  * ConfigException is the superclass for all BioLockJ configuration file Exceptions used to ensure message uniformity.
@@ -49,8 +48,8 @@ public abstract class ConfigException extends BioLockJException {
 	protected static String buildMessage( final String property, final String msg ) {
 		String val = Config.getString( null, property );
 		if( val == null ) val = "{undefined}";
-		return "[ " + property + "=" + val + " ] " + Constants.RETURN + msg + Constants.RETURN +
-			"Restart pipeline after updating the property value in: " + Config.getConfigFilePath() + Constants.RETURN +
+		return "[ " + property + "=" + val + " ] " + RETURN + msg + RETURN +
+			"Restart pipeline after updating the property value in: " + Config.getConfigFilePath() + RETURN +
 			"RESTART SHORTCUT CMD ---> \"blj_rerun " + Config.getConfigFilePath() + "\"";
 	}
 

@@ -54,14 +54,14 @@ public class MetaUtil {
 		setFile( newMeta );
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( getMetadata() ) );
 		try {
-			writer.write( reader.readLine() + Constants.TAB_DELIM + colName + Constants.RETURN );
+			writer.write( reader.readLine() + DEFAULT_COL_DELIM + colName + Constants.RETURN );
 			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
-				final StringTokenizer st = new StringTokenizer( line, Constants.TAB_DELIM );
+				final StringTokenizer st = new StringTokenizer( line, DEFAULT_COL_DELIM );
 				final String id = st.nextToken();
 				if( sampleIds.contains( id ) )
-					writer.write( line + Constants.TAB_DELIM + map.get( id ) + Constants.RETURN );
+					writer.write( line + DEFAULT_COL_DELIM + map.get( id ) + Constants.RETURN );
 				else if( !removeMissingIds )
-					writer.write( line + Constants.TAB_DELIM + getNullValue( null ) + Constants.RETURN );
+					writer.write( line + DEFAULT_COL_DELIM + getNullValue( null ) + Constants.RETURN );
 				else Log.warn( MetaUtil.class, getRemoveIdMsg( id ) );
 
 			}
@@ -428,11 +428,11 @@ public class MetaUtil {
 		try {
 			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
 				int i = 1;
-				final StringTokenizer st = new StringTokenizer( line, Constants.TAB_DELIM );
+				final StringTokenizer st = new StringTokenizer( line, DEFAULT_COL_DELIM );
 				writer.write( st.nextToken() );
 				while( st.hasMoreTokens() ) {
 					final String token = st.nextToken();
-					if( i++ != index ) writer.write( Constants.TAB_DELIM + token );
+					if( i++ != index ) writer.write( DEFAULT_COL_DELIM + token );
 				}
 				writer.write( Constants.RETURN );
 			}
@@ -517,7 +517,7 @@ public class MetaUtil {
 			for( String line = reader.readLine(); line != null; line = reader.readLine() ) {
 				if( isUpdated() ) Log.debug( MetaUtil.class, "===> Meta line: " + line );
 				final ArrayList<String> record = new ArrayList<>();
-				final String[] cells = line.split( Constants.TAB_DELIM, -1 );
+				final String[] cells = line.split( DEFAULT_COL_DELIM, -1 );
 				for( final String cell: cells )
 					if( cell == null || cell.trim().isEmpty() ) record.add( getNullValue( null ) );
 					else record.add( removeComments( cell.trim() ) );

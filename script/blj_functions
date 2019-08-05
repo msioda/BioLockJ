@@ -139,17 +139,25 @@ blj_sup_git() {
 	blj_git_reset "${BLJ_SUP}"
 }
 
+# Check bash array for element exact match
+# Param 1 - Search pattern
+# Param @ = Remaining args = searchable array
+containsElement() {
+  local e match="$1"
+  shift
+  for e; do [ "$e" == "$match" ] && return 0; done
+  return 1
+}
+
 # Return absolute path of current pipeline if in a pipeline directory
 current_pipeline() {
 	if [ -d "${BLJ_PROJ}" ]; then
-		dir="$PWD"
-		parentDir="$(dirname $dir)"
+		dir="$PWD" && parentDir="$(dirname $dir)"
 		while [ "$parentDir" != "${BLJ_PROJ}" ] && [ "$parentDir" != "$(dirname $parentDir)" ] && ! $(is_pipeline_dir $dir)
 		do
-			dir="$parentDir"
-			parentDir="$(dirname $parentDir)"
+			dir="$parentDir" && parentDir="$(dirname $parentDir)"
 		done
-		[ "$parentDir" == "${BLJ_PROJ}" ] && echo $dir
+		[ "$parentDir" == "${BLJ_PROJ}" ] && echo "${dir}"
    fi
 }
 
@@ -185,8 +193,7 @@ exit_script() {
 # Check if parameter contains alpha-numeric chars [a-zA-Z0-9]
 # Param 1 - Any variable
 is_empty() {
-	x=$(echo "$1" | grep -c [a-zA-Z0-9])
-	[ ${x} -eq 0 ]
+	[ $(echo "$1" | grep -c [a-zA-Z0-9]) -eq 0 ]
 }
 
 # Return TRUE if the directory path given ends with a valid module name
@@ -253,7 +260,7 @@ reset_IFS() {
 rm_property() {
 	[ ! -f "${1}" ] && exit_script "Error [ blj_functions.rm_property() ]: Config file ${1} does not exist"
 	[ ${#2} -eq 0 ] && exit_script "Error [ blj_functions.rm_property() ]: Config property name is required"
-	TMP=~/.temp_config.txt && [ -f "${TMP}" ] && rm "${TMP}" && touch "${TMP}" && chmod 770 "${TMP}"
+	[ -f "${TMP}" ] && rm "${TMP}" && touch "${TMP}" && chmod 770 "${TMP}"
 	while read line; do
 		line="$(echo ${line} | xargs)" && IFS=$'=' && tokens=( ${line} ) && reset_IFS 
 		[ ${#line} -gt 0 ] && [ "${tokens[0]}" != "${2}" ] && echo "${line}" >> "${TMP}"

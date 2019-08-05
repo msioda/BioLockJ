@@ -38,40 +38,30 @@ display_help() {
 
 # Get dockblj scripts formatted named arg params
 docker_args() {
-	args='' && [ ${#runGui} -gt 0 ] && args="$runGui "
-	[ ${#config} -gt 0 ] && args="${args}c=${config} "
-	[ ${#newPass} -gt 0 ] && args="${args}p=${newPass} "
-	[ ${#restart} -gt 0 ] && args="${args}r=${restart} "
-	[ ${#blj} -gt 0 ] && args="${args}blj "
-	[ ${#blj_sup} -gt 0 ] && args="${args}blj_sup "
-	echo "${args}"
+	args='' && [ ${#runGui} -gt 0 ] && args="${runGui}"
+	[ ${#blj} -gt 0 ] && args="${args} blj"
+	[ ${#blj_sup} -gt 0 ] && args="${args} blj_sup"
+	[ ${#newPass} -gt 0 ] && args="${args} p=${newPass}"
+	[ ${#restart} -gt 0 ] && args="${args} r=${restart}"
+	[ ${#config} -gt 0 ] && args="${args} c=${config}"
+	echo "${args}" | xargs
 }
 
-# Convert input parameters to array with values "name=value"
+# Convert input parameters to array of flag args and "name=value" arg pairs
 get_params() {
-	returnVals='' && count=0 && i=0 && conf='' && restartDir='' && args=( "$@" )
-	numArgs=${#args[*]}
+	args=( "$@" ) && i=0 && name='' && numArgs=${#args[*]} && out=''
     for arg in ${args[@]}; do
-    	a="${arg//-}" && count=$((count+1))
-    	if [ "${a}" == "docker" ] || [ "${a}" == "blj" ] || [ "${a}" == "blj_sup" ] || [ "${a}" == "gui" ] || [ "${a}" == "aws" ]; then
-    	 	[ ${#returnVals} -gt 0 ] && returnVals="${returnVals} "
-    	 	returnVals="${returnVals}${a}" && continue
-    	fi
-		i=$((i+1)) && [ $((i%2)) -eq 1 ] && name="${a}"
-		if [ $((i%2)) -eq 0 ]; then
-			[ ${#returnVals} -gt 0 ] && returnVals="${returnVals} "
-			returnVals="${returnVals}${name}=${arg}"
-			[ "${name:0:1}" == "r" ] && restartDir="${arg}"
-			[ "${name:0:1}" == "c" ] && conf="${arg}"
-			name=''
-    	fi
+    	arg=$(echo $arg | sed 's/^\(-\)*//')
+    	$(containsElement $arg docker blj blj_sup gui aws) && out="${out} ${arg}" && continue
+		[ ${#name} -eq 0 ] && name="${arg}" && continue
+		out="${out} ${name}=${arg}" && name=''
     done
 
-    if [ ${#name} -gt 0 ] && [ ${#conf} -eq 0 ] && [ ${#restartDir} -eq 0 ]; then
-    	[ ${#returnVals} -gt 0 ] && returnVals="${returnVals} "
-		returnVals="${returnVals}c=${name}"
-    fi
-    echo "${returnVals}"
+	[ "${out/'c='}" == "${out}" ] && [ "${out/'r='}" == "${out}" ] && [ ${#name} -gt 0 ] && out="${out} c=${name}"
+   
+#    [ ${#conf} -eq 0 ] && [ ${#restartDir} -eq 0 ] && [ ${#name} -gt 0 ] && out="${out} c=${name}"
+
+    echo "${out}" | xargs
 }
 
 # The last arg must be the config path, if config & restart dir are undefined and we are looking at the last parameter
@@ -145,10 +135,10 @@ start_pipeline() {
 	echo "blj_summary  -> View module execution summary"
 }
 
-arg="${@//-}"
-if [ $# -eq 1 ] && [ "${arg:0:1}" == "v" ]; then
+arg1="${1//-}"
+if [ $# -eq 1 ] && [ "${arg1:0:1}" == "v" ]; then
 	display_version
-elif [ $# -eq 1 ] && [ "${arg:0:1}" == "h" ]; then
+elif [ $# -eq 1 ] && [ "${arg1:0:1}" == "h" ]; then
 	display_help
 else
 	printf "\n ---------> Execute CMD [  biolockj $(echo ${@})  ]\n"

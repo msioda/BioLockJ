@@ -4,7 +4,7 @@
 ##############################################################
 . "${DOCKER_LIB}"
 
-TMP=~/.temp_config.txt && AWS_CONF=~/.aws/aws_config
+AWS_CONF=~/.aws/aws_config
 STANDARD_CONFIG="${BLJ}/resources/config/default/standard.properties"
 DOCKER_CONFIG="${BLJ}/resources/config/default/docker.properties"
 alias awsr="aws_report_config"

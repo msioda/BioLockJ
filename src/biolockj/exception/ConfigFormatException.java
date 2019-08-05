@@ -12,7 +12,6 @@
 package biolockj.exception;
 
 import biolockj.Config;
-import biolockj.Constants;
 
 /**
  * ConfigFormatException is thrown if property is defined but the format is invalid.
@@ -26,7 +25,7 @@ public class ConfigFormatException extends ConfigException {
 	 */
 	public ConfigFormatException( final String property, final String msg ) {
 		super( property, "Current value \"" + Config.getString( null, property ) +
-			"\" does not meet format requirements!" + Constants.RETURN + msg );
+			"\" does not meet format requirements!" + RETURN + msg );
 	}
 
 	private static final long serialVersionUID = -5659243602699272132L;

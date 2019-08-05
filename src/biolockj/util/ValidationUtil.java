@@ -272,6 +272,10 @@ public class ValidationUtil {
 		}
 	}
 
+	protected static List<String> getValidationAttributes() {
+		return new ArrayList<>( Arrays.asList( NAME, SIZE, MD5 ) );
+	}
+
 	private static boolean canHaltPipeline( final BioModule module ) throws ConfigFormatException {
 		return Config.getBoolean( module, HALT_PIPELINE );
 	}
@@ -303,8 +307,8 @@ public class ValidationUtil {
 		compareFeatures.remove( NAME );
 		if( !getValidationAttributes().containsAll( compareFeatures ) ) {
 			compareFeatures.removeAll( getValidationAttributes() );
-			throw new ConfigViolationException( "Available file attributes for validation are: " + getValidationAttributes() +
-				Constants.RETURN + "Cannot compare on: " + compareFeatures );
+			throw new ConfigViolationException( "Available file attributes for validation are: " +
+				getValidationAttributes() + Constants.RETURN + "Cannot compare on: " + compareFeatures );
 		}
 		if( !headers.containsAll( compareFeatures ) ) {
 			compareFeatures.removeAll( headers );
@@ -380,9 +384,8 @@ public class ValidationUtil {
 
 			rowNum++;
 		}
-		if( prevOutput.isEmpty() )
-			Log.info( ValidationUtil.class, "Module " + ModuleUtil.displayID( module ) + "_" +
-				module.getClass().getSimpleName() + " is expected to have not output." );
+		if( prevOutput.isEmpty() ) Log.info( ValidationUtil.class, "Module " + ModuleUtil.displayID( module ) + "_" +
+			module.getClass().getSimpleName() + " is expected to have not output." );
 		return prevOutput;
 	}
 
@@ -457,11 +460,6 @@ public class ValidationUtil {
 			throw e;
 		}
 	}
-	
-	protected static List<String> getValidationAttributes() {
-		return new ArrayList<>( Arrays.asList( NAME, SIZE, MD5 ) );
-	}
-	
 
 	/**
 	 * {@link biolockj.Config} String property giving the file path that gives the expected values for file metrics.

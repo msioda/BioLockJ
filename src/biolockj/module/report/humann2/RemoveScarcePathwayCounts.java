@@ -178,7 +178,7 @@ public class RemoveScarcePathwayCounts extends Humann2CountModule {
 			for( final List<String> record: data ) {
 				boolean newRecord = true;
 				for( int i = 0; i < record.size(); i++ ) {
-					writer.write( ( !newRecord ? Constants.TAB_DELIM: "" ) + record.get( i ) );
+					writer.write( ( !newRecord ? TAB_DELIM: "" ) + record.get( i ) );
 					newRecord = false;
 				}
 

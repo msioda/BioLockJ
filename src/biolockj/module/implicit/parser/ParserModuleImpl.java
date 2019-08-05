@@ -126,18 +126,38 @@ public abstract class ParserModuleImpl extends JavaModuleImpl implements ParserM
 		getParsedSamples().add( parsedSample );
 	}
 
+	/**
+	 * Simple getter for hitsPerSample map
+	 * 
+	 * @return Map {key=SampleId, val=#hits}
+	 */
 	protected Map<String, String> getHitsPerSample() {
 		return this.hitsPerSample;
 	}
 
+	/**
+	 * Simple getter for TreeSet of ParsedSamples
+	 * 
+	 * @return TreeSet of ParsedSamples
+	 */
 	protected TreeSet<ParsedSample> getParsedSamples() {
 		return this.parsedSamples;
 	}
 
+	/**
+	 * Simple getter for Set of Sample IDs output by the module
+	 * 
+	 * @return Set of Sample IDs
+	 */
 	protected Set<String> getSampleIds() {
 		return this.sampleIds;
 	}
 
+	/**
+	 * Simple getter for Set of unique OTU names output by the module
+	 * 
+	 * @return Set of unique OTU names
+	 */
 	protected Set<String> getUniqueOtus() {
 		return this.uniqueOtus;
 	}
