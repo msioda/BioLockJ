@@ -13,7 +13,8 @@ package biolockj.module.seq;
 
 import java.io.*;
 import java.util.*;
-import biolockj.*;
+import biolockj.Config;
+import biolockj.Log;
 import biolockj.exception.ConfigViolationException;
 import biolockj.exception.SequnceFormatException;
 import biolockj.module.JavaModuleImpl;
@@ -205,7 +206,7 @@ public class SeqFileValidator extends JavaModuleImpl implements SeqModule {
 						if( readLen > stats[ INDEX_MAX_READS ] ) stats[ INDEX_MAX_READS ] = readLen;
 
 						for( final String seqLine: seqLines )
-							writer.write( seqLine + Constants.RETURN );
+							writer.write( seqLine + RETURN );
 					}
 
 					seqLines.clear();

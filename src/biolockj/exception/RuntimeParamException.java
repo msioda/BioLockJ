@@ -11,8 +11,6 @@
  */
 package biolockj.exception;
 
-import biolockj.Constants;
-
 /**
  * ConfigException is the superclass for all BioLockJ configuration file Exceptions used to ensure message uniformity.
  */
@@ -63,7 +61,7 @@ public class RuntimeParamException extends BioLockJException {
 	protected static String buildMessage( final String arg, final String val, final String msg ) {
 		final String displayVal = val == null ? "{undefined}": val;
 		return "Pipeline failed to start due to invalid runtime parameter: [ " + arg + " = " + displayVal + " ] " +
-			( msg == null || msg.trim().isEmpty() ? "": Constants.RETURN + msg );
+			( msg == null || msg.trim().isEmpty() ? "": RETURN + msg );
 	}
 
 	private static final long serialVersionUID = 4511621216880299923L;

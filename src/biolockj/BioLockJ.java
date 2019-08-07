@@ -53,9 +53,9 @@ public class BioLockJ {
 	public static String getHelpInfo() {
 		final File errFile = FatalExceptionHandler.getErrorLog();
 		// TODO: reference the jar help menu: showInfo(Constants.HELP)
-		return Constants.RETURN + "To view the BioLockJ help menu, run \"biolockj -h\"" + Constants.RETURN +
-			( errFile != null ? "Check error logs here --> " + errFile.getAbsolutePath() + Constants.RETURN: "" ) +
-			"For more information, please visit the BioLockJ Wiki:" + Constants.BLJ_WIKI + Constants.RETURN;
+		return RETURN + "To view the BioLockJ help menu, run \"biolockj --" + Constants.HELP + "\"" + RETURN +
+			( errFile != null ? "Check error logs here --> " + errFile.getAbsolutePath() + RETURN: "" ) +
+			"For more information, please visit the BioLockJ Wiki:" + Constants.BLJ_WIKI + RETURN;
 	}
 
 	/**
@@ -83,7 +83,7 @@ public class BioLockJ {
 	 * @param args - String[] runtime parameters passed to the Java program when launching BioLockJ
 	 */
 	public static void main( final String[] args ) {
-		showInfo( args );
+		BioLockJUtil.showInfo( args );
 		System.out.println( "Starting BioLockj..." + Constants.APP_START_TIME );
 		try {
 			initBioLockJ( args );
@@ -208,10 +208,8 @@ public class BioLockJ {
 	 */
 	protected static void initRestart() throws Exception {
 		Log.initialize( Config.pipelineName() );
-		Log.warn( BioLockJ.class,
-			Constants.RETURN + Constants.LOG_SPACER + Constants.RETURN + "RESTART_DIR PROJECT DIR --> " +
-				RuntimeParamUtil.getRestartDir().getAbsolutePath() + Constants.RETURN + Constants.LOG_SPACER +
-				Constants.RETURN );
+		Log.warn( BioLockJ.class, RETURN + Constants.LOG_SPACER + RETURN + "RESTART_DIR PROJECT DIR --> " +
+			RuntimeParamUtil.getRestartDir().getAbsolutePath() + RETURN + Constants.LOG_SPACER + RETURN );
 		Log.info( BioLockJ.class, "Initializing Restarted Pipeline - this may take a couple of minutes..." );
 
 		SummaryUtil.updateNumAttempts();
@@ -237,7 +235,7 @@ public class BioLockJ {
 			if( DockerUtil.inAwsEnv() ) NextflowUtil.saveNextflowSuccessFlag();
 		}
 
-		info( "Log Pipeline Summary..." + Constants.RETURN + SummaryUtil.getSummary() + SummaryUtil.displayAsciiArt() );
+		info( "Log Pipeline Summary..." + RETURN + SummaryUtil.getSummary() + SummaryUtil.displayAsciiArt() );
 		if( isPipelineComplete() ) System.exit( 0 );
 
 		System.exit( 1 );
@@ -327,17 +325,5 @@ public class BioLockJ {
 		if( !BioLockJUtil.isDirectMode() ) Log.info( BioLockJ.class, msg );
 	}
 
-	private static void showInfo( final String[] args ) {
-		for( final String arg: args ) {
-			final String lowerArg = arg.replaceAll( "^--", "-" ).toLowerCase();
-			if( lowerArg.equals( Constants.VERSION ) ) {
-				System.out.println( "BioLockJ " + BioLockJUtil.getVersion( true ) );
-				System.exit( 0 );
-			}
-			if( lowerArg.equals( Constants.HELP ) ) {
-				BioLockJUtil.printHelp();
-				System.exit( 0 );
-			}
-		}
-	}
+	private static final String RETURN = Constants.RETURN;
 }

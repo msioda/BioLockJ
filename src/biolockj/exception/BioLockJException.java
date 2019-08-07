@@ -11,6 +11,8 @@
  */
 package biolockj.exception;
 
+import biolockj.Constants;
+
 /**
  * Superclass for all BioLockJ exception used to ensure message uniformity.
  */
@@ -24,6 +26,11 @@ public class BioLockJException extends Exception {
 	public BioLockJException( final String msg ) {
 		super( msg );
 	}
+
+	/**
+	 * Return character constant *backslash-n*
+	 */
+	protected static final String RETURN = Constants.RETURN;
 
 	private static final long serialVersionUID = 243456830655360169L;
 }

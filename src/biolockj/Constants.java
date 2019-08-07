@@ -17,11 +17,6 @@ package biolockj;
 public class Constants {
 
 	/**
-	 * {@link biolockj.Config} property for GenMod to set its Docker container name: {@value #DOCKER_CONTAINER_NAME} 
-	 */
-	public static final String DOCKER_CONTAINER_NAME = "genMod.dockerContainerName";
-	
-	/**
 	 * Captures the application start time
 	 */
 	public static final long APP_START_TIME = System.currentTimeMillis();
@@ -134,6 +129,11 @@ public class Constants {
 	 * Default Docker {@link biolockj.Config} file imported after {@value #STANDARD_CONFIG_PATH} (if files exist)
 	 */
 	public static final String DOCKER_CONFIG_PATH = "${BLJ}/resources/config/default/docker.properties";
+
+	/**
+	 * {@link biolockj.Config} property for GenMod to set its Docker container name: {@value #DOCKER_CONTAINER_NAME}
+	 */
+	public static final String DOCKER_CONTAINER_NAME = "genMod.dockerContainerName";
 
 	/**
 	 * {@link biolockj.Config} option for {@value #REPORT_TAXONOMY_LEVELS}: {@value #DOMAIN}
@@ -742,9 +742,9 @@ public class Constants {
 	public static final String USER_PROFILE = "pipeline.userProfile";
 
 	/**
-	 * Argument to print version info: {@value #VERSION}
+	 * BioLockJ main() runtime arg used to print version info: {@value #VERSION}
 	 */
-	public static final String VERSION = "-version";
+	public static final String VERSION = "version";
 
 	/**
 	 * {@link biolockj.Config} property to define permission settings when running chmod on pipeline root dir:

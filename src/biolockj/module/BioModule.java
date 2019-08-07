@@ -167,18 +167,19 @@ public interface BioModule {
 	public boolean isValidInputModule( BioModule previousModule );
 
 	/**
-	 * Script prefix appended to start of file name to indicate the main script in the script directory. BioModules that
-	 * generate scripts must create exactly one main script.
+	 * Script prefix appended to start of file name to indicate the main script in the script directory.<br>
+	 * Non-AWS pipelines execute worker scripts via executing the main shell script - named with the prefix:
+	 * {@value #MAIN_SCRIPT_PREFIX}
 	 */
 	public static final String MAIN_SCRIPT_PREFIX = "MAIN_";
 
 	/**
-	 * Name of the output sub-directory
+	 * Name of the output sub-directory: {@value #OUTPUT_DIR}
 	 */
 	public static final String OUTPUT_DIR = "output";
 
 	/**
-	 * Name of the temporary sub-directory
+	 * Name of the temporary sub-directory: {@value #OUTPUT_DIR}
 	 */
 	public static final String TEMP_DIR = "temp";
 }

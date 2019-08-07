@@ -370,6 +370,11 @@ public class BioLockJUtil {
 		return prof;
 	}
 
+	/**
+	 * Method returns the current version of BioLockJ without Git build info
+	 * 
+	 * @return BioLockJ version
+	 */
 	public static String getVersion() {
 		return getVersion( false );
 	}
@@ -377,7 +382,7 @@ public class BioLockJUtil {
 	/**
 	 * Method returns the current version of BioLockJ - or undefined message.
 	 * 
-	 * @param getBuildId boolean - should the returned string include the git revision hash
+	 * @param getBuildId boolean - If enabled, print git revision hash
 	 * @return BioLockJ version
 	 */
 	public static String getVersion( final boolean getBuildId ) {
@@ -528,20 +533,6 @@ public class BioLockJUtil {
 		return new File( Config.pipelinePath() + File.separator + "input" );
 	}
 
-	public static void printHelp() {
-		System.err.println( Constants.RETURN + "BioLockJ " + getVersion() + " java help menu:" );
-		System.err.println( "The BioLockJ.jar file is not intended to be called directly," + Constants.RETURN +
-			"it should be called through the biolockj command." );
-		System.err.println(
-			Constants.RETURN + "Developers: When calling java directly, the following parameters are recognized: " );
-		System.err.println( "Stand alone arguments:" + Constants.RETURN + Constants.HELP + Constants.TAB_DELIM +
-			"print this help menu" + Constants.RETURN + Constants.VERSION + Constants.TAB_DELIM +
-			"print version number" );
-		RuntimeParamUtil.printArgsDescriptions();
-		System.err.println( Constants.RETURN + "Users: please use the biolockj command." );
-		System.err.println( "See: \"biolockj -h\" " );
-	}
-
 	/**
 	 * Print collection one item per line.
 	 * 
@@ -551,9 +542,9 @@ public class BioLockJUtil {
 	public static String printLongFormList( final Collection<?> data ) {
 		final StringBuffer sb = new StringBuffer();
 		if( data != null && !data.isEmpty() ) {
-			sb.append( Constants.RETURN );
+			sb.append( RETURN );
 			for( final Object val: data )
-				sb.append( val ).append( Constants.RETURN );
+				sb.append( val ).append( RETURN );
 		}
 
 		return sb.toString();
@@ -600,6 +591,24 @@ public class BioLockJUtil {
 	public static String removeQuotes( final String value ) {
 		if( value == null ) return null;
 		return value.replaceAll( "'", "" ).replaceAll( "\"", "" );
+	}
+
+	/**
+	 * Print basic version or help info if requested.<br>
+	 * Cally by 1st line BioLockJ.java main() method
+	 * 
+	 * @param args BioLockJ.java main() runtime args
+	 */
+	public static void showInfo( final String[] args ) {
+		for( final String arg: args ) {
+			String argX = arg;
+			while( argX.startsWith( "-" ) )
+				argX = argX.replaceAll( "^-", "" ).toLowerCase();
+			if( argX.equals( Constants.VERSION ) ) System.out.println( "BioLockJ " + BioLockJUtil.getVersion( true ) );
+			else if( argX.equals( Constants.HELP ) ) BioLockJUtil.printHelp();
+			else continue;
+			System.exit( 0 );
+		}
 	}
 
 	private static Collection<File> findDups( final Collection<File> files, final Collection<File> newFiles )
@@ -676,6 +685,19 @@ public class BioLockJUtil {
 			}
 		}
 		return "Version Unknown - missing file \"${BLJ}/.version\"";
+	}
+
+	private static void printHelp() {
+		System.err.println( RETURN + "BioLockJ " + getVersion() + " java help menu:" );
+		System.err.println( "The BioLockJ.jar file is not intended to be called directly," + RETURN +
+			"it should be called through the biolockj command." );
+		System.err
+			.println( RETURN + "Developers: When calling java directly, the following parameters are recognized: " );
+		System.err.println( "Stand alone arguments:" + RETURN + Constants.HELP + Constants.TAB_DELIM +
+			"print this help menu" + RETURN + Constants.VERSION + Constants.TAB_DELIM + "print version number" );
+		RuntimeParamUtil.printArgsDescriptions();
+		System.err.println( RETURN + "Users: please use the biolockj command." );
+		System.err.println( "See: \"biolockj --" + Constants.HELP + "\" " );
 	}
 
 	private static void setPipelineInputFileTypes() {
@@ -801,6 +823,11 @@ public class BioLockJUtil {
 	 * to pass {@link biolockj.util.TaxaUtil#isTaxaFile(File)}.
 	 */
 	public static final String PIPELINE_TAXA_COUNT_TABLE_INPUT_TYPE = "taxa_count";
+
+	/**
+	 * Return character constant *backslash-n*
+	 */
+	public static final String RETURN = Constants.RETURN;
 
 	private static final String BLJ_SUPPORT = "blj_support";
 	private static final String DEFAULT_PROFILE_CMD = "get_default_profile";

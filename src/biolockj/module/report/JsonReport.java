@@ -260,16 +260,16 @@ public class JsonReport extends JavaModuleImpl {
 			new FileWriter( new File( getOutputDir().getAbsolutePath() + File.separator + JSON_SUMMARY ) ) );
 		try {
 			int indentCount = 0;
-			final StringTokenizer st = new StringTokenizer( code, Constants.RETURN );
+			final StringTokenizer st = new StringTokenizer( code, RETURN );
 			while( st.hasMoreTokens() ) {
 				final String line = st.nextToken();
 				if( line.startsWith( "}" ) ) indentCount--;
 
 				int i = 0;
 				while( i++ < indentCount )
-					writer.write( Constants.TAB_DELIM );
+					writer.write( TAB_DELIM );
 
-				writer.write( line + Constants.RETURN );
+				writer.write( line + RETURN );
 
 				if( line.endsWith( "{" ) ) indentCount++;
 			}

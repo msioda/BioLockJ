@@ -48,66 +48,66 @@ public class MasterConfigUtil {
 	 * 
 	 */
 	public static void sanitizeMasterConfig() {
-		
+
 		try {
-		Log.info( MasterConfigUtil.class,
-			"Sanitizing MASTER Config file so only properties accessed during pipeline execution are retained." );
-
-		final Map<String, String> props = new HashMap<>();
-		final Map<String, String> usedProps = Config.getUsedProps();
-		final String defaultDemux = ModuleUtil.getDefaultDemultiplexer();
-		final String defaultFaCon = ModuleUtil.getDefaultFastaConverter();
-		final String defaultMerger = ModuleUtil.getDefaultMergePairedReadsConverter();
-		final String defaultStats = ModuleUtil.getDefaultStatsModule();
-		final Set<String> configMods = Config.getSet( null, Constants.INTERNAL_BLJ_MODULE );
-		boolean foundQiime = false;
-		for( final String mod: configMods )
-			if( mod.toLowerCase().contains( Constants.QIIME ) ) foundQiime = true;
-		if( !foundQiime ) usedProps.remove( Constants.QIIME_ALPHA_DIVERSITY_METRICS );
-
-		if( !ModuleUtil.moduleExists( defaultDemux ) && !configMods.contains( defaultDemux ) ) {
-			usedProps.remove( Constants.DEFAULT_MOD_DEMUX );
-			usedProps.remove( MetaUtil.META_BARCODE_COLUMN );
-			usedProps.remove( Constants.DEFAULT_MOD_DEMUX );
-			usedProps.remove( Constants.DEFAULT_MOD_DEMUX );
-		}
-
-		if( !ModuleUtil.moduleExists( defaultFaCon ) && !configMods.contains( defaultFaCon ) )
-			usedProps.remove( Constants.DEFAULT_MOD_FASTA_CONV );
-
-		if( !ModuleUtil.moduleExists( defaultMerger ) && !configMods.contains( defaultMerger ) )
-			usedProps.remove( Constants.DEFAULT_MOD_SEQ_MERGER );
-
-		if( !configMods.contains( defaultStats ) && !ModuleUtil.moduleExists( defaultStats ) )
-			usedProps.remove( Constants.DEFAULT_STATS_MODULE );
-
-		if( !Log.doDebug() ) {
 			Log.info( MasterConfigUtil.class,
-				"To view the list of removed Config properties before MASTER config is sanitized in future runs, enable: " +
-					Constants.LOG_LEVEL_PROPERTY + "=" + Constants.TRUE );
+				"Sanitizing MASTER Config file so only properties accessed during pipeline execution are retained." );
+
+			final Map<String, String> props = new HashMap<>();
+			final Map<String, String> usedProps = Config.getUsedProps();
+			final String defaultDemux = ModuleUtil.getDefaultDemultiplexer();
+			final String defaultFaCon = ModuleUtil.getDefaultFastaConverter();
+			final String defaultMerger = ModuleUtil.getDefaultMergePairedReadsConverter();
+			final String defaultStats = ModuleUtil.getDefaultStatsModule();
+			final Set<String> configMods = Config.getSet( null, Constants.INTERNAL_BLJ_MODULE );
+			boolean foundQiime = false;
+			for( final String mod: configMods )
+				if( mod.toLowerCase().contains( Constants.QIIME ) ) foundQiime = true;
+			if( !foundQiime ) usedProps.remove( Constants.QIIME_ALPHA_DIVERSITY_METRICS );
+
+			if( !ModuleUtil.moduleExists( defaultDemux ) && !configMods.contains( defaultDemux ) ) {
+				usedProps.remove( Constants.DEFAULT_MOD_DEMUX );
+				usedProps.remove( MetaUtil.META_BARCODE_COLUMN );
+				usedProps.remove( Constants.DEFAULT_MOD_DEMUX );
+				usedProps.remove( Constants.DEFAULT_MOD_DEMUX );
+			}
+
+			if( !ModuleUtil.moduleExists( defaultFaCon ) && !configMods.contains( defaultFaCon ) )
+				usedProps.remove( Constants.DEFAULT_MOD_FASTA_CONV );
+
+			if( !ModuleUtil.moduleExists( defaultMerger ) && !configMods.contains( defaultMerger ) )
+				usedProps.remove( Constants.DEFAULT_MOD_SEQ_MERGER );
+
+			if( !configMods.contains( defaultStats ) && !ModuleUtil.moduleExists( defaultStats ) )
+				usedProps.remove( Constants.DEFAULT_STATS_MODULE );
+
+			if( !Log.doDebug() ) {
+				Log.info( MasterConfigUtil.class,
+					"To view the list of removed Config properties before MASTER config is sanitized in future runs, enable: " +
+						Constants.LOG_LEVEL_PROPERTY + "=" + Constants.TRUE );
+				Log.info( MasterConfigUtil.class,
+					"To add DEBUG statements for only this utility class, add the property (this is a list property so multiple" +
+						" class names could be provided - in this example, wee add a single class): " +
+						Constants.LIMIT_DEBUG_CLASSES + "=" + MasterConfigUtil.class.getName() );
+			}
+
+			usedProps.remove( Constants.INTERNAL_BLJ_MODULE );
+			usedProps.remove( Constants.PIPELINE_DEFAULT_PROPS );
+
+			for( final String key: usedProps.keySet() ) {
+				final String val = usedProps.get( key );
+				if( val == null || val.trim().isEmpty() ) Log.debug( MasterConfigUtil.class,
+					"Remove unused property from sanatized MASTER Config: " + key + "=" + val );
+				else if( !key.startsWith( INTERNAL_PREFIX ) ) props.put( key, val );
+			}
+
+			Log.info( MasterConfigUtil.class, "The original version of project Config contained: " +
+				Config.getInitialProperties().size() + " properties" );
 			Log.info( MasterConfigUtil.class,
-				"To add DEBUG statements for only this utility class, add the property (this is a list property so multiple" +
-					" class names could be provided - in this example, wee add a single class): " +
-					Constants.LIMIT_DEBUG_CLASSES + "=" + MasterConfigUtil.class.getName() );
-		}
+				"The final version of MASTER Config contains: " + props.size() + " properties" );
 
-		usedProps.remove( Constants.INTERNAL_BLJ_MODULE );
-		usedProps.remove( Constants.PIPELINE_DEFAULT_PROPS );
-
-		for( final String key: usedProps.keySet() ) {
-			final String val = usedProps.get( key );
-			if( val == null || val.trim().isEmpty() ) Log.debug( MasterConfigUtil.class,
-				"Remove unused property from sanatized MASTER Config: " + key + "=" + val );
-			else if( !key.startsWith( INTERNAL_PREFIX ) ) props.put( key, val );
-		}
-
-		Log.info( MasterConfigUtil.class, "The original version of project Config contained: " +
-			Config.getInitialProperties().size() + " properties" );
-		Log.info( MasterConfigUtil.class,
-			"The final version of MASTER Config contains: " + props.size() + " properties" );
-
-		saveMasterConfig( props );
-		}catch( Exception ex  ) {
+			saveMasterConfig( props );
+		} catch( final Exception ex ) {
 			ex.printStackTrace();
 		}
 	}

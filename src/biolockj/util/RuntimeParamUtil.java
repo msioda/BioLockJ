@@ -248,6 +248,11 @@ public class RuntimeParamUtil {
 		return params.get( SYSTEM_OUT_FLAG ) != null;
 	}
 
+	/**
+	 * Print arg descriptions
+	 * 
+	 * TODO: PROBLEMATIC APPROACH TO SHOW ARGS BY PRINTING VARIABLES IN THIS METHOD
+	 */
 	public static void printArgsDescriptions() {
 		// TODO: Fill this in with descriptions here!
 		final String sep = ", ";
