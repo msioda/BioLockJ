@@ -591,7 +591,7 @@ public class Demultiplexer extends JavaModuleImpl implements SeqModule {
 		final boolean exists = outFile.isFile();
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( outFile, exists ) );
 		for( final String line: lines )
-			writer.write( line + Constants.RETURN );
+			writer.write( line + RETURN );
 		writer.close();
 	}
 

@@ -14,7 +14,6 @@ package biolockj.module.report.taxa;
 import java.io.BufferedReader;
 import java.io.File;
 import java.util.*;
-import biolockj.Constants;
 import biolockj.Log;
 import biolockj.util.*;
 
@@ -41,7 +40,7 @@ public class LogTransformTaxaTables extends NormalizeTaxaTables {
 			otuNames.addAll( getOtuNames( reader.readLine() ) );
 			String nextLine = reader.readLine();
 			while( nextLine != null ) {
-				final StringTokenizer st = new StringTokenizer( nextLine, Constants.TAB_DELIM );
+				final StringTokenizer st = new StringTokenizer( nextLine, TAB_DELIM );
 				final String sampleID = st.nextToken();
 				final List<Long> innerList = new ArrayList<>();
 				sampleIDs.add( sampleID );

@@ -93,11 +93,11 @@ public class Humann2Parser extends ParserModuleImpl {
 						else if( headerRow && cell.equals( UNINTEGRATED ) &&
 							!Config.getBoolean( this, HN2_KEEP_UNINTEGRATED ) ) skipCols.add( i );
 						else if( skipCols.contains( i ) ) skipCols.add( i );
-						else writer.write( ( !newRecord ? Constants.TAB_DELIM: "" ) + cell );
+						else writer.write( ( !newRecord ? TAB_DELIM: "" ) + cell );
 
 						newRecord = false;
 					}
-					writer.write( Constants.RETURN );
+					writer.write( RETURN );
 					headerRow = false;
 				}
 			} finally {

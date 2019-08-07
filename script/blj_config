@@ -22,6 +22,7 @@ export DOCKER_LIB="${BLJ_SCRIPT}/docker_functions"
 export AWS_LIB="${BLJ_SCRIPT}/aws_functions"
 export EC2_USER="ec2-user"
 export EC2_HOME="/home/${EC2_USER}"
+export TMP="${HOME}/.temp_config.txt"
 
 alias load_blj=". ${BLJ_LIB}"
 alias load_docker=". ${DOCKER_LIB}"

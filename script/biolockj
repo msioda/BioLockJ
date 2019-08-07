@@ -6,6 +6,8 @@
 ##                                                                      ##
 ##  Pass optional param "-r" as 1st param to restart failed pipeline    ##
 ##                                                                      ##
+##  If optional param "-blj_gui" found, launch 2nd container from GUI   ##
+##                                                                      ##
 ##  Pass admin email password as 1st param to encode and store in the   ##
 ##  BioLockJ Config file (2nd param) instead of running a pipeline      ##
 ##                                                                      ##
@@ -36,96 +38,46 @@ display_help() {
     echo '    Mount Docker BLJ_SUP     blj_sup'
 }
 
-# Get dockblj scripts formatted named arg params
-docker_args() {
-	args='' && [ ${#runGui} -gt 0 ] && args="$runGui "
-	[ ${#config} -gt 0 ] && args="${args}c=${config} "
-	[ ${#newPass} -gt 0 ] && args="${args}p=${newPass} "
-	[ ${#restart} -gt 0 ] && args="${args}r=${restart} "
-	[ ${#blj} -gt 0 ] && args="${args}blj "
-	[ ${#blj_sup} -gt 0 ] && args="${args}blj_sup "
-	echo "${args}"
-}
-
-# Convert input parameters to array with values "name=value"
+# Convert input parameters to array of flag args and "name=value" arg pairs
+# Params $@ passed in from main script input parameters at runtime
 get_params() {
-	returnVals='' && count=0 && i=0 && conf='' && restartDir='' && args=( "$@" )
-	numArgs=${#args[*]}
+	args=("$@") && i=0 && name='' && numArgs=${#args[*]} && out=''
     for arg in ${args[@]}; do
-    	a="${arg//-}" && count=$((count+1))
-    	if [ "${a}" == "docker" ] || [ "${a}" == "blj" ] || [ "${a}" == "blj_sup" ] || [ "${a}" == "gui" ] || [ "${a}" == "aws" ]; then
-    	 	[ ${#returnVals} -gt 0 ] && returnVals="${returnVals} "
-    	 	returnVals="${returnVals}${a}" && continue
-    	fi
-		i=$((i+1)) && [ $((i%2)) -eq 1 ] && name="${a}"
-		if [ $((i%2)) -eq 0 ]; then
-			[ ${#returnVals} -gt 0 ] && returnVals="${returnVals} "
-			returnVals="${returnVals}${name}=${arg}"
-			[ "${name:0:1}" == "r" ] && restartDir="${arg}"
-			[ "${name:0:1}" == "c" ] && conf="${arg}"
-			name=''
-    	fi
+    	arg=$(echo $arg | sed 's/^\(-\)*//')
+    	$(containsElement $arg docker blj blj_sup gui aws) && out="${out} ${arg}" && continue
+		[ ${#name} -eq 0 ] && name="${arg}" && continue
+		out="${out} ${name}=${arg}" && name=''
     done
-
-    if [ ${#name} -gt 0 ] && [ ${#conf} -eq 0 ] && [ ${#restartDir} -eq 0 ]; then
-    	[ ${#returnVals} -gt 0 ] && returnVals="${returnVals} "
-		returnVals="${returnVals}c=${name}"
-    fi
-    echo "${returnVals}"
-}
-
-# The last arg must be the config path, if config & restart dir are undefined and we are looking at the last parameter
-# Param 1 - Current script input param number
-# Param 2 - Total number of script input params
-lastArgMustBeConfig() {
-	[ $1 -eq $2 ] && [ ${#conf} -eq 0 ] && [ ${#restart} -eq 0 ]
-}
-
-# Initialize script, read in script arguments
-# Param 1 -  All script params
-read_input_args() {
-	blj=$(arg_exists ${@} blj)
-	blj_sup=$(arg_exists ${@} blj_sup)
-	runAws=$(arg_exists ${@} aws)
-	runGui=$(arg_exists ${@} gui)
-	runDocker=$(arg_exists ${@} docker)
-	config=$(named_arg ${@} c)
-	newPass=$(named_arg ${@} p)
-	restart=$(named_arg ${@} r)
-	if [ ${#runDocker} -eq 0 ]; then 
-		[ ${#runGui} -gt 0 ] && runDocker="docker" && echo "Arg \"gui\" is only applicable in Docker mode --> starting Docker biolockj_controller container"
-		[ ${#blj} -gt 0 ] && echo "Arg \"blj\" is only applicable in Docker mode so will be ignored"
-		[ ${#blj_sup} -gt 0 ] && echo "Arg \"blj_sup\" is only applicable in Docker mode so will be ignored"
-	fi
+	[ "${out/'c='}" == "${out}" ] && [ "${out/'r='}" == "${out}" ] && [ ${#name} -gt 0 ] && out="${out} c=${name}"
+    echo "${out}" | xargs
 }
 
 # Run biolockj by locally, on AWS, or in Docker mode based on script args
-# Param 1 - args output by read_input_args $@ 
+# Params - Array of processed script args
 run_biolockj() {
-	if [ ${#runAws} -gt 0 ]; then
-		if [ ${#runGui} -gt 0 ]; then
-			run_aws_gui
-		else
-			run_aws "${config}"
-		fi
-	elif [ ${#runDocker} -gt 0 ]; then
-	 	[ ${#config} -gt 0 ] && echo "found config: $config"
-		dockblj $(docker_args)
-	else
-		[ ${#config} -gt 0 ] && args="c=${config}" && [ ${#newPass} -gt 0 ] && args="${args} p=${newPass}"
-		[ ${#runGui} -eq 0 ] && [ ${#restartDir} -eq 0 ] && [ ! -f "${config}" ] && 
-			${BLJ}/script/biolockj -h && exit_script "Error [ biolockj ]:  \"${config}\" not found on filesystem"
-		[ ! -d "${BLJ_PROJ}" ] && exit_script "Error [ biolockj ]: Required env variable BLJ_PROJ undefined: \"${BLJ_PROJ}\""
-		[ ! -f "${BLJ_JAR}" ] && exit_script "Error [ biolockj ]: BioLockJ Jar file \"${BLJ_JAR}\" not found"
-		start_pipeline "${@}"
+	config=$(named_arg $@ c)
+	restart=$(named_arg $@ r)
+	! $(containsElement gui $@) && [ ${#config} -eq 0 ] && [ ${#restart} -eq 0 ] && 
+		exit_script "Error [ biolockj ]: Either -config or -restart arg is required!"
+	if $(containsElement gui $@) && $(containsElement aws $@); then
+		run_aws_gui
+	elif $(containsElement gui $@); then
+		dockblj $@
+	elif (containsElement aws $@); then
+		[ ${#config} -eq 0 ] && exit_script "Error [ biolockj ]: AWS pipelines require a -config arg!"
+		run_aws "${config}"
+	elif $(containsElement docker $@); then
+		dockblj $@
+	else # direct local pipeline
+		start_pipeline "$(verify_args $@)"
 	fi
 }
 
 # Start local pipeline by calling java to run the BioLockJ.jar on the given Config file
-# Param 1 - array of script args "$@"
+# Params - Array of processed script args
 start_pipeline() {
 	i=0 && initDir="$(most_recent_pipeline)" && pipeDir="${initDir}" && initJava=$(ps | grep -c java) 
-	numJava=${initJava} && echo -e "Launching BioLockJ:  \"nohup java -jar ${BLJ_JAR} -b ${BLJ_PROJ} -u ${HOME} $@ >/dev/null 2>&1 &\""
+	numJava=${initJava} && echo -e "Starting BioLockJ:  \"nohup java -jar ${BLJ_JAR} -b ${BLJ_PROJ} -u ${HOME} $@ >/dev/null 2>&1 &\""
 	nohup java -jar "${BLJ_JAR}" -b "${BLJ_PROJ}" -u "${HOME}" $@ >/dev/null 2>&1 &
 	[ $? != 0 ] && ${BLJ}/script/biolockj -h && exit_script "Error [ biolockj ]:  Unable to run ${BLJ_JAR}"
 	printf "Initializing BioLockJ."
@@ -137,7 +89,7 @@ start_pipeline() {
 		echo "Restarting pipeline:  ${pipeDir}"
 	elif [ ${#restart} -eq 0 ] && [ "${initDir}" != "${pipeDir}" ] || [ ${numJava} -gt ${initJava} ]; then 
 		echo "Starting pipeline:  ${pipeDir}"
-	elif [ ${#restart} -eq 0 ] && [ ${#runGui} -eq 0 ]; then
+	elif [ ${#restart} -eq 0 ] && ! $(containsElement gui $@); then
 		echo "Pipeline may have failed to launch - check $BLJ_PROJ for new pipeline"
 	fi
 	echo "blj_go       -> Move to pipeline output directory"
@@ -145,14 +97,28 @@ start_pipeline() {
 	echo "blj_summary  -> View module execution summary"
 }
 
-arg="${@//-}"
-if [ $# -eq 1 ] && [ "${arg:0:1}" == "v" ]; then
+# Throw error if params are invalid
+# Params - Array of processed script args
+verify_args() {
+	newPass=$(named_arg $@ p)
+	[ ${#newPass} -gt 0 ] && args="${@/p=$newPass}"
+	args="${@//=/ }"
+	[ ${#newPass} -gt 0 ] && args="${args} -p ${newPass}"
+	[ ! -f "/.dockerenv" ] && [ ${#config} -gt 0 ] && [ ! -f "${config}" ] &&
+		${BLJ}/script/biolockj -h && exit_script "Error [ biolockj ]:  \"${config}\" not found on filesystem"
+	[ ! -f "/.dockerenv" ] && [ ${#restart} -gt 0 ] && [ ! -d "${restart}" ] &&
+		${BLJ}/script/biolockj -h && exit_script "Error [ biolockj ]:  \"${restart}\" not found on filesystem"
+	[ ! -d "${BLJ_PROJ}" ] && exit_script "Error [ biolockj ]: Required env variable BLJ_PROJ undefined: \"${BLJ_PROJ}\""
+	[ ! -f "${BLJ_JAR}" ] && exit_script "Error [ biolockj ]: BioLockJ Jar file \"${BLJ_JAR}\" not found"
+	echo "${args}"
+}
+
+arg1="${1//-}"
+if [ $# -eq 1 ] && [ "${arg1:0:1}" == "v" ]; then
 	display_version
-elif [ $# -eq 1 ] && [ "${arg:0:1}" == "h" ]; then
+elif [ $# -eq 1 ] && [ "${arg1:0:1}" == "h" ]; then 
 	display_help
 else
 	printf "\n ---------> Execute CMD [  biolockj $(echo ${@})  ]\n"
-	args=$(get_params $@)
-	read_input_args "${args}"
-	run_biolockj "${args}"
+	run_biolockj $(get_params $@)
 fi

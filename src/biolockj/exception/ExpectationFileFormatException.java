@@ -1,7 +1,6 @@
 package biolockj.exception;
 
 import java.io.File;
-import biolockj.Constants;
 import biolockj.util.ValidationUtil;
 
 /**
@@ -21,9 +20,9 @@ public class ExpectationFileFormatException extends BioLockJException {
 	}
 
 	private static String buildMessage( final String msg, final File file ) {
-		return msg + Constants.RETURN + "Configuration property [" + ValidationUtil.EXPECTATION_FILE +
-			"] points to file [" + file.getAbsolutePath() + "]." + Constants.RETURN + "Make corrections to [" +
-			file.getName() + "] and restart pipeline.";
+		return msg + RETURN + "Configuration property [" + ValidationUtil.EXPECTATION_FILE + "] points to file [" +
+			file.getAbsolutePath() + "]." + RETURN + "Make corrections to [" + file.getName() +
+			"] and restart pipeline.";
 	}
 
 	/**

@@ -178,16 +178,15 @@ public class RemoveLowPathwayCounts extends Humann2CountModule {
 				boolean newRecord = true;
 				if( firstRecord && !badPathways.isEmpty() ) for( final String pathway: record ) {
 					if( badPathways.contains( pathway ) ) badIndex.add( record.indexOf( pathway ) );
-					else writer.write( ( !newRecord ? Constants.TAB_DELIM: "" ) + pathway );
+					else writer.write( ( !newRecord ? TAB_DELIM: "" ) + pathway );
 					newRecord = false;
 				}
 				else if( !firstRecord ) for( int i = 0; i < record.size(); i++ ) {
-					if( !badIndex.contains( i ) )
-						writer.write( ( !newRecord ? Constants.TAB_DELIM: "" ) + record.get( i ) );
+					if( !badIndex.contains( i ) ) writer.write( ( !newRecord ? TAB_DELIM: "" ) + record.get( i ) );
 					newRecord = false;
 				}
 				else for( final String pathway: record ) {
-					writer.write( ( !newRecord ? Constants.TAB_DELIM: "" ) + pathway );
+					writer.write( ( !newRecord ? TAB_DELIM: "" ) + pathway );
 					newRecord = false;
 				}
 				firstRecord = false;

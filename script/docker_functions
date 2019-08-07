@@ -28,7 +28,7 @@ clearDock() {
 	containers=$(docker ps -aq)
 	runningProcs=$(docker ps -q)
 	images=$(docker images -f "dangling=true" -q) 
-	[ ${#runningProcs} -gt 0 ] && echo "run CMD [ docker stop -t 30 $runningProcs ]" && docker stop -t 30 $runningProcs && runningProcs=$(docker ps -q)
+	[ ${#runningProcs} -gt 0 ] && echo "run CMD [ docker stop -t 30 $runningProcs ]" && docker stop -t 10 $runningProcs && runningProcs=$(docker ps -q)
 	[ ${#runningProcs} -gt 0 ] && echo "run CMD [ docker kill -s SIGINT $runningProcs ]" && docker kill -s SIGINT $runningProcs && runningProcs=$(docker ps -q)
 	[ ${#runningProcs} -gt 0 ] && echo "run CMD [ docker kill $runningProcs ]" && docker kill $runningProcs
 	[ ${#containers} -gt 0 ] && echo "run CMD [ docker rm $containers ]" && docker rm $containers
@@ -147,5 +147,6 @@ push_blj_only() {
 # Run a clone of the last biolockj_controller container
 # Very useful to debug after failed Docker pipelines
 run_docker_clone() {
+	[ -f "/.dockerenv" ] && export DOCKER_CLONE_SCRIPT="${BLJ_HOST_HOME}/$(basename $DOCKER_CLONE_SCRIPT)"
 	[ -x "${DOCKER_CLONE_SCRIPT}" ] && bash "${DOCKER_CLONE_SCRIPT}"
 }

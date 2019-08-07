@@ -193,11 +193,9 @@ public class DockerUtil {
 	 */
 	public static String getImageName( final BioModule module ) throws ConfigNotFoundException {
 		final String className = module.getClass().getName();
-		
-		if( module instanceof GenMod ) {
-			return Config.requireString( module, Constants.DOCKER_CONTAINER_NAME );
-		}
-		
+
+		if( module instanceof GenMod ) return Config.requireString( module, Constants.DOCKER_CONTAINER_NAME );
+
 		if( useBasicBashImg( module ) ) {
 			Log.info( DockerUtil.class, "Map: Class [" + className + "] <--> Docker Image [ " + BLJ_BASH + " ]" );
 			return BLJ_BASH;
