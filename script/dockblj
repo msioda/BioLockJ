@@ -70,14 +70,15 @@ blj_proj() {
 # Build a script that can be used to launch a clone of the
 # Param 1 - Full Docker run command
 build_clone_script() {
-	img="$(dock_id)/biolockj_controller"
-	cmd=${@/$img/-ti $img /bin/bash} 
-	! $(null_var $runGui) && cmd=${cmd/npm start}
-	if [ "${cmd: -1}" == "&" ]; then
-		len=$((${#cmd}-1))
-		cmd="${cmd:0:len}"
+	args="$@"
+	if [ "${args: -1}" == "&" ]; then
+		len=$((${#args}-1))
+		args="${args:0:len}"
 	fi
-	
+
+	img="$(dock_id)/biolockj_controller"
+	cmd=${args/$img/-ti $img /bin/bash} 
+	! $(null_var $runGui) && cmd=${cmd/npm start}
 	! $(null_var $fromGui) && DOCKER_CLONE_SCRIPT="${BLJ_HOST_HOME}/$(basename $DOCKER_CLONE_SCRIPT)"
 	
 	echo "#!/bin/bash" > "${DOCKER_CLONE_SCRIPT}"
@@ -147,7 +148,9 @@ scan_script_and_env_args() {
 	config=$(named_arg $@ c)
 	newPass=$(named_arg $@ p)
 	restartDir=$(named_arg $@ r)
-	if $(null_var $runGui) || $(null_var $fromGui); then
+	! $(null_var $runGui) && echo "RUN THE GUI"
+	! $(null_var $fromGui) && echo "INSIDE THE GUI"
+	if ! $(null_var $runGui) && ! $(null_var $fromGui); then
 		inputDir="$(get_property $config input.dirPaths)"
 		metaPath="$(get_property $config metadata.filePath)" && [ ${#metaPath} -gt 0 ] && metaPath="$(dirname $metaPath)"
 		primerPath="$(get_property $config trimPrimers.filePath)" && [ ${#primerPath} -gt 0 ] && primerPath="$(dirname $primerPath)"
