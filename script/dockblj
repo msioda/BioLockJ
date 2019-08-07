@@ -11,6 +11,7 @@
 ##  Aws flag:                  aws                                           ##
 ##  Use local BLJ flag:        blj                                           ##
 ##  Use local BLJ_SUP flag:    blj_sup                                       ##
+##  Run BioLockJ from GUI:     blj_gui                                       ##
 ##  Run GUI flag:              gui                                           ##
 ##  New email password:        pass    <new_password>                        ##
 ##  Restart flag:              restart <dir_path>                            ##
@@ -72,6 +73,13 @@ build_clone_script() {
 	img="$(dock_id)/biolockj_controller"
 	cmd=${@/$img/-ti $img /bin/bash} 
 	! $(null_var $runGui) && cmd=${cmd/npm start}
+	if [ "${cmd: -1}" == "&" ]; then
+		len=$((${#cmd}-1))
+		cmd="${cmd:0:len}"
+	fi
+	
+	! $(null_var $fromGui) && DOCKER_CLONE_SCRIPT="${BLJ_HOST_HOME}/$(basename $DOCKER_CLONE_SCRIPT)"
+	
 	echo "#!/bin/bash" > "${DOCKER_CLONE_SCRIPT}"
 	echo "# This script launches a clone of the last biolockj_controller (same env vars + volumes)" >> "${DOCKER_CLONE_SCRIPT}"
 	echo "${cmd}" >> "${DOCKER_CLONE_SCRIPT}"
@@ -130,7 +138,8 @@ run_docker() {
 # Read script args and bash env vars
 # Param 1 - Array of dockblj script args
 scan_script_and_env_args() {
-	runGui='' && runAws='' && blj='' && blj_sup=''
+	fromGui='' && runGui='' && runAws='' && blj='' && blj_sup=''
+	$(containsElement blj_gui $@) && fromGui=blj_gui
 	$(containsElement gui $@) && runGui=gui
 	$(containsElement aws $@) && runAws=aws
 	$(containsElement blj $@) && blj="${BLJ}"
@@ -138,7 +147,7 @@ scan_script_and_env_args() {
 	config=$(named_arg $@ c)
 	newPass=$(named_arg $@ p)
 	restartDir=$(named_arg $@ r)
-	if $(null_var $runGui); then
+	if $(null_var $runGui) || $(null_var $fromGui); then
 		inputDir="$(get_property $config input.dirPaths)"
 		metaPath="$(get_property $config metadata.filePath)" && [ ${#metaPath} -gt 0 ] && metaPath="$(dirname $metaPath)"
 		primerPath="$(get_property $config trimPrimers.filePath)" && [ ${#primerPath} -gt 0 ] && primerPath="$(dirname $primerPath)"
@@ -185,6 +194,6 @@ verify_inputs() {
 
 printf "\n ---------> Execute CMD [  dockblj $(echo ${@})  ]\n"
 scan_script_and_env_args $@
-! $(containsElement gui $@) && [ "${HOME}" != "${EC2_HOME}" ] && [ ! -f "/.dockerenv" ] && verify_inputs 
+$(null_var $runGui) && [ "${HOME}" != "${EC2_HOME}" ] && [ ! -f "/.dockerenv" ] && verify_inputs 
 run_docker
 $(containsElement gui $@) && startBrowser

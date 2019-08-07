@@ -6,6 +6,8 @@
 ##                                                                      ##
 ##  Pass optional param "-r" as 1st param to restart failed pipeline    ##
 ##                                                                      ##
+##  If optional param "-blj_gui" found, launch 2nd container from GUI   ##
+##                                                                      ##
 ##  Pass admin email password as 1st param to encode and store in the   ##
 ##  BioLockJ Config file (2nd param) instead of running a pipeline      ##
 ##                                                                      ##
