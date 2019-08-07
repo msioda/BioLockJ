@@ -5,19 +5,6 @@
 ##                                                               ##
 ###################################################################
 
-# Return value if found in input parameters
-# Param 1 - Script paramaters $@
-# Param 2 - Target param
-arg_exists() {
-	args=("$@")
-	numArgs=${#@}
-	target=${args[$((numArgs-1))]}
-	args=${args[@]:0:$((numArgs-1))}
-	for arg in $args; do
-		[ "$arg" == "$target" ] && echo "$target" && return
-	done
-}
-
 # Add a named arg to a space-delimited list of args (Use "=" to add a name-value pair)
 # Param 1 - arg name
 # Param 2 - arg value
@@ -284,12 +271,6 @@ set_property() {
 show_IFS() {
 	echo "Cached  IFS  -->  $(printf %q "$IFS_CACHE")"
 	echo "Current IFS  -->  $(printf %q "$IFS")"
-}
-
-# Return TRUE if variable name in Param 1 exists in shell
-# Param 1 - bash env variable
-var_exists() {
-	[ $(set | grep -c "^${1}=") -gt 0 ]
 }
 
 IFS_CACHE="$IFS" && alias showIFS="show_IFS" && alias resetIFS="reset_IFS"
