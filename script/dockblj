@@ -149,7 +149,7 @@ scan_script_and_env_args() {
 	newPass=$(named_arg $@ p)
 	restartDir=$(named_arg $@ r)
 
-	if ! $(null_var $runGui) && ! $(null_var $fromGui) && ! $(null_var $config); then
+	if $(null_var $runGui) && ! $(null_var $config); then
 		inputDir="$(get_property $config input.dirPaths)"
 		metaPath="$(get_property $config metadata.filePath)" && [ ${#metaPath} -gt 0 ] && metaPath="$(dirname $metaPath)"
 		primerPath="$(get_property $config trimPrimers.filePath)" && [ ${#primerPath} -gt 0 ] && primerPath="$(dirname $primerPath)"
