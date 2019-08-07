@@ -62,7 +62,7 @@ run_biolockj() {
 	if $(containsElement gui $@) && $(containsElement aws $@); then
 		run_aws_gui
 	elif $(containsElement gui $@); then
-		dockblj gui
+		dockblj $@
 	elif (containsElement aws $@); then
 		[ ${#config} -eq 0 ] && exit_script "Error [ biolockj ]: AWS pipelines require a -config arg!"
 		run_aws "${config}"
