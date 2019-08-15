@@ -216,20 +216,23 @@ public class DockerUtil {
 				prevChar.equals( IMAGE_NAME_DELIM ) && !val.equals( IMAGE_NAME_DELIM ) ) imageName += val.toLowerCase();
 		}
 
-		if( hasCustomDockerDB( module ) && className.toLowerCase().contains( "knead_data" ) ||
-			className.toLowerCase().contains( "kraken" ) ) imageName += DB_FREE;
+		if( hasCustomDockerDB( module ) && ( className.toLowerCase().contains( "knead_data" ) ||
+			className.toLowerCase().contains( "kraken" ) ) ) imageName += DB_FREE;
 		Log.info( DockerUtil.class, "Map: Class [" + className + "] <--> Docker Image [ " + imageName + " ]" );
 		return imageName;
 	}
 
 	/**
-	 * Function used to determine if an alternate database has been defined (other than /db).
+	 * Function used to determine if an alternate database has been defined (other than /mnt/db).
 	 * 
 	 * @param module BioModule
 	 * @return TRUE if module has a custom DB defined runtime env
 	 */
 	public static boolean hasCustomDockerDB( final BioModule module ) {
 		try {
+			Log.info( DockerUtil.class, "Check for Custom Docker DB" );
+			//new File( "/.dockerenv" )
+			
 			if( inDockerEnv() && module instanceof DatabaseModule ) {
 				final File db = ( (DatabaseModule) module ).getDB();
 				if( db != null ) return !db.getAbsolutePath().startsWith( DOCKER_DEFAULT_DB_DIR );
