@@ -10,6 +10,7 @@ const fs = require('fs'),
   errorLogger = require('./errorLogger.js'),
   bljProjDir = process.env.BLJ_PROJ, //path to blj_proj
   bljDir = process.env.BLJ,
+  BLJ_CONFIG = process.env.BLJ_CONFIG,
   HOST_BLJ = process.env.HOST_BLJ,
   events = require('events'),
   Stream = new events.EventEmitter(), // my event emitter instance
@@ -26,29 +27,27 @@ exports.launch = function(req, res, next) {
     const modules = req.body.modules;
     const paramKeys = req.body.paramKeys;
     const paramValues = req.body.paramValues;
-    let launchArg = req.body.partialLaunchArg;
     let configName = paramValues[paramKeys.indexOf('pipeline.configFile')];
     if (!configName.endsWith('.properties')){
       configName = configName.concat('.properties');
     }
-
+    console.log(configName, HOST_BLJ);
+  
     const configText = indexAux.formatAsFlatFile(modules, paramKeys, paramValues);
     indexAux.saveConfigToLocal(configName,configText);
 
     //set host-path for the config:
-    launchArg['c'] = path.join( HOST_BLJ ,'resources','config','gui', configName);
-
-    var launchCommand;
+    const configPath = path.join( HOST_BLJ, 'resources', 'config', 'gui', configName);
 
     switch (req.body.launchAction) {
       case 'restartFromCheckPoint':
         console.log('restart request: ', req.body.restartProjectPath);
         const fullRestartPath = path.join(bljDir,req.body.restartProjectPath);
         console.log(fullRestartPath);
-        launchCommand = indexAux.createFullLaunchCommand(launchArg, fullRestartPath);
+        launchCommand = createLaunchCommand(configPath, paramKeys, paramValues, fullRestartPath);
+        //configPath, keys, params, restartPath
         console.log('launching!');
-        indexAux.runLaunchCommand(launchCommand, Stream);
-
+        runLaunchCommand(launchCommand, Stream);
         break;
       case 'eraseThenRestart':
       try {
@@ -74,9 +73,9 @@ exports.launch = function(req, res, next) {
           }
         };
         deleteFolderRecursive(eraseDir);
-        launchCommand = indexAux.createFullLaunchCommand(launchArg);
+        launchCommand = createLaunchCommand(configPath, paramKeys, paramValues);
         console.log('launching!');
-        indexAux.runLaunchCommand(launchCommand, Stream);
+        runLaunchCommand(launchCommand, Stream);
 
       } catch (e) {
         console.log(e);
@@ -85,10 +84,9 @@ exports.launch = function(req, res, next) {
 
         break;
       case 'launchNew':
-        launchCommand = indexAux.createFullLaunchCommand(launchArg);
+        launchCommand = createLaunchCommand(configPath, paramKeys, paramValues);
         console.log('launching!');
-        indexAux.runLaunchCommand(launchCommand, Stream);
-        //let fileModTime = new Map();
+        runLaunchCommand(launchCommand, Stream);
 
       break;
       default:
@@ -134,3 +132,61 @@ exports.streamProgress = function(req, res, next){
     //response.write("event: " + String(event) + "\n" + "data: " + JSON.stringify(data) + "\n\n");
   });
 }
+
+runLaunchCommand = function(command, eventEmitter) {
+  const bljProjDir = process.env.BLJ_PROJ; //path to blj_proj
+  const { spawn } = require('child_process');//for running child processes
+  const first = command.shift();
+  console.log(first);
+  console.log(command);
+  try {
+    const child = spawn(first, command);
+    child.stdout.on('data', function(data){
+      eventEmitter.emit('log',data);
+      console.log('child.stdout: ' + data);
+    });
+    child.stderr.on('data', function (data) {
+        //throw errors
+        eventEmitter.emit('log',data);
+        console.log('child.stderr: ' + data);
+    });
+    child.on('error', function (data) {
+        //throw errors
+        eventEmitter.emit('log',data);
+        console.log('child.err: ' + data);
+    });
+    child.on('close', function (code) {
+        console.log('child process exited with code ' + code);
+    });
+    //child.unref();//to run in background
+  } catch (e) {
+    console.error(`launch error: ${e}`);
+  }
+
+}//end runLaunchCommand
+
+createLaunchCommand = function(configPath, keys, values, restartPath){//
+  let command = ['biolockj', "--docker"];
+
+  let env = '-c';//flag, -c
+
+  for (var i = 0; i < keys.length; i++) {
+    if (keys[i] == 'pipeline.env' && values[i] == 'aws'){
+      command.push(`-aws ${configPath}`);
+      env = 'aws';
+    }
+  }
+
+  if (env == '-c') {
+    command.push(`-c ${configPath}`);
+  }
+
+  if (restartPath !== undefined ){
+    //note, change to make more universal
+    command.push(`-r ${path.Dirname(restartPath)}`);
+  }
+  console.log('launch');
+  console.log('full launch command: \n', command);
+  return command;
+
+}//end createLaunchCommand

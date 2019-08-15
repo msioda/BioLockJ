@@ -31,17 +31,17 @@ body {background-color: #A9A9A9;}/* for dark theme */
 
 /* This block is for the nav-bar */
 .nav-bar {
-    overflow: hidden;
-    background-color: rgb(0,112,60);/* uncc charlotte green */
-    font-family: Arial;
+  overflow: hidden;
+  background-color: rgb(0,112,60);/* uncc charlotte green */
+  font-family: Arial;
 }
 .nav-bar a {
-    float: left;
-    font-size: 16px;
-    color: white;
-    text-align: center;
-    padding: 14px 16px;
-    text-decoration: none;
+  float: left;
+  font-size: 16px;
+  color: white;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
 }
 .banner {
   text-align: center;
@@ -52,43 +52,49 @@ body {background-color: #A9A9A9;}/* for dark theme */
   margin-top: 11px;
 }
 .dropdown {
-    float: left;
-    overflow: hidden;
+  overflow: hidden;
+}
+.lft{
+  float: left;
+}
+.rght{
+  float: right;
+  padding-right: 125px;
 }
 .dropdown .dropbtn {
-    cursor: pointer;
-    font-size: 16px;
-    border: none;
-    outline: none;
-    color: white;
-    padding: 10px 16px;
-    background-color: inherit;
+  cursor: pointer;
+  font-size: 16px;
+  border: none;
+  outline: none;
+  color: white;
+  padding: 10px 16px;
+  background-color: inherit;
 }
 .nav-bar a:hover, .dropdown:hover .dropbtn {
     background-color: rgb(195,215,164);
 }
 .dropdown-content {
-    display: none;
-    position: absolute;
-    background-color: #f9f9f9;
-    min-width: 160px;
-    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-    z-index: 1;
+  display: none;
+  position: absolute;
+  background-color: #f9f9f9;
+  min-width: 160px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  z-index: 1;
 }
 .dropdown-content a {
-    float: none;
-    color: black;
-    padding: 12px 16px;
-    text-decoration: none;
-    display: block;
-    text-align: left;
-    z-index: 1;
+  float: none;
+  color: black;
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+  text-align: left;
+  z-index: 1;
 }
 .dropdown-content a:hover {
-    background-color: rgb(255,246,220);
+  background-color: rgb(255,246,220);
 }
 .show {
-    display: block;
+  display: block;
 }
 
 .hidden{
@@ -97,36 +103,36 @@ body {background-color: #A9A9A9;}/* for dark theme */
 
 /* for menu and tabbed buttons of menu */
 .menu {
-    padding: 14px 10px;
-    background-color: rgb(255,246,220);
-    border: 1px solid black;
-    margin: 10px 30px 20px 30px;
-    display: none; /*hidden until "new" is clicked */
+  padding: 14px 10px;
+  background-color: rgb(255,246,220);
+  border: 1px solid black;
+  margin: 10px 30px 20px 30px;
+  display: none; /*hidden until "new" is clicked */
 }
 /* Style the tab */
 div.tab {
-    overflow: hidden;
-    border: 1px solid #ccc;
-    background-color: #f1f1f1;
+  overflow: hidden;
+  border: 1px solid #ccc;
+  background-color: #f1f1f1;
 }
 /* Style the buttons inside the tab */
 div.tab button {
-    background-color: inherit;
-    float: left;
-    border: none;
-    outline: none;
-    cursor: pointer;
-    padding: 14px 10px;
-    transition: 0.3s;
-    font-size: 17px;
+  background-color: inherit;
+  float: left;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 14px 10px;
+  transition: 0.3s;
+  font-size: 17px;
 }
 /* Change background color of buttons on hover */
 div.tab button:hover {
-    background-color: #ddd;
+  background-color: #ddd;
 }
 /* Create an active/current tablink class */
 div.tab button.active {
-    background-color: #ccc;
+  background-color: #ccc;
 }
 
 .tablinks {
@@ -138,10 +144,10 @@ div.tab button.active {
 
 /* Style the tab content */
 .tabcontent {
-    display: none;
-    padding: 6px 3px;
-    border: 1px solid #ccc;
-    border-top: none;
+  display: none;
+  padding: 6px 3px;
+  border: 1px solid #ccc;
+  border-top: none;
 }
 /*for module options*/
 .modChoosen {
@@ -169,14 +175,14 @@ select[multiple] {
 
 /*for the list elements of the module tab*/
 div#module li {
-list-style-type:none;
-padding:1px;
-margin:0px;
-background-color:#FFFFFF;
-border:1px double #CCCCCC;
-position: relative;
-display: block;
-/*transition-timing-function: ease;*/
+  list-style-type:none;
+  padding:1px;
+  margin:0px;
+  background-color:#FFFFFF;
+  border:1px double #CCCCCC;
+  position: relative;
+  display: block;
+  /*transition-timing-function: ease;*/
 }
 div#module ul{
   padding-left: 5;
@@ -227,47 +233,47 @@ div#moduleInfoDiv {
 }
 /* The Modal (background) */
 .modal {
-    display: none; /* Hidden by default */
-    position: fixed; /* Stay in place */
-    z-index: 1; /* Sit on top */
-    left: 0;
-    top: 0;
-    width: 100%; /* Full width */
-    height: 100%; /* Full height */
-    overflow: auto; /* Enable scroll if needed */
-    background-color: rgb(0,0,0); /* Fallback color */
-    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
-    overflow: scroll;
+  display: none; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 1; /* Sit on top */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  background-color: rgb(0,0,0); /* Fallback color */
+  background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+  overflow: scroll;
 }
 
 /* Modal Content/Box */
 .modal-content {
-    background-color: #fefefe;
-    margin: 15% auto; /* 15% from the top and centered */
-    padding: 5px;
-    border: 1px solid #888;
-    width: 100%; /* Could be more or less, depending on screen size */
+  background-color: #fefefe;
+  margin: 15% auto; /* 15% from the top and centered */
+  padding: 5px;
+  border: 1px solid #888;
+  width: 100%; /* Could be more or less, depending on screen size */
 }
 
 /* The Close Button */
 .close {
-    color: #aaa;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
 }
 
 .close:hover,
 .close:focus {
-    color: black;
-    text-decoration: none;
-    cursor: pointer;
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
 }
 table, td {
-    border: 1px solid black;
-    width: 100%;
-    table-layout: fixed;
-    overflow: scroll;
+  border: 1px solid black;
+  width: 100%;
+  table-layout: fixed;
+  overflow: scroll;
 }
 .rowHeader {
   text-align: left;

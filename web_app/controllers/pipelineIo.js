@@ -6,7 +6,8 @@
 
 const fs = require('fs'),
   path = require('path'),
-  errorLogger = require('./errorLogger.js');
+  errorLogger = require('./errorLogger.js'),
+  BLJ_PROJ = process.env.BLJ_PROJ;
 
 //returns
 exports.retrieveAllPipelines = function(req, res, next) {
@@ -16,18 +17,18 @@ exports.retrieveAllPipelines = function(req, res, next) {
     let descrips = [];
     let paths = [];
     let complete = [];
-    fs.readdir(path.join( '/', 'pipelines' ), (err, files) => {
+    fs.readdir( BLJ_PROJ, (err, files) => {
       if (err) {
         console.error(err);
-        accessLogStream.write(e.stack + '\n');
+        errorLogger.writeError(e.stack + '\n');
       }
       let completePosition = 0;//variable for
       files.forEach( file => {
-        const checkFile = fs.lstatSync(path.join('/','pipelines',file));
+        const checkFile = fs.lstatSync(path.join(BLJ_PROJ, file));
         if (checkFile.isDirectory()) {
           complete[completePosition] = false;
           //go into folder
-          const nestedFolderFiles = fs.readdirSync(path.join('/', 'pipelines', file));
+          const nestedFolderFiles = fs.readdirSync(path.join(BLJ_PROJ, file));
 
           //get master config and read description
           for (var i = 0; i < nestedFolderFiles.length; i++) {
@@ -37,7 +38,7 @@ exports.retrieveAllPipelines = function(req, res, next) {
             }
             if (nestedFolderFiles[i].startsWith('MASTER_') && nestedFolderFiles[i].endsWith('.properties')) {
               // console.log('nestedFolderFiles[i] MASTER_', nestedFolderFiles[i]);
-              const propFilePath = path.join('/', 'pipelines', file, nestedFolderFiles[i]);
+              const propFilePath = path.join(BLJ_PROJ, file, nestedFolderFiles[i]);
               // console.log('propFilePath: ', propFilePath);
               const propFile = fs.readFileSync(propFilePath, 'utf8').split('\n');
 

@@ -6,19 +6,20 @@ Notes:
   https://www.html5rocks.com/en/tutorials/eventsource/basics/
 */
 let express = require('express'),
- router = express.Router(),
- path = require('path'),
- indexAux = require('../lib/indexAux.js'),
- fs = require('fs'),
- events = require('events'),
- eventEmitter = new events.EventEmitter();//for making an event emitter,
- sys = require('util'),
- exec = require('child_process').exec,
- pipelineIo = require(path.join('..','controllers','pipelineIo.js')),
- errorLogger = require(path.join('..','controllers','errorLogger.js')),
- propertiesIo = require(path.join('..','controllers','propertiesIo.js')),
- awsUtil = require(path.join('..','controllers','awsUtil.js')),
- launcher = require(path.join('..','controllers','launcher.js'));
+  router = express.Router(),
+  path = require('path'),
+  indexAux = require('../lib/indexAux.js'),
+  fs = require('fs'),
+  events = require('events'),
+  eventEmitter = new events.EventEmitter();//for making an event emitter,
+  sys = require('util'),
+  exec = require('child_process').exec,
+  pipelineIo = require(path.join('..','controllers','pipelineIo.js')),
+  errorLogger = require(path.join('..','controllers','errorLogger.js')),
+  propertiesIo = require(path.join('..','controllers','propertiesIo.js')),
+  awsUtil = require(path.join('..','controllers','awsUtil.js')),
+  launcher = require(path.join('..','controllers','launcher.js')),
+  javaDocs = require(path.join('..','controllers','javaDocs.js'));
 
 const { spawn } = require('child_process');//for running child processes
 const Stream = new events.EventEmitter(); // my event emitter instance
@@ -53,22 +54,7 @@ router.post('/retrieveConfigs', propertiesIo.retrievePropertiesFiles);
 
 router.post('/retrievePropertiesFile', propertiesIo.retrievePropertiesFile);
 
-router.post('/javadocsmodulegetter', function(req, res, next) {
-  try {
-    let modPathString = req.body.moduleJavaClassPath;
-    modPathString = modPathString.concat('.java');
-    const modPathArray = modPathString.split('/');
-    // console.log(path.join.apply(null, modPathArray));
-    const datum = fs.readFileSync(path.join(bljDir, 'src', path.join.apply(null, modPathArray)), 'utf8');
-      res.setHeader("Content-Type", "text/html");
-      res.write(datum);
-      res.end();
-  } catch (e) {
-    console.error(e);
-    errorLogger.writeError(e.stack);
-  }
-});
-//__dirname resolves to /app/biolockj/web_app/routes
+router.post('/javadocsmodulegetter', javaDocs.javaDocsModGetter);
 
 router.get('/results', function(req, res, next) {
   res.render('results', { title: 'BioLockJ' });
@@ -77,35 +63,6 @@ router.get('/results', function(req, res, next) {
 router.post('/saveConfigToGui', propertiesIo.saveConfig);
 
 router.post('/defaultproperties', propertiesIo.getDefaultProperties);//end router.post('/defaultproperties'...
-
-//currently for docker only
-router.post('/checkProjectExists', function(req, res, next) {
-  try {
-    const projectPath = pipelineProjectName(req.body.projectName);
-    const projectName = path.parse(projectPath).base;
-    console.log('checkingProject: ', projectName);
-    if (fs.existsSync(projectPath)){
-      console.log('exists');
-
-      const resParams = {
-        projectName : projectName,
-        projectPath : projectPath,
-      }
-
-      res.setHeader('Content-Type', 'text/html');
-      res.write(JSON.stringify(resParams));
-      res.end();
-    }else{
-      console.log('not exists');
-      res.setHeader('Content-Type', 'text/html');
-      res.write('');
-      res.end();
-    }
-  } catch (e) {
-    console.log(e);
-    errorLogger.writeError(e.stack);
-  }
-});// end outer.post('/checkProjectExists',
 
 router.post('/launch', launcher.launch);
 
@@ -119,7 +76,6 @@ router.post('/listAwsProfiles', awsUtil.listAwsProfiles);
 router.post('/listS3Buckets', awsUtil.listS3Buckets);
 
 router.post('/listEc2InstanceIds', awsUtil.listEc2InstanceIds);
-
 
 // source ~/.batchawsdeploy/config ; getcloudformationstack.sh testing2
 
