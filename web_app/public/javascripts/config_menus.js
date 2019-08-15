@@ -582,6 +582,8 @@ document.getElementById('aws.ec2InstanceID').addEventListener('focus', function(
 
 //update datalist from array
 function updateDataList(dataListId, arry) {
+  console.log(`%c ${dataListId}`, 'color: orange; font-weight: bold;');
+  console.log(`%c ${arry}`, 'color: blue; font-weight: bold;');
   let dl = document.getElementById(dataListId);
   clearChildren(dl);
   for (let a of arry){
