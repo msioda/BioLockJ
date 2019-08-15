@@ -11,7 +11,7 @@ RUN	cd /usr/local/bin && \
 #2.) Download MetaPhlAn2 with DB
 RUN cd /app && \
 	wget -qO- "https://www.dropbox.com/s/ztqr8qgbo727zpn/metaphlan2.zip" | bsdtar -xf- && \
-	chmod -R 774 * && \
+	chmod -R 777 * && \
 	mv /app/metaphlan2/* $mpa_dir && \
 	rm -rf /app/*
 
