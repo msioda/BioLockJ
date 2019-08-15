@@ -31,12 +31,13 @@ exports.launch = function(req, res, next) {
     if (!configName.endsWith('.properties')){
       configName = configName.concat('.properties');
     }
-
+    console.log(configName, HOST_BLJ);
+  
     const configText = indexAux.formatAsFlatFile(modules, paramKeys, paramValues);
     indexAux.saveConfigToLocal(configName,configText);
 
     //set host-path for the config:
-    const configPath = path.join( BLJ_CONFIG, configName);
+    const configPath = path.join( HOST_BLJ, 'resources', 'config', 'gui', configName);
 
     switch (req.body.launchAction) {
       case 'restartFromCheckPoint':
@@ -187,4 +188,5 @@ createLaunchCommand = function(configPath, keys, values, restartPath){//
   console.log('launch');
   console.log('full launch command: \n', command);
   return command;
+
 }//end createLaunchCommand
