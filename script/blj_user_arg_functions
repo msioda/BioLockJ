@@ -70,7 +70,7 @@ init_defaults(){
 	shortArgName=()
 	parameters=()
 	mustTakeValue=($PASSWORD_ARG $CONFIG_ARG)
-	canTakeValue=($PASSWORD_ARG $CONFIG_ARG)
+	canTakeValue=($PASSWORD_ARG $CONFIG_ARG $BLJ_SUP_ARG)
 	for i in ${!longArgName[@]}; do
 		longName=${longArgName[ $i ]}
 		index_of $longName ${takeShortArg[@]} && shortArgName[ $i ]=${longName:0:1}
@@ -213,24 +213,29 @@ display_help() {
 	addSpaceNoShortArg(){ 
 		printf '%-1s %-3s %-25s %-10s\n' "" "" "--$1" "$2"
 	}
+	continueDescriptoin(){
+		printf '%-1s %-3s %-25s %-10s\n' "" "" "" "$1"
+	}
 	echo ""
 	echo "BioLockJ $(display_version) - UNCC Fodor Lab July 2018" 
     echo 'Usage:'
     printf '%-1s %-3s' "" "biolockj [options] <config|pipeline>" && echo ""
     echo ""
     echo 'Options:'
-    addSpace "version" "show version"
-    addSpace "help" "show help menu"
-    addSpace "restart" "resume an existing pipeline"
-    addSpace "$CONFIG_ARG <file>" "new config file (if restarting a pipeline)"
-    addSpace "$PASSWORD_ARG <password>" "encrypt password"
-    addSpace "$DOCKER_ARG" "run in docker"
-    addSpace "$AWS_ARG" "run on aws"
-    addSpace "$GUI_ARG" "start the BioLockJ GUI"
-    addSpace "$FG_ARG" "run the java process in the foreground without nohup"
-    addSpace "$EXT_MODS_ARG <dir>" "directory with compiled java code giving additional modules"
-    addSpace "$BLJ_ARG" "map \$BLJ folder into the docker container"
-    addSpace "$BLJ_SUP_ARG" "map \$BLJ_SUP folder into the docker container"
+    addSpace "version"       "Show version"
+    addSpace "help"          "Show help menu"
+    addSpace "restart"       "Resume an existing pipeline"
+    addSpace "$CONFIG_ARG <file>" "New config file (if restarting a pipeline)"
+    addSpace "$PASSWORD_ARG <password>" "Encrypt password"
+    addSpace "$DOCKER_ARG"   "Run in docker"
+    addSpace "$AWS_ARG"      "Run on aws"
+    addSpace "$GUI_ARG"      "Start the BioLockJ GUI"
+    addSpace "$FG_ARG"       "Run the java process in the foreground without nohup"
+    addSpace "$EXT_MODS_ARG <dir>" "Directory with compiled java code giving additional modules"
+    addSpace "$BLJ_ARG"      "Map \$BLJ folder into the docker container;"
+    continueDescriptoin      "this replaces BioLockJ packaged in a docker container with the local copy."
+    addSpace "$BLJ_SUP_ARG <dir>" "Map <dir> folder into the docker container as /app/blj_support,"
+    continueDescriptoin      "if <dir> is not given, variable \$BLJ_SUP is used"
     echo ""
 }
 

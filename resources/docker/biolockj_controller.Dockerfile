@@ -50,3 +50,4 @@ RUN echo '[ -f "$BLJ/script/blj_config" ] && . $BLJ/script/blj_config' >> ~/.bas
 		
 #8.) Setup environment and assign default command
 CMD java -jar $BLJ/dist/BioLockJ.jar $BLJ_OPTIONS
+# CMD java -cp ${BLJ_MODS}/*:$BLJ/dist/BioLockJ.jar biolockj.BioLockJ $BLJ_OPTIONS

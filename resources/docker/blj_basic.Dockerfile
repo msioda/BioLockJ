@@ -9,6 +9,7 @@ ENV APP_BIN="${APP}/bin"
 ENV BIN="/usr/local/bin"
 ENV BLJ="${APP}/biolockj"
 ENV BLJ_SUP="${APP}/blj_support"
+ENV BLJ_MODS="${APP}/external_modules"
 ENV EFS="/mnt/efs"
 ENV BLJ_CONFIG="${EFS}/config"
 ENV BLJ_DB="${EFS}/db"
@@ -25,7 +26,7 @@ ENV PATH="$PATH:${BLJ_HOST_HOME}/miniconda/bin:${APP_BIN}"
 RUN mkdir -p "${BLJ}" && mkdir "${BLJ_SUP}" && mkdir -p "${BLJ_PROJ}" && \
 	mkdir "${BLJ_CONFIG}" && mkdir "${BLJ_DB}" && mkdir "${BLJ_INPUT}" && \
 	mkdir "${BLJ_META}" && mkdir "${BLJ_PRIMER}" && mkdir "${BLJ_SCRIPT}" && \
-	mkdir "${BLJ_DEFAULT_DB}" && mkdir -p "${BLJ_HOST_HOME}"
+	mkdir "${BLJ_DEFAULT_DB}" && mkdir -p "${BLJ_HOST_HOME}" && mkdir "${BLJ_MODS}"
 
 #3.) Install Ubuntu Software 
 RUN apt-get update && \
