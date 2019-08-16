@@ -200,7 +200,7 @@ public class DockerUtil {
 			Log.info( DockerUtil.class, "Map: Class [" + className + "] <--> Docker Image [ " + BLJ_BASH + " ]" );
 			return BLJ_BASH;
 		}
-
+		
 		final String simpleName = getDockerClassName( module );
 		Log.debug( DockerUtil.class, "Found Java simple class name: " + simpleName );
 		String imageName = simpleName.substring( 0, 1 ).toLowerCase();
@@ -230,11 +230,31 @@ public class DockerUtil {
 	 */
 	public static boolean hasCustomDockerDB( final BioModule module ) {
 		try {
+			Log.info( DockerUtil.class, Constants.LOG_SPACER );
 			Log.info( DockerUtil.class, "Check for Custom Docker DB" );
-			//new File( "/.dockerenv" )
+			Log.info( DockerUtil.class, Constants.LOG_SPACER );
+			if( inDockerEnv() ) 
+				Log.info( DockerUtil.class, "Verified BLJ is running INSIDE the Docker biolockj_controller Container" );
+			else {
+				Log.info( DockerUtil.class, "LOOKS LIKE BLJ is <<< NOT >>> running INSIDE the Docker biolockj_controller Container - run extra tests!" );
+				final File testFile = new File( "/.dockerenv" );
+				if( testFile.isFile() )
+					Log.info( DockerUtil.class, "testFile.isFile() == TRUE! --> WHY FAIL ON INIT ATTEMPT?  BLJ is running INSIDE the Docker biolockj_controller Container" );
+				else if( testFile.exists() )
+					Log.info( DockerUtil.class, "testFile.exists() == TRUE! --> WHY FAIL ON INIT ATTEMPT?  BLJ is running INSIDE the Docker biolockj_controller Container" );
+			}
 			
+			if( module instanceof DatabaseModule )
+				Log.info( DockerUtil.class, module.getClass().getSimpleName() + " is a DB Module!" );
+			else
+				Log.info( DockerUtil.class, module.getClass().getSimpleName() + " is NOT DB Module!" );
+			
+			Log.info( DockerUtil.class, Constants.LOG_SPACER );
+				
 			if( inDockerEnv() && module instanceof DatabaseModule ) {
 				final File db = ( (DatabaseModule) module ).getDB();
+				if( db == null ) Log.info( DockerUtil.class, module.getClass().getSimpleName() + " db ==> NULL " );
+				if( db != null ) Log.info( DockerUtil.class, module.getClass().getSimpleName() + " db ==> " + db.getAbsolutePath() );
 				if( db != null ) return !db.getAbsolutePath().startsWith( DOCKER_DEFAULT_DB_DIR );
 			}
 		} catch( ConfigPathException | ConfigNotFoundException ex ) {

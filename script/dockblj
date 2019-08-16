@@ -23,7 +23,7 @@ inDockerContainer() {
 	[ -f "/.dockerenv" ]
 }
 
-inGuiContainer() {
+startGuiContainer() {
 	! $(null_var $runGui)
 }
 
@@ -41,7 +41,7 @@ blj_options() {
 		! $(null_var $blj_sup) && options="${options} -blj_sup ${BLJ_SUP}"
 	fi
 	
-	$(inGuiContainer) && echo "${options}" && return
+	$(startGuiContainer) && echo "${options}" && return
 
 	# -i is required if not launching the WebApp GUI 
 	options="${options} -i ${inputDir}" 
@@ -87,7 +87,7 @@ build_clone_script() {
 
 	img="$(dock_id)/biolockj_controller"
 	cmd=${args/$img/-ti $img /bin/bash} 
-	$(inGuiContainer) && cmd=${cmd/npm start}
+	$(startGuiContainer) && cmd=${cmd/npm start}
 	$(inDockerContainer) && DOCKER_CLONE_SCRIPT="${BLJ_HOST_HOME}/$(basename $DOCKER_CLONE_SCRIPT)"
 	
 	echo "#!/bin/bash" > "${DOCKER_CLONE_SCRIPT}"
@@ -101,7 +101,7 @@ build_clone_script() {
 # Get Docker image - add port, entrypoint, anc command if launching GUI
 get_docker_img() {
 	cmd=$(dock_id)/biolockj_controller
-	if $(inGuiContainer); then 
+	if $(startGuiContainer); then 
 		echo "-p ${GUI_PORT}:3000 --expose ${GUI_PORT} -w /app/biolockj/web_app ${cmd} npm start"
 	else echo "${cmd}"; fi
 	
@@ -112,9 +112,9 @@ get_volumes() {
 	vols="-v ${DOCK_SOCK}:${DOCK_SOCK} -v ${HOME}:${BLJ_HOST_HOME}:delegated"
 	if $(null_var $runAws); then
 		vols="${vols} -v $(blj_proj):${EFS_PROJ}:delegated"
-		if $(inGuiContainer); then
+		if $(startGuiContainer); then
 			vols="${vols} -v ${BLJ}/resources/config/gui:${BLJ_CONFIG}:delegated"
-			[ -f "$(which aws)" ] && [ -d "$(dirname $(which aws))" ] && vols="${vols} -v $(dirname $(which aws)):${APP_BIN}"
+			[ -f "$(which aws)" ] && [ -d "$(dirname $(dirname $(which aws)))" ] && vols="${vols} -v $(dirname $(dirname $(which aws))):${AWS_ROOT}"
 		else
 			vols="${vols} -v $inputDir:${BLJ_INPUT}:ro -v $(dirname $config):${BLJ_CONFIG}:ro"
 			! $(null_var $metaPath) && vols="${vols} -v $metaPath:${EFS}/metadata:ro"
@@ -136,11 +136,17 @@ null_var() {
 
 # Print and execute the docker run command with the correct volumes and env variables
 run_docker() {
-	runInBak='' && $(inGuiContainer) && runInBak=" &"
+	runInBak='' && $(startGuiContainer) && runInBak=" &"
 	cmd="docker run --rm -e \"BLJ_OPTIONS=$(blj_options)\" $(get_volumes) $(get_docker_img)${runInBak}"
+	if $(startGuiContainer); then 
+		cloneCmd="docker run --rm -e \"BLJ_OPTIONS=$(blj_options)\" $(get_volumes) $(dock_id)/biolockj_controller"
+	else
+		cloneCmd="docker run --rm -e \"BLJ_OPTIONS=$(blj_options)\" $(get_volumes) $(get_docker_img)${runInBak}"
+	fi
+	
 	printf "\n---------> Execute CMD [  ${cmd}  ] \n\n"
-	build_clone_script "${cmd}"
-	if $(inGuiContainer); then
+	build_clone_script "${cloneCmd}"
+	if $(startGuiContainer); then
 		docker run --rm -e "BLJ_OPTIONS=$(blj_options)" $(get_volumes) $(get_docker_img) &
 	else
 		docker run --rm -e "BLJ_OPTIONS=$(blj_options)" $(get_volumes) $(get_docker_img)
@@ -159,7 +165,7 @@ scan_script_and_env_args() {
 	newPass=$(named_arg $@ p)
 	restartDir=$(named_arg $@ r)
 
-	if ! $(inGuiContainer) && ! $(null_var $config); then
+	if ! $(null_var $config); then
 		localConfig="${config}"
 		$(inDockerContainer) && localConfig="${BLJ_CONFIG}/$(basename $config)"
 		inputDir="$(get_property $localConfig input.dirPaths)"
@@ -170,7 +176,7 @@ scan_script_and_env_args() {
 
 # Start the local browswer
 startBrowser() {
-	sleep 2 # See also: https://stackoverflow.com/questions/3124556/clean-way-to-launch-the-web-browser-from-shell-script#3124750
+	sleep 6 # See also: https://stackoverflow.com/questions/3124556/clean-way-to-launch-the-web-browser-from-shell-script#3124750
 	if which xdg-open > /dev/null; then
 		xdg-open http://localhost:${GUI_PORT}
 	elif which gnome-open > /dev/null; then
@@ -208,6 +214,6 @@ verify_inputs() {
 
 printf "\n ---------> Execute CMD [  dockblj $(echo ${@})  ]\n"
 scan_script_and_env_args $@
-[ "${HOME}" != "${EC2_HOME}" ] && [ ! -f "/.dockerenv" ] && verify_inputs 
+[ "${HOME}" != "${EC2_HOME}" ] && ! $(inDockerContainer) && ! $(startGuiContainer) && verify_inputs 
 run_docker
 $(containsElement gui $@) && startBrowser
