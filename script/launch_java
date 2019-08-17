@@ -1,13 +1,8 @@
 #!/bin/bash
 ##########################################################################
 ##                                                                      ##
-##  Script requires 1+ of the listed arguments parameter.               ##
-##  Script requires  BioLockJ pipeline root directory: $BLJ_PROJ.       ##
-##                                                                      ##
-##  Pass optional param "-r" as 1st param to restart failed pipeline    ##
-##                                                                      ##
-##  Pass admin email password as 1st param to encode and store in the   ##
-##  BioLockJ Config file (2nd param) instead of running a pipeline      ##
+##  Script to launch BioLockJ jar file localy                           ##
+##  See biolockj --help.
 ##                                                                      ##
 ##########################################################################
 
@@ -17,10 +12,11 @@
 catch_bad_values(){
 	if ifArgUsed $RESTART_ARG ; then
 		[ ! -d $restartDir ] && exit_with_message "Error [ launch_java ]: $restartDir is not a directory on the filesystem."
+		ifArgUsed $CONFIG_ARG && [ ! -f "${configFile}" ] && exit_with_message "Error [ launch_java ]: Config file [ $configFile ] not found on filesystem."
 	else
 		[ ! -f "${configFile}" ] && exit_with_message "Error [ launch_java ]: Config file [ $configFile ] not found on filesystem."
 	fi
-	[ ! -d "${BLJ_PROJ}" ] && exit_script "Error [ launch_java ]: Required env variable BLJ_PROJ undefined: \"${BLJ_PROJ}\""
+	[ ! -d "${BLJ_PROJ}" ] && exit_with_message "Error [ launch_java ]: Required env variable BLJ_PROJ undefined: \"${BLJ_PROJ}\""
 	[ ! -f "${BLJ_JAR}" ] && exit_script "Error [ launch_java ]: BioLockJ Jar file \"${BLJ_JAR}\" not found."
 }
 
@@ -59,13 +55,14 @@ printf "\n ---------> Execute CMD [  launch_java $(echo ${@})  ]\n"
 
 take_standard_biolockj_args "$@"
 
-# store named arg values as bash variables; note that any -'s are removed from the variable name.
-for i in $(seq 0 $((${#longArgName[@]} - 1)) ); do
-	declare "${longArgName[ $i ]//-/}"=${parameters[ $i ]}
-	[ ${#BIOLOCKJ_TEST_MODE} -gt 0 ] && echo "${longArgName[ $i ]//-/} = ${parameters[ $i ]}"
-done 
 assign_main_arg
 
+# Make sure required variables exist and are valid
+pls_use_install="\nThe install script packaged with BioLockJ sets this value. You may need to start a new terminal window.\n"
+[ ${#BLJ_PROJ} -eq 0 ] && exit_with_message "Error [ biolockj ]: Required env variable BLJ_PROJ is not defined. $pls_use_install"
+[ ! -d "${BLJ_PROJ}" ] && exit_with_message "Error [ biolockj ]: Required env variable BLJ_PROJ [\"${BLJ_PROJ}\"] must be a directory on the filesystem. $pls_use_install"
+[ ${#BLJ} -eq 0 ] && exit_with_message "Error [ biolockj ]: Required env variable BLJ is not defined. $pls_use_install"
+[ ! -d "${BLJ}" ] && exit_with_message "Error [ biolockj ]: Required env variable BLJ [\"${BLJ_PROJ}\"] must be a directory on the filesystem. $pls_use_install"
 
 # Start local pipeline
 BLJ_JAR=${BLJ}/dist/BioLockJ.jar
@@ -73,7 +70,7 @@ catch_bad_values
 before_java_start
 
 args="-b ${BLJ_PROJ} -u ${HOME}"
-ifArgUsed $PASSWORD_ARG && args="${args} p=${password}" 
+ifArgUsed $PASSWORD_ARG && args="${args} p=$(get_arg_value $PASSWORD_ARG)" 
 ifArgUsed $RESTART_ARG && args="${args} r=${restartDir}"
 [ ${#configFile} -gt 0 ] && args="${args} ${configFile}"
 if ifArgUsed $FG_ARG ; then
@@ -91,7 +88,7 @@ fi
 
 CMD="$useNohup java $classPathAndMain $args $directStdOut"
 numJava=${initJava}
-echo -e "Launching BioLockJ:  $CMD" #<-- for the user to see cmd
+echo -e "Starting BioLockJ:  $CMD" #<-- for the user to see cmd
 continue_after_command $CMD #<-- for the developer and test suite to see cmd
 confirm_java_start
 

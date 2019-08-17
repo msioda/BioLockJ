@@ -11,15 +11,12 @@ printf "\n ---------> Execute CMD [  launch_aws $(echo ${@})  ]\n"
 
 take_standard_biolockj_args "$@"
 
-# store named arg values as bash variables; note that any -'s are removed from the variable name.
-# scope is limited to this shell; export any values needed by subshells
-for i in $(seq 0 $((${#longArgName[@]} - 1)) ); do
-	declare "${longArgName[ $i ]//-/}"=${parameters[ $i ]}
-	[ ${#BIOLOCKJ_TEST_MODE} -gt 0 ] && echo "${longArgName[ $i ]//-/} = ${parameters[ $i ]}"
-done 
+assign_main_arg
 
 if ifArgUsed $GUI_ARG ; then
 	exit_after_command run_aws_gui
 else
+	[ ${#configFile} -eq 0 ] && exit_script "Error [ biolockj ]: AWS pipelines require a config file."
+	[ ! -f $configFile ] && exit_script "Error [ biolockj ]: Config file \"$configFile\" is not found on the filesystem."
 	exit_after_command run_aws $configFile
 fi

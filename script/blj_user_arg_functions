@@ -2,14 +2,182 @@
 ###################################################################
 ##                                                               ##
 ##  This script contains common functions used in                ##
-##  BioLockJ scripts.                                            ##
+##  BioLockJ scripts to interpret user input.                    ##
 ##                                                               ##
 ###################################################################
 
 
+# example: take_standard_biolockj_args "$@"
+take_standard_biolockj_args(){
+	set_arg_names
+	init_defaults
+	split_main_arg_from_options "$@"
+	[ ${#options[@]} -gt 0 ] && parse_options "${options[@]}"
+	[ ${#BIOLOCKJ_TEST_MODE} -gt 0 ] && display_arg_vals
+}
 
-# A good understanding of the index_of function is critical.
-#
+set_arg_names(){
+	GUI_ARG="gui"
+	PASSWORD_ARG="password"
+	CONFIG_ARG="config-override"
+	RESTART_ARG="restart"
+	AWS_ARG="aws"
+	DOCKER_ARG="docker"
+	FG_ARG="foreground"
+	EXT_MODS_ARG="external-modules"
+	BLJ_ARG="blj"
+	BLJ_SUP_ARG="blj_sup"
+	# not shown in user documentation
+	FROM_GUI_ARG="blj_gui" #This flag indicates that a pipeline was launched by the GUI.
+}
+
+init_defaults(){
+	# Order does not matter for $longArgName or $takeShortArg, but it is easier to read if they match
+	# Order MATTERS for $shortArgName and $parameters ---they must match whatever order is in $longArgName.
+	longArgName=( $GUI_ARG $PASSWORD_ARG $CONFIG_ARG $RESTART_ARG $AWS_ARG $DOCKER_ARG $FG_ARG $EXT_MODS_ARG $BLJ_ARG $BLJ_SUP_ARG $FROM_GUI_ARG )
+	takeShortArg=($GUI_ARG $PASSWORD_ARG $CONFIG_ARG $RESTART_ARG $AWS_ARG $DOCKER_ARG $FG_ARG help version)
+	shortArgName=()
+	parameters=()
+	mustTakeValue=($PASSWORD_ARG $CONFIG_ARG)
+	canTakeValue=($PASSWORD_ARG $CONFIG_ARG $BLJ_SUP_ARG)
+	for i in ${!longArgName[@]}; do
+		longName=${longArgName[ $i ]}
+		index_of $longName ${takeShortArg[@]} && shortArgName[ $i ]=${longName:0:1}
+		[ $index -eq -1 ] && shortArgName[ $i ]=$longName # a place holder
+		parameters[ $i ]="default"
+		i=$((i+1))
+	done
+	argsFromUser=() # distinguish between the default, and the user supplying "default" as the value
+}
+
+# get the last argument, and call it mainArg
+# all preceding arguments are options
+split_main_arg_from_options(){
+	local args=( "$@" )	
+	numArgs=${#args[@]}
+	mainArg=${args[$numArgs-1]}
+	options=()
+	if [ $numArgs -gt 1 ]; then
+		for i in $(seq 0 $((${#args[@]} - 2)) ); do
+			options[ $i ]=${args[ $i ]}
+		done
+	fi
+	if [ ${mainArg:0:1} == "-" ]; then
+		mainArg=""
+		local i=${#options[@]}
+		options[ $i ]=${args[ $i ]}
+	fi
+}
+
+
+# call using: parse_options $options
+# assumes that the following variables exist: 
+#   order within these three should match: longArgName, shortArgName, parameters
+#   order of these does not matter:    mustTakeValue, canTakeValue
+parse_options(){
+	argName=""
+	# iterate over all args except the the last one; that one is handled as "mainArg"
+	for arg in "$@" ; do
+		# if arg starts with -, we assume its an an argument name
+		if [ ${arg:0:1} == "-" ]; then
+			[ ${#argName} -gt 0 ] && index_of $argName ${mustTakeValue[@]} && exit_with_message "error: the value of argument [ $argName ] should not begin with \"-\" or \"--\", found [ $arg ]."
+			argName=""
+			#  if arg starts with --, we assume it is a long-form argument name or flag
+			if [ ${arg:0:2} == "--" ]; then
+				arg=${arg#--}
+				apply_arg $arg	
+			else # only single -, we assume it is a short-form argument
+				arg=${arg#-}
+				#process each letter in arg, so multiple short form args can be stacked behind a single -
+				for i in $(seq 0 $((${#arg} - 1)) ); do
+				letter=${arg:$i:1}
+					index_of $letter ${shortArgName[@]} && argLong=${longArgName[${index}]} && apply_arg $argLong
+					[ $index -eq -1 ] && exit_with_message "error: unrecognized short-form argument [ -$letter ]."
+				done
+			fi		
+		# if arg starts with no dashes, we assume it must be the value for $argName
+		else
+			[ ${#argName} -eq 0 ] && exit_with_message "error: unnamed value [ $arg ]"
+			index_of $argName "${longArgName[@]}" && parameters[ $index ]=${arg} && argName=""
+			[ $index -eq -1 ] && exit_with_message "error: unrecognized argument name [ $argName ]"
+		fi		
+	done
+}
+
+# Determine if an argument takes a value; if so, store the name and await the value
+# otherwise the argument is a flag, set that parameter to true
+# param1: the long-form argument name
+apply_arg(){
+	argsFromUser=($argsFromUser $1)
+	index_of $1 "${canTakeValue[@]}" && argName=$1
+	set_flag_to_true $1
+}
+
+# Set a parameter value to true
+# param1: name of flag to set
+set_flag_to_true(){
+	index_of $1 ${longArgName[@]} && parameters[${index}]="true"
+	[ $index -eq "-1" ] && exit_with_message "error: unrecognized argument [ $1 ]."
+}
+
+# sets variables configFile and/or restartDir
+assign_main_arg(){
+	# TODO - check that mainArg is a valide file
+	if ifArgUsed $RESTART_ARG ; then
+		restartDir=$mainArg
+		# TODO - if mainArg is "", try to get current pipeline
+		# TODO - check that restartDir is a directory
+		[ ${#BIOLOCKJ_TEST_MODE} -gt 0 ] && echo "Using $restartDir as the pipeline to restart."
+		ifArgUsed $CONFIG_ARG && configFile=configoverride && echo "Updating pipeline with config file $configFile."
+		# TODO - check that configFile is a valid file
+	else
+		configFile=$mainArg
+		[ ${#BIOLOCKJ_TEST_MODE} -gt 0 ] && echo "Using $configFile as the config file."
+	fi
+	# TODO - check that configFile is not a directory
+}
+
+# Only used when BIOLOCKJ_TEST_MODE is set.
+display_arg_vals(){
+	for i in $(seq 0 $((${#longArgName[@]} - 1)) ); do
+		#ARG=${longArgName[ $i ]} # no, some arg names use -'s and cannot be variable names. TODO -check this
+		if ifArgUsed ${longArgName[ $i ]} ; then
+			argVal=$(get_arg_value ${longArgName[ $i ]})
+			echo "${longArgName[ $i ]} = $argVal"
+		fi
+	done 
+}
+
+
+
+### These functions are used by the main scripts to querry user args
+
+# Use this to set a value to true or false; remember these are strings, not logic values
+# param 1: argument name (from longArgName array)
+trueIfArgUsed(){
+	index_of $1 ${argsFromUser[@]} && echo "true"
+	[ $index -eq -1 ] && echo "false"
+}
+
+# Use this to control logic flow
+# ex: ifArgUsed $BLJ_ARG && blj=$BLJ || blj=""
+# param 1: argument name (from longArgName array)
+ifArgUsed(){
+	local tmp=$(trueIfArgUsed $1)
+	[ $tmp == "true" ] && return 0
+	[ $tmp == "false" ] && return 1
+}
+
+# Return the value that was passed after a given arg
+# If the arg is not in the list of arg names, then return status 1 (ie, unsuccessful)
+# param 1 - the arg name
+get_arg_value(){
+	index_of $1 ${longArgName[@]} && echo ${parameters[$index]} || return 1
+}
+
+
+### This functions is tool to both check if a string is present and get its index.
+
 # Summary: 
 #   This function checks if an array contains a value, 
 #   if so $index is the index of the value in the array, 
@@ -46,148 +214,8 @@ index_of(){
 	return 1
 }
 
-# example: take_standard_biolockj_args "$@"
-take_standard_biolockj_args(){
-	init_defaults
-	split_main_arg_from_options "$@"
-	[ ${#options[@]} -gt 0 ] && parse_options "${options[@]}"
-}
 
-init_defaults(){
-	GUI_ARG=gui
-	PASSWORD_ARG=password
-	CONFIG_ARG=config-override
-	RESTART_ARG=restart
-	AWS_ARG=aws
-	DOCKER_ARG=docker
-	FG_ARG=foreground
-	EXT_MODS_ARG=external-modules
-	BLJ_ARG=blj
-	BLJ_SUP_ARG=blj_sup
-	
-	longArgName=( $GUI_ARG $PASSWORD_ARG $CONFIG_ARG $RESTART_ARG $AWS_ARG $DOCKER_ARG $FG_ARG $EXT_MODS_ARG $BLJ_ARG $BLJ_SUP_ARG )
-	takeShortArg=($GUI_ARG $PASSWORD_ARG $CONFIG_ARG $RESTART_ARG $AWS_ARG $DOCKER_ARG $FG_ARG help version)
-	shortArgName=()
-	parameters=()
-	mustTakeValue=($PASSWORD_ARG $CONFIG_ARG)
-	canTakeValue=($PASSWORD_ARG $CONFIG_ARG $BLJ_SUP_ARG)
-	for i in ${!longArgName[@]}; do
-		longName=${longArgName[ $i ]}
-		index_of $longName ${takeShortArg[@]} && shortArgName[ $i ]=${longName:0:1}
-		[ $index -eq -1 ] && shortArgName[ $i ]=$longName # a place holder
-		parameters[ $i ]="default"
-		i=$((i+1))
-	done
-	argsFromUser=() # distinguish between the default, and the user supplying "default" as the value
-}
-###
-## Optionally, use the following lines in the active script to 
-## set all varaibles from long args to the parameter values.
-## store named arg values as bash variables; note that any -'s are removed from the variable name.
-## scope is limited to this shell; export any values needed by subshells
-## use trueIfArgUsed() to only get values if the user passed the argument.
-#for i in $(seq 0 $((${#longArgName[@]} - 1)) ); do
-#	declare "${longArgName[ $i ]//-/}"=${parameters[ $i ]}
-#	[ ${#BIOLOCKJ_TEST_MODE} -gt 0 ] && echo "${longArgName[ $i ]//-/} = ${parameters[ $i ]}"
-#done 
-
-
-
-trueIfArgUsed(){
-	index_of $1 ${argsFromUser[@]} && echo "true"
-	[ $index -eq -1 ] && echo "false"
-}
-
-ifArgUsed(){
-	local tmp=$(trueIfArgUsed $1)
-	[ $tmp == "true" ] && return 0
-	[ $tmp == "false" ] && return 1
-}
-
-
-assign_main_arg(){
-	if ifArgUsed $RESTART_ARG ; then
-		restartDir=$mainArg
-		[ ${#BIOLOCKJ_TEST_MODE} -gt 0 ] && echo "Using $restartDir as the pipeline to restart."
-		[ $configoverride != "default" ] && configFile=configoverride && echo "Updating pipeline with config file $configFile."
-	else
-		configFile=$mainArg
-		[ ${#BIOLOCKJ_TEST_MODE} -gt 0 ] && echo "Using $configFile as the config file."
-	fi
-}
-
-# get the last argument, and call it mainArg
-# all preceding arguments are options
-split_main_arg_from_options(){
-	local args=( "$@" )	
-	numArgs=${#args[@]}
-	mainArg=${args[$numArgs-1]}
-	options=()
-	if [ $numArgs -gt 1 ]; then
-		for i in $(seq 0 $((${#args[@]} - 2)) ); do
-			options[ $i ]=${args[ $i ]}
-		done
-	fi
-	if [ ${mainArg:0:1} == "-" ]; then
-		mainArg=""
-		local i=${#options[@]}
-		options[ $i ]=${args[ $i ]}
-	fi
-}
-
-# call using: parse_options $options
-# assumes that the following variables exist: 
-#   order within these three should match: longArgName, shortArgName, parameters
-#   order of these does not matter:    mustTakeValue, canTakeValue
-parse_options(){
-	argName=""
-	# iterate over all args except the the last one; that one is handled as "mainArg"
-	for arg in "$@" ; do
-		# if arg starts with -, we assume its an an argument name
-		if [ ${arg:0:1} == "-" ]; then
-			[ ${#argName} -gt 0 ] && index_of $argName ${mustTakeValue[@]} && exit_with_message "error: the value of argument [ $argName ] should not begin with \"-\" or \"--\", found [ $arg ]."
-			argName=""
-			#  if arg starts with --, we assume it is a long-form argument name or flag
-			if [ ${arg:0:2} == "--" ]; then
-				arg=${arg#--}
-				apply_arg $arg	
-			else # only single -, we assume it is a short-form argument
-				arg=${arg#-}
-				#process each letter in arg, so multiple short form args can be stacked behind a single -
-				for i in $(seq 0 $((${#arg} - 1)) ); do
-				letter=${arg:$i:1}
-					index_of $letter ${shortArgName[@]} && argLong=${longArgName[${index}]} && apply_arg $argLong
-					[ $index -eq -1 ] && exit_with_message "error: unrecognized short-form argument [ -$letter ]."
-				done
-			fi		
-		# if arg starts with no dashes, we assume it must be the value for $argName
-		else
-			[ ${#argName} -eq 0 ] && exit_with_message "error: unnamed value [ $arg ]"
-			index_of $argName "${longArgName[@]}" && parameters[ $index ]=${arg} && argName=""
-			[ $index -eq -1 ] && exit_with_message "error: unrecognized argument name [ $argName ]"
-		fi
-			
-	done
-
-}
-
-# Set a parameter value to true
-# param1: name of flag to set
-set_flag_to_true(){
-	index_of $1 ${longArgName[@]} && parameters[${index}]="true"
-	[ $index -eq "-1" ] && exit_with_message "error: unrecognized argument [ $1 ]."
-}
-
-
-# Determine if an argument takes a value; if so, store the name and await the value
-# otherwise the argument is a flag, set that parameter to true
-# param1: the long-form argument name
-apply_arg(){
-	argsFromUser=(argsFromUser $1)
-	index_of $1 "${canTakeValue[@]}" && argName=$1
-	set_flag_to_true $1
-}
-
+### These functions are used to give info to the user
 
 # Display BioLockJ release version
 display_version() {
@@ -197,6 +225,7 @@ display_version() {
 
 # Show the help menu
 display_help() {
+	set_arg_names
 	init_defaults
 	addSpace(){
 		if [ ${#BIOLOCKJ_TEST_MODE} -gt 0 ]; then
