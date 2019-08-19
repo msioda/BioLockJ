@@ -81,7 +81,7 @@ else
 	useNohup="nohup"
 fi
 if ifArgUsed $EXT_MODS_ARG ; then
-	classPathAndMain="-cp $externalmodules/*:${BLJ_JAR} biolockj.BioLockJ"
+	classPathAndMain="-cp ${BLJ_JAR}:$(get_arg_value $EXT_MODS_ARG)/* biolockj.BioLockJ"
 else
 	classPathAndMain="-jar ${BLJ_JAR}"
 fi

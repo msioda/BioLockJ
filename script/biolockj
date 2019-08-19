@@ -4,7 +4,7 @@
 ##  This script is the user entry point for the BioLockJ program.       ##
 ##                                                                      ##
 ##  See help menu; it should look like this:                            ##
-##                                                                      ##
+###                                                           ############
 ##  BioLockJ v1.2 - UNCC Fodor Lab July 2018
 ##  Usage:
 ##    biolockj [options] <config|pipeline>
@@ -25,15 +25,14 @@
 ##        --blj_sup <dir>           Map <dir> folder into the docker container as /app/blj_support,
 ##                                  if <dir> is not given, variable $BLJ_SUP is used
 ##  
-##                                                                      
-#####################################################################################################
+
 
 . ${BLJ}/script/blj_functions
 . ${BLJ}/script/blj_user_arg_functions
 
 # Before anything else, check to see if the user just wants help or version info.
-index_of "--help" "$@" || index_of "-h" "$@" && display_help && exit 0
-index_of "--version" "$@" || index_of "-v" "$@" && display_version && exit 0
+containsElement "--help" "$@" || containsElement "-h" "$@" && display_help && exit 0
+containsElement "--version" "$@" || containsElement "-v" "$@" && display_version && exit 0
 
 # Make sure there is at least one argument
 [ $# -eq 0 ] && exit_with_message "biolockj requires at least one argument."

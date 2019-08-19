@@ -39,11 +39,13 @@ init_defaults(){
 	shortArgName=()
 	parameters=()
 	mustTakeValue=($PASSWORD_ARG $CONFIG_ARG)
-	canTakeValue=($PASSWORD_ARG $CONFIG_ARG $BLJ_SUP_ARG)
+	canTakeValue=($mustTakeValue $BLJ_SUP_ARG)
 	for i in ${!longArgName[@]}; do
 		longName=${longArgName[ $i ]}
-		index_of $longName ${takeShortArg[@]} && shortArgName[ $i ]=${longName:0:1}
-		[ $index -eq -1 ] && shortArgName[ $i ]=$longName # a place holder
+		if containsElement $longName ${takeShortArg[@]}
+			then shortArgName[ $i ]=${longName:0:1}
+			else shortArgName[ $i ]=$longName # a place holder
+		fi 
 		parameters[ $i ]="default"
 		i=$((i+1))
 	done
@@ -80,7 +82,7 @@ parse_options(){
 	for arg in "$@" ; do
 		# if arg starts with -, we assume its an an argument name
 		if [ ${arg:0:1} == "-" ]; then
-			[ ${#argName} -gt 0 ] && index_of $argName ${mustTakeValue[@]} && exit_with_message "error: the value of argument [ $argName ] should not begin with \"-\" or \"--\", found [ $arg ]."
+			[ ${#argName} -gt 0 ] && containsElement $argName ${mustTakeValue[@]} && exit_with_message "error: the value of argument [ $argName ] should not begin with \"-\", found [ $arg ]."
 			argName=""
 			#  if arg starts with --, we assume it is a long-form argument name or flag
 			if [ ${arg:0:2} == "--" ]; then
@@ -90,18 +92,23 @@ parse_options(){
 				arg=${arg#-}
 				#process each letter in arg, so multiple short form args can be stacked behind a single -
 				for i in $(seq 0 $((${#arg} - 1)) ); do
-				letter=${arg:$i:1}
-					index_of $letter ${shortArgName[@]} && argLong=${longArgName[${index}]} && apply_arg $argLong
-					[ $index -eq -1 ] && exit_with_message "error: unrecognized short-form argument [ -$letter ]."
+					letter=${arg:$i:1}
+					if index=$( index_of $letter ${shortArgName[@]})
+						then apply_arg ${longArgName[${index}]}
+						else exit_with_message "error: unrecognized short-form argument [ -$letter ]."
+					fi
 				done
 			fi		
 		# if arg starts with no dashes, we assume it must be the value for $argName
 		else
 			[ ${#argName} -eq 0 ] && exit_with_message "error: unnamed value [ $arg ]"
-			index_of $argName "${longArgName[@]}" && parameters[ $index ]=${arg} && argName=""
-			[ $index -eq -1 ] && exit_with_message "error: unrecognized argument name [ $argName ]"
+			if index=$( index_of $argName "${longArgName[@]}" )
+				then parameters[ $index ]=${arg} && argName=""
+				else exit_with_message "error: unrecognized argument name [ $argName ]"
+			fi
 		fi		
 	done
+	[ ${#argName} -gt 0 ] && containsElement $argName ${mustTakeValue[@]} && exit_with_message "error: argument [ $argName ] must take a value."
 }
 
 # Determine if an argument takes a value; if so, store the name and await the value
@@ -109,41 +116,35 @@ parse_options(){
 # param1: the long-form argument name
 apply_arg(){
 	argsFromUser=($argsFromUser $1)
-	index_of $1 "${canTakeValue[@]}" && argName=$1
+	containsElement $1 "${canTakeValue[@]}" && argName=$1
 	set_flag_to_true $1
 }
 
 # Set a parameter value to true
 # param1: name of flag to set
 set_flag_to_true(){
-	index_of $1 ${longArgName[@]} && parameters[${index}]="true"
+	index=$( index_of $1 ${longArgName[@]} ) && parameters[${index}]="true"
 	[ $index -eq "-1" ] && exit_with_message "error: unrecognized argument [ $1 ]."
 }
 
 # sets variables configFile and/or restartDir
 assign_main_arg(){
-	# TODO - check that mainArg is a valide file
 	if ifArgUsed $RESTART_ARG ; then
 		restartDir=$mainArg
-		# TODO - if mainArg is "", try to get current pipeline
-		# TODO - check that restartDir is a directory
 		[ ${#BIOLOCKJ_TEST_MODE} -gt 0 ] && echo "Using $restartDir as the pipeline to restart."
 		ifArgUsed $CONFIG_ARG && configFile=configoverride && echo "Updating pipeline with config file $configFile."
-		# TODO - check that configFile is a valid file
 	else
 		configFile=$mainArg
 		[ ${#BIOLOCKJ_TEST_MODE} -gt 0 ] && echo "Using $configFile as the config file."
 	fi
-	# TODO - check that configFile is not a directory
 }
 
 # Only used when BIOLOCKJ_TEST_MODE is set.
 display_arg_vals(){
-	for i in $(seq 0 $((${#longArgName[@]} - 1)) ); do
-		#ARG=${longArgName[ $i ]} # no, some arg names use -'s and cannot be variable names. TODO -check this
-		if ifArgUsed ${longArgName[ $i ]} ; then
-			argVal=$(get_arg_value ${longArgName[ $i ]})
-			echo "${longArgName[ $i ]} = $argVal"
+	for ARG in ${longArgName[@]} ; do
+		if ifArgUsed $ARG ; then
+			argVal=$(get_arg_value $ARG)
+			echo "$ARG = $argVal"
 		fi
 	done 
 }
@@ -155,8 +156,10 @@ display_arg_vals(){
 # Use this to set a value to true or false; remember these are strings, not logic values
 # param 1: argument name (from longArgName array)
 trueIfArgUsed(){
-	index_of $1 ${argsFromUser[@]} && echo "true"
-	[ $index -eq -1 ] && echo "false"
+	if containsElement $1 ${argsFromUser[@]}
+		then echo "true"
+		else echo "false"
+	fi
 }
 
 # Use this to control logic flow
@@ -172,45 +175,19 @@ ifArgUsed(){
 # If the arg is not in the list of arg names, then return status 1 (ie, unsuccessful)
 # param 1 - the arg name
 get_arg_value(){
-	index_of $1 ${longArgName[@]} && echo ${parameters[$index]} || return 1
+	index=$( index_of $1 ${longArgName[@]} ) && echo ${parameters[$index]} || return 1
 }
 
-
-### This functions is tool to both check if a string is present and get its index.
-
-# Summary: 
-#   This function checks if an array contains a value, 
-#   if so $index is the index of the value in the array, 
-#   otherwise $index is -1.
-#   param 1: the value
-#   param 2-n: the array
-#   
-# Example: 
-#   index_of "-h" "$@"
-#
-# Desctiption:
-# If the value is found in the array, then the function 
-#   returns 0 (success) and any && after this function call will be evaluated,
-#   and the value of $index is the index of the value in the array.
-# If the value is NOT found in the array, then the function 
-#   returns 1 (failure) and any && after this function call will NOT be evaluated,
-#   and the value of $index is -1, so "[ $index -eq -1 ]" will 
-#   evaluate to 0 (true) and any && after that will be evaluated.
-# Every reference to $index refers to the most recent evaluation of "index_of"
-# 
-# Leave the commented echo's in place for future troubleshooting.
+# return the index of $1 in the array (remaining args)--IFF it is in the array
 index_of(){
-	#echo "inputs: " $*
 	local array=( "$@" )
-	#echo "array: " ${array[@]}	
 	for arrayIndex in $(seq 1 ${#array[@]}); do
-		#echo "comparing " $1 " to " ${array[$i]}
 		if [ "${array[$arrayIndex]}" == "$1" ]; then
-			index=$(( $arrayIndex - 1 ))
+			echo $(( $arrayIndex - 1 ))
 			return 0
 		fi
 	done
-	index=-1
+	echo "-1"
 	return 1
 }
 
@@ -230,11 +207,14 @@ display_help() {
 	addSpace(){
 		if [ ${#BIOLOCKJ_TEST_MODE} -gt 0 ]; then
 			local allargs=(${longArgName[@]} help version)
-			index_of $1 ${allargs[@]}
-			[ $index -eq -1 ] && echo "$1 may not be supported!"
+			if ! containsElement $1 ${allargs[@]} ; then 
+				echo "$1 may not be supported!"
+			fi
 		fi
-		index_of $1 ${takeShortArg[@]} && addSpaceWithShort "${@}"
-		[ $index -eq -1 ] && addSpaceNoShortArg "${@}"
+		if containsElement $1 ${takeShortArg[@]}
+			then addSpaceWithShort "${@}"
+			else addSpaceNoShortArg "${@}"
+		fi
 	}
 	addSpaceWithShort(){ 
 		printf '%-1s %-3s %-25s %-10s\n' "" "-${1:0:1}" "--$1" "$2"

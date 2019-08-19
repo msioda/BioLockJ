@@ -6,7 +6,7 @@
 ###################################################################
 
 . ${BLJ}/script/blj_script_functions
-. ${BLJ}/script/blj_dev_functions
-. ${BLJ}/script/blj_user_functions
+#. ${BLJ}/script/blj_dev_functions
+#. ${BLJ}/script/blj_user_functions
 
 

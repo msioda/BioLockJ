@@ -34,6 +34,25 @@ to_abs_path(){
     echo $absPath
 }
 
+# Return basename of ${2} under new parent directory ${1}
+# Param 1 - Target directory
+# Param 2 - Absolute file/dir path
+modify_path() {
+	echo "${1}/$(basename $2)" 
+}
+
+
+in_docker_env() {
+	[ -f "/.dockerenv" ]
+}
+
+
+# Append formatted time-stamp as prefix and print log output line "${1}"
+# Param 1 - Log statement  
+console_log() {
+	echo "[ $(date "+%Y-%m-%d %H:%M:%S") ] ${1}"
+}
+
 
 
 
@@ -132,8 +151,9 @@ continue_after_command(){
 # Optionally print a message, then show help, then exit with status 1
 exit_with_message(){
 	echo $1
+	echo "$(biolockj --help)" 
 	[ -f "/.dockerenv" ] && sleep 5
-	echo "$(biolockj --help)" && exit 1 # display_help
+	exit 1
 }
 
 

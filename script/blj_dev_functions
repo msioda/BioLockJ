@@ -10,18 +10,18 @@
 # ---> should be removed
 # Call ANT to build BioLockJ
 blj_build() {
-	echo "Building BioLockJ with ANT..."
-	[ ! -f "$BLJ/resources/build.xml" ] && exit_script "Error [ blj_functions.blj_build() ]: ANT build script missing: $BLJ/resources/build.xml"
+	console_log "Building BioLockJ with ANT..."
+	[ ! -f "$BLJ/resources/build.xml" ] && console_log "Error [ blj_functions.blj_build() ]: ANT build script missing: $BLJ/resources/build.xml" && return
 	myDir="$PWD"
 	cd $BLJ/resources
 	[ ${#1} -eq 0 ] && ant
 	[ ${#1} -gt 0 ] && ant $1
-	echo "Ant script execution complete"
+	console_log "Ant script execution complete"
 
 	if [ -f "$BLJ/dist/BioLockJ.jar" ]; then
 		ls -lh "$BLJ/dist/BioLockJ.jar"
 	else
-		echo "Build Failed - missing $BLJ/dist/BioLockJ.jar"
+		console_log "Build Failed - missing $BLJ/dist/BioLockJ.jar"
 	fi
 	cd $myDir
 }
@@ -37,7 +37,7 @@ blj_deploy() {
 # ---> should be removed
 # Git latest $BLJ + build BioLockJ.jar
 blj_git() {
-	[ ! -d "${BLJ}" ] && echo "Cannot build BLJ: directory not found: ${BLJ}" && return
+	[ ! -d "${BLJ}" ] && console_log "Cannot build BLJ: directory not found: ${BLJ}" && return
 	blj_git_reset "${BLJ}"
 }
 
