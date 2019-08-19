@@ -193,31 +193,26 @@ public class DockerUtil {
 	 */
 	public static String getImageName( final BioModule module ) throws ConfigNotFoundException {
 		final String className = module.getClass().getName();
-
-		if( module instanceof GenMod ) return Config.requireString( module, Constants.DOCKER_CONTAINER_NAME );
-
-		if( useBasicBashImg( module ) ) {
-			Log.info( DockerUtil.class, "Map: Class [" + className + "] <--> Docker Image [ " + BLJ_BASH + " ]" );
-			return BLJ_BASH;
-		}
-
 		final String simpleName = getDockerClassName( module );
-		Log.debug( DockerUtil.class, "Found Java simple class name: " + simpleName );
 		String imageName = simpleName.substring( 0, 1 ).toLowerCase();
+		if( useBasicBashImg( module ) ) imageName = BLJ_BASH;
+		else if( module instanceof GenMod ) imageName = Config.requireString( module, Constants.DOCKER_CONTAINER_NAME );
+		else {
+			for( int i = 2; i < simpleName.length() + 1; i++ ) {
+				final int len = imageName.toString().length();
+				final String prevChar = imageName.toString().substring( len - 1, len );
+				final String val = simpleName.substring( i - 1, i );
+				if( !prevChar.equals( IMAGE_NAME_DELIM ) && !val.equals( IMAGE_NAME_DELIM ) &&
+					val.equals( val.toUpperCase() ) && !NumberUtils.isNumber( val ) )
+					imageName += IMAGE_NAME_DELIM + val.toLowerCase();
+				else if( !prevChar.equals( IMAGE_NAME_DELIM ) ||
+					prevChar.equals( IMAGE_NAME_DELIM ) && !val.equals( IMAGE_NAME_DELIM ) ) imageName += val.toLowerCase();
+			}
 
-		for( int i = 2; i < simpleName.length() + 1; i++ ) {
-			final int len = imageName.toString().length();
-			final String prevChar = imageName.toString().substring( len - 1, len );
-			final String val = simpleName.substring( i - 1, i );
-			if( !prevChar.equals( IMAGE_NAME_DELIM ) && !val.equals( IMAGE_NAME_DELIM ) &&
-				val.equals( val.toUpperCase() ) && !NumberUtils.isNumber( val ) )
-				imageName += IMAGE_NAME_DELIM + val.toLowerCase();
-			else if( !prevChar.equals( IMAGE_NAME_DELIM ) ||
-				prevChar.equals( IMAGE_NAME_DELIM ) && !val.equals( IMAGE_NAME_DELIM ) ) imageName += val.toLowerCase();
+			if( hasCustomDockerDB( module ) && ( className.toLowerCase().contains( "knead_data" ) ||
+				className.toLowerCase().contains( "kraken" ) ) ) imageName += DB_FREE;
 		}
-
-		if( hasCustomDockerDB( module ) && ( className.toLowerCase().contains( "knead_data" ) ||
-			className.toLowerCase().contains( "kraken" ) ) ) imageName += DB_FREE;
+		
 		Log.info( DockerUtil.class, "Map: Class [" + className + "] <--> Docker Image [ " + imageName + " ]" );
 		return imageName;
 	}
@@ -230,11 +225,31 @@ public class DockerUtil {
 	 */
 	public static boolean hasCustomDockerDB( final BioModule module ) {
 		try {
+			Log.info( DockerUtil.class, Constants.LOG_SPACER );
 			Log.info( DockerUtil.class, "Check for Custom Docker DB" );
-			//new File( "/.dockerenv" )
+			Log.info( DockerUtil.class, Constants.LOG_SPACER );
+			if( inDockerEnv() ) 
+				Log.info( DockerUtil.class, "Verified BLJ is running INSIDE the Docker biolockj_controller Container" );
+			else {
+				Log.info( DockerUtil.class, "LOOKS LIKE BLJ is <<< NOT >>> running INSIDE the Docker biolockj_controller Container - run extra tests!" );
+				final File testFile = new File( "/.dockerenv" );
+				if( testFile.isFile() )
+					Log.info( DockerUtil.class, "testFile.isFile() == TRUE! --> WHY FAIL ON INIT ATTEMPT?  BLJ is running INSIDE the Docker biolockj_controller Container" );
+				else if( testFile.exists() )
+					Log.info( DockerUtil.class, "testFile.exists() == TRUE! --> WHY FAIL ON INIT ATTEMPT?  BLJ is running INSIDE the Docker biolockj_controller Container" );
+			}
 			
+			if( module instanceof DatabaseModule )
+				Log.info( DockerUtil.class, module.getClass().getSimpleName() + " is a DB Module!" );
+			else
+				Log.info( DockerUtil.class, module.getClass().getSimpleName() + " is NOT DB Module!" );
+			
+			Log.info( DockerUtil.class, Constants.LOG_SPACER );
+				
 			if( inDockerEnv() && module instanceof DatabaseModule ) {
 				final File db = ( (DatabaseModule) module ).getDB();
+				if( db == null ) Log.info( DockerUtil.class, module.getClass().getSimpleName() + " db ==> NULL " );
+				if( db != null ) Log.info( DockerUtil.class, module.getClass().getSimpleName() + " db ==> " + db.getAbsolutePath() );
 				if( db != null ) return !db.getAbsolutePath().startsWith( DOCKER_DEFAULT_DB_DIR );
 			}
 		} catch( ConfigPathException | ConfigNotFoundException ex ) {

@@ -103,8 +103,7 @@ public class ParsedSample implements Serializable, Comparable<ParsedSample> {
 						if( otu.contains( level ) ) {
 							parentTaxa = TaxaUtil.getTaxaName( otu, level );
 							parentLevel = level;
-						} else if( parentTaxa != null &&
-							Config.getBoolean( Pipeline.exeModule(), Constants.REPORT_UNCLASSIFIED_TAXA ) )
+						} else if( parentTaxa != null && OtuNodeImpl.reportUnclassifiedTaxa() )
 							otu += Constants.OTU_SEPARATOR +
 								OtuUtil.buildOtuTaxa( level, TaxaUtil.getUnclassifiedTaxa( parentTaxa, parentLevel ) );
 

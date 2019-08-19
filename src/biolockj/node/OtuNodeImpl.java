@@ -61,8 +61,7 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 				if( this.taxaMap.keySet().contains( testLevel ) ) {
 					parentTaxa = this.taxaMap.get( testLevel );
 					parentLevel = testLevel;
-				} else if( parentTaxa != null &&
-					Config.getBoolean( Pipeline.exeModule(), Constants.REPORT_UNCLASSIFIED_TAXA ) ) {
+				} else if( parentTaxa != null && reportUnclassifiedTaxa() ) {
 					final String unclassifiedTaxa = TaxaUtil.getUnclassifiedTaxa( parentTaxa, parentLevel );
 					this.taxaMap.put( testLevel, unclassifiedTaxa );
 				}
@@ -115,7 +114,7 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 			for( final String level: TaxaUtil.getTaxaLevels() ) {
 				String taxaName = this.taxaMap.get( level );
 				if( taxaName != null && taxaName.trim().isEmpty() ) taxaName = null;
-				if( taxaName == null && Config.getBoolean( Pipeline.exeModule(), Constants.REPORT_UNCLASSIFIED_TAXA ) )
+				if( taxaName == null && reportUnclassifiedTaxa() )
 					taxaName = TaxaUtil.getUnclassifiedTaxa( parentTaxa, parentLevel );
 				else if( taxaName != null ) {
 					parentTaxa = taxaName;
@@ -206,8 +205,7 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 				numFound++;
 				parentTaxa = this.taxaMap.get( level );
 				parentLevel = level;
-			} else if( Config.getBoolean( Pipeline.exeModule(), Constants.REPORT_UNCLASSIFIED_TAXA ) &&
-				parentTaxa != null && this.taxaMap.get( level ) == null && numFound < numTaxa )
+			} else if( parentTaxa != null && reportUnclassifiedTaxa() && this.taxaMap.get( level ) == null && numFound < numTaxa )
 				this.taxaMap.put( level, TaxaUtil.getUnclassifiedTaxa( parentTaxa, parentLevel ) );
 			else if( numFound == numTaxa ) break;
 	}
@@ -228,6 +226,10 @@ public abstract class OtuNodeImpl implements OtuNode, Comparable<OtuNode> {
 			delimToLevelMap.put( SPECIES_DELIM, Constants.SPECIES );
 		}
 		return delimToLevelMap;
+	}
+	
+	protected static boolean reportUnclassifiedTaxa() throws ConfigFormatException {
+		return Config.getBoolean( Pipeline.exeModule(), Constants.REPORT_UNCLASSIFIED_TAXA );
 	}
 
 	private long count = 0;
