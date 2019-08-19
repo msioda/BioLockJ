@@ -193,31 +193,26 @@ public class DockerUtil {
 	 */
 	public static String getImageName( final BioModule module ) throws ConfigNotFoundException {
 		final String className = module.getClass().getName();
+		final String simpleName = getDockerClassName( module );
+		String imageName = simpleName.substring( 0, 1 ).toLowerCase();
+		if( useBasicBashImg( module ) ) imageName = BLJ_BASH;
+		else if( module instanceof GenMod ) imageName = Config.requireString( module, Constants.DOCKER_CONTAINER_NAME );
+		else {
+			for( int i = 2; i < simpleName.length() + 1; i++ ) {
+				final int len = imageName.toString().length();
+				final String prevChar = imageName.toString().substring( len - 1, len );
+				final String val = simpleName.substring( i - 1, i );
+				if( !prevChar.equals( IMAGE_NAME_DELIM ) && !val.equals( IMAGE_NAME_DELIM ) &&
+					val.equals( val.toUpperCase() ) && !NumberUtils.isNumber( val ) )
+					imageName += IMAGE_NAME_DELIM + val.toLowerCase();
+				else if( !prevChar.equals( IMAGE_NAME_DELIM ) ||
+					prevChar.equals( IMAGE_NAME_DELIM ) && !val.equals( IMAGE_NAME_DELIM ) ) imageName += val.toLowerCase();
+			}
 
-		if( module instanceof GenMod ) return Config.requireString( module, Constants.DOCKER_CONTAINER_NAME );
-
-		if( useBasicBashImg( module ) ) {
-			Log.info( DockerUtil.class, "Map: Class [" + className + "] <--> Docker Image [ " + BLJ_BASH + " ]" );
-			return BLJ_BASH;
+			if( hasCustomDockerDB( module ) && ( className.toLowerCase().contains( "knead_data" ) ||
+				className.toLowerCase().contains( "kraken" ) ) ) imageName += DB_FREE;
 		}
 		
-		final String simpleName = getDockerClassName( module );
-		Log.debug( DockerUtil.class, "Found Java simple class name: " + simpleName );
-		String imageName = simpleName.substring( 0, 1 ).toLowerCase();
-
-		for( int i = 2; i < simpleName.length() + 1; i++ ) {
-			final int len = imageName.toString().length();
-			final String prevChar = imageName.toString().substring( len - 1, len );
-			final String val = simpleName.substring( i - 1, i );
-			if( !prevChar.equals( IMAGE_NAME_DELIM ) && !val.equals( IMAGE_NAME_DELIM ) &&
-				val.equals( val.toUpperCase() ) && !NumberUtils.isNumber( val ) )
-				imageName += IMAGE_NAME_DELIM + val.toLowerCase();
-			else if( !prevChar.equals( IMAGE_NAME_DELIM ) ||
-				prevChar.equals( IMAGE_NAME_DELIM ) && !val.equals( IMAGE_NAME_DELIM ) ) imageName += val.toLowerCase();
-		}
-
-		if( hasCustomDockerDB( module ) && ( className.toLowerCase().contains( "knead_data" ) ||
-			className.toLowerCase().contains( "kraken" ) ) ) imageName += DB_FREE;
 		Log.info( DockerUtil.class, "Map: Class [" + className + "] <--> Docker Image [ " + imageName + " ]" );
 		return imageName;
 	}

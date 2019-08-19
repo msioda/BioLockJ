@@ -116,7 +116,7 @@ init_nextflow_config() {
 	NF="$(local_nf_conf)" && LPQ="$(get_stack_param LowPriorityJobQueue)" && HPQ="$(get_stack_param HighPriorityJobQueue)"
 	echo "// Nextflow properties inherited by BioLockJ $(biolockj -v) pipeline main.nf" > "${NF}"
 	echo "" >> "${NF}" && echo "executor {" >> "${NF}" && echo "    name = 'awsbatch'" >> "${NF}"
-    echo "    executor.awscli = '${EC2_HOME}/miniconda/bin/aws'" >> "${NF}" && echo "}" >> "${NF}"
+    echo "    aws.batch.cliPath = '${EC2_HOME}/miniconda/bin/aws'" >> "${NF}" && echo "}" >> "${NF}"
     echo "" >> "${NF}" && echo "aws {" >> "${NF}" && echo "    region = '$(aws_region)'" >> "${NF}"
     echo "}" >> "${NF}" && echo "" >> "${NF}" && echo "process {" >> "${NF}"
 	echo "    queue = '${LPQ}'" >> "${NF}" && echo "    withLabel: 'DEMAND' {" >> "${NF}"

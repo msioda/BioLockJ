@@ -130,12 +130,18 @@ get_cmd() {
 	fi
 	echo docker ${cmd} ${target}
 }
+
 # Launch a new bash shell for a running Docker container 
 # Param $1 = Docker container name or ID, if undefined use 1st ID
 goDock() {
 	count=$(docker ps -q| head -1)
 	if [ $# -eq 0 ]; then id="$(docker ps -q | head -n 1)"; else id="${1}"; fi
 	docker exec -ti ${id} /bin/bash
+}
+
+## Retruns 0 (TRUE) if running in a Docker container (in which /.dockerenv exists)
+inDockerContainer() {
+	[ -f "/.dockerenv" ]
 }
 
 # Deploy only Docker images that contain $BLJ/dist/BioLockJ.jar
@@ -147,6 +153,6 @@ push_blj_only() {
 # Run a clone of the last biolockj_controller container
 # Very useful to debug after failed Docker pipelines
 run_docker_clone() {
-	[ -f "/.dockerenv" ] && export DOCKER_CLONE_SCRIPT="${BLJ_HOST_HOME}/$(basename $DOCKER_CLONE_SCRIPT)"
+	$(inDockerContainer) && export DOCKER_CLONE_SCRIPT="${BLJ_HOST_HOME}/$(basename $DOCKER_CLONE_SCRIPT)"
 	[ -x "${DOCKER_CLONE_SCRIPT}" ] && bash "${DOCKER_CLONE_SCRIPT}"
 }

@@ -102,9 +102,9 @@ verify_args() {
 	[ ${#newPass} -gt 0 ] && args="${@/p=$newPass}"
 	args="${@//=/ }"
 	[ ${#newPass} -gt 0 ] && args="${args} -p ${newPass}"
-	[ ! -f "/.dockerenv" ] && [ ${#config} -gt 0 ] && [ ! -f "${config}" ] &&
+	! $(inDockerContainer) && [ ${#config} -gt 0 ] && [ ! -f "${config}" ] &&
 		${BLJ}/script/biolockj -h && exit_script "Error [ biolockj ]:  \"${config}\" not found on filesystem"
-	[ ! -f "/.dockerenv" ] && [ ${#restart} -gt 0 ] && [ ! -d "${restart}" ] &&
+	! $(inDockerContainer) && [ ${#restart} -gt 0 ] && [ ! -d "${restart}" ] &&
 		${BLJ}/script/biolockj -h && exit_script "Error [ biolockj ]:  \"${restart}\" not found on filesystem"
 	[ ! -d "${BLJ_PROJ}" ] && exit_script "Error [ biolockj ]: Required env variable BLJ_PROJ undefined: \"${BLJ_PROJ}\""
 	[ ! -f "${BLJ_JAR}" ] && exit_script "Error [ biolockj ]: BioLockJ Jar file \"${BLJ_JAR}\" not found"
