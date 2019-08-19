@@ -41,13 +41,13 @@ blj_options() {
 		options="-u ${HOME} -b $(blj_proj) -h $(hostname) -i ${inputDir}"
 		ifArgUsed $BLJ_ARG && options="${options} -blj ${BLJ}"
 		ifArgUsed $BLJ_SUP_ARG && options="${options} -blj_sup ${blj_sup}"
-		[ $gui == "true" ] && echo "${options}" && return
+		ifArgUsed $GUI_ARG && echo "${options}" && return
 	fi	
-	! $(null_var $restartDir) && options="${options} -r ${BLJ_PROJ}/${restartDir#$(blj_proj)/}"
-	! $(null_var $newPass) && options="${options} -p $newPass"
-	! $(null_var $metaPath) && options="${options} -m $metaPath"
-	! $(null_var $primerPath) && options="${options} -t $primerPath"
-	[ $aws == "true" ] && options="${options} -aws"
+	ifDefined $restartDir && options="${options} -r ${BLJ_PROJ}/${restartDir#$(blj_proj)/}"
+	ifArgUsed $PASSWORD_ARG && options="${options} -p $newPass"
+	ifDefined $metaPath && options="${options} -m $metaPath"
+	ifDefined $primerPath && options="${options} -t $primerPath"
+	ifArgUsed $AWS_ARG && options="${options} -aws"
 	echo "${options} -c ${config}" # TODO - handle reset case in docker
 }
 
@@ -67,7 +67,7 @@ blj_proj() {
 		len=$((${#bljProj}-1))
 		bljProj="${bljProj:0:len}"
 	fi
-	$(null_var $bljProj) && exit_script "Error [ launch_docker.blj_proj ]: Required env variable BLJ_PROJ undefined"
+	! ifDefined $bljProj && exit_script "Error [ launch_docker.blj_proj ]: Required env variable BLJ_PROJ undefined"
 	echo "${bljProj}"
 }
 
@@ -82,7 +82,7 @@ build_clone_script() {
 
 	img="$(dock_id)/biolockj_controller"
 	cmd=${args/$img/-ti $img /bin/bash} 
-	! $(null_var $runGui) && cmd=${cmd/npm start}
+	ifArgUsed $GUI_ARG && cmd=${cmd/npm start}
 	ifArgUsed $FROM_GUI_ARG && DOCKER_CLONE_SCRIPT="${BLJ_HOST_HOME}/$(basename $DOCKER_CLONE_SCRIPT)"
 	
 	echo "#!/bin/bash" > "${DOCKER_CLONE_SCRIPT}"
@@ -96,7 +96,7 @@ build_clone_script() {
 # Get Docker image - add port, entrypoint, anc command if launching GUI
 get_docker_img() {
 	cmd=$(dock_id)/biolockj_controller
-	if $(null_var $runGui); then echo "${cmd}";
+	if ! ifArgUsed $GUI_ARG; then echo "${cmd}";
 	else echo "-p ${GUI_PORT}:3000 --expose ${GUI_PORT} -w /app/biolockj/web_app ${cmd} npm start"; fi
 }
 
@@ -106,12 +106,12 @@ get_volumes() {
 	ifArgUsed $BLJ_ARG && vols="${vols} -v ${BLJ}:/app/biolockj:ro"
 	ifArgUsed $BLJ_SUP_ARG && vols="${vols} -v ${blj_sup}:/app/blj_support:ro"
 	ifArgUsed $EXT_MODS_ARG && vols="${vols} -v ${extMods}:/app/external_modules:ro"
-	if [ $aws != "true" ]; then ## from aws
+	if ifArgUsed $AWS_ARG ; then
 		vols="${vols} -v $(blj_proj):${EFS_PROJ}:delegated"
-		if [ $gui != "true" ]; then ## running pipeline in docker on local machine
+		if ! ifArgUsed $GUI_ARG; then ## running pipeline in docker on local machine
 			vols="${vols} -v $inputDir:${BLJ_INPUT}:ro -v $(dirname $config):${BLJ_CONFIG}:ro"
-			! $(null_var $metaPath) && vols="${vols} -v $metaPath:${EFS}/metadata:ro"
-			! $(null_var $primerPath) && vols="${vols} -v $primerPath:${BLJ_PRIMER}:ro"
+			ifDefined $metaPath && vols="${vols} -v $metaPath:${EFS}/metadata:ro"
+			ifDefined $primerPath) && vols="${vols} -v $primerPath:${BLJ_PRIMER}:ro"
 		else ## running local gui
 			vols="${vols} -v ${BLJ}/resources/config/gui:${BLJ_CONFIG}:delegated"
 			[ -f "$(which aws)" ] && [ -d "$(dirname $(which aws))" ] && vols="${vols} -v $(dirname $(which aws)):${APP_BIN}"
@@ -122,10 +122,11 @@ get_volumes() {
 	echo "${vols}"
 }
 
-# Boolean evaluation if single argument passed exists with a non-zero size
-# Param 1 - Script arg
-null_var() {
-	[ ${#1} -eq 0 ]
+# Logic control; if the variable given is empty then evaluates like false,
+# if the variable has a positive size then evaluates like true
+ifDefined(){
+	[ ${#1} -gt 0 ] && return 0
+	[ ${#1} -eq 0 ] && return 1
 }
 
 # Read script args and bash env vars
@@ -138,11 +139,9 @@ scan_script_and_env_args() {
 		echo "mapping directory \"$blj_sup\" into container..."
 	fi
 	ifArgUsed $EXT_MODS_ARG && extMods=$(get_arg_value $EXT_MODS_ARG)
-	aws=$(trueIfArgUsed $AWS_ARG)
-	gui=$(trueIfArgUsed $GUI_ARG)
-	[ $gui == "true" ] && echo "RUN THE GUI"
+	ifArgUsed $GUI_ARG && echo "Starting BioLockJ GUI..."
 	config=$configFile
-	if [ $gui != "true" ] && ! ifArgUsed $FROM_GUI_ARG && [ ${#config} -gt 0 ] && [ -f $config ] ; then
+	if ! ifArgUsed $GUI_ARG && ! ifArgUsed $FROM_GUI_ARG && [ ${#config} -gt 0 ] && [ -f $config ] ; then
 		inputDir="$(get_property $config input.dirPaths)"
 		metaPath="$(get_property $config metadata.filePath)" && [ ${#metaPath} -gt 0 ] && metaPath="$(dirname $metaPath)"
 		primerPath="$(get_property $config trimPrimers.filePath)" && [ ${#primerPath} -gt 0 ] && primerPath="$(dirname $primerPath)"
@@ -177,14 +176,14 @@ verify_file() {
 
 # Verify paths are valid, if launch_docker is not run inside a Docker container
 verify_inputs() {
-	! $(null_var $inputDir) && dirPath=( ${inputDir//, } )
-	$(null_var $inputDir) || [ ${#dirPath[@]} -gt 1 ] && exit_script "Error [ launch_docker ]: The -i parameter must reference a single input directory"
+	ifDefined $inputDir && dirPath=( ${inputDir//, } )
+	! ifDefined $inputDir || [ ${#dirPath[@]} -gt 1 ] && exit_script "Error [ launch_docker ]: The -i parameter must reference a single input directory"
 	verify_dir $dirPath
 	verify_dir $BLJ_PROJ
-	! $(null_var $restartDir) && verify_dir $restartDir
-	! $(null_var $config) && verify_file $config
-	! $(null_var $metaPath) && verify_dir $metaPath
-	! $(null_var $primerPath) && verify_dir $primerPath	
+	ifDefined $restartDir && verify_dir $restartDir
+	ifDefined $config && verify_file $config
+	ifDefined $metaPath && verify_dir $metaPath
+	ifDefined $primerPath && verify_dir $primerPath	
 }
  
 
@@ -197,7 +196,7 @@ assign_main_arg
 [ ${#BIOLOCKJ_TEST_MODE} -gt 0 ] && echo "args used: ${argsFromUser[@]}" && echo "configFile = $configFile" && echo "restartDir = $restartDir"
 
 scan_script_and_env_args
-[ $gui != "true" ] && [ "${HOME}" != "${EC2_HOME}" ] && ! inDockerContainer && verify_inputs
+! ifArgUsed $GUI_ARG && [ "${HOME}" != "${EC2_HOME}" ] && ! inDockerContainer && verify_inputs
 
 CMD="docker run --rm -e \"BLJ_OPTIONS=$(blj_options)\" $(get_volumes) $(get_docker_img)"
 printf "\n---------> Execute CMD [  ${CMD}  ] \n\n"
