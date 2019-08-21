@@ -149,16 +149,16 @@ parse_script_input() {
 		metaPath="$(get_property $localConfig metadata.filePath)" && [ ${#metaPath} -gt 0 ] && metaPath="$(dirname $metaPath)" && echo "BLJ metaPath: $metaPath"
 		primerPath="$(get_property $localConfig trimPrimers.filePath)" && [ ${#primerPath} -gt 0 ] && primerPath="$(dirname $primerPath)" && echo "BLJ primerPath: $primerPath"
 	fi
-	if [ ${#configPath} -gt 0 ]; then mapConfigDir=TRUE; else mapConfigDir=FALSE; fi
-	if [ ${#inputPath} -gt 0 ]; then mapInputDir=TRUE; else mapInputDir=FALSE; fi
-	if [ ${#metaPath} -gt 0 ]; then mapMetaDir=TRUE; else mapMetaDir=FALSE; fi
-	if [ ${#primerPath} -gt 0 ]; then mapPrimerDir=TRUE; else mapPrimerDir=FALSE; fi
-	if [ ${#restartPath} -gt 0 ]; then mapRestartDir=TRUE; else mapRestartDir=FALSE; fi
-	if [ ${#newPass} -gt 0 ]; then doChangePass=TRUE; else doChangePass=FALSE; fi
-	if $(containsElement aws $@); then runAws=TRUE; else runAws=FALSE; fi
-	if $(containsElement gui $@); then startGUI=TRUE; else startGUI=FALSE; fi
-	if $(containsElement blj $@); then mapBlj=TRUE; else mapBlj=FALSE; fi
-	if $(containsElement blj_sup $@); then mapBljSup=TRUE; else mapBljSup=FALSE; fi
+	if [ ${#configPath} -gt 0 ]; then mapConfigDir=true; else mapConfigDir=false; fi
+	if [ ${#inputPath} -gt 0 ]; then mapInputDir=true; else mapInputDir=false; fi
+	if [ ${#metaPath} -gt 0 ]; then mapMetaDir=true; else mapMetaDir=false; fi
+	if [ ${#primerPath} -gt 0 ]; then mapPrimerDir=true; else mapPrimerDir=false; fi
+	if [ ${#restartPath} -gt 0 ]; then mapRestartDir=true; else mapRestartDir=false; fi
+	if [ ${#newPass} -gt 0 ]; then doChangePass=true; else doChangePass=false; fi
+	if $(containsElement aws $@); then runAws=true; else runAws=false; fi
+	if $(containsElement gui $@); then startGUI=true; else startGUI=false; fi
+	if $(containsElement blj $@); then mapBlj=true; else mapBlj=false; fi
+	if $(containsElement blj_sup $@); then mapBljSup=true; else mapBljSup=false; fi
 }
 
 # Print the docker run command to the console.
