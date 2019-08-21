@@ -127,8 +127,8 @@ blj_sup_git() {
 }
 
 # Check bash array for element exact match
-# Param 1 - Search pattern
-# Param @ = Remaining args = searchable array
+# Param 1 - Search pattern = 1st item in arg array: args[0]
+# Param 2 - Remaining script args args[1:n]
 containsElement() {
   local e match="$1"
   shift
@@ -271,6 +271,12 @@ set_property() {
 show_IFS() {
 	echo "Cached  IFS  -->  $(printf %q "$IFS_CACHE")"
 	echo "Current IFS  -->  $(printf %q "$IFS")"
+}
+
+# Trim leading hyphens from script args
+# Params - $@ = Parent script args
+trimArgHyphens() {
+	args=("$@") && for arg in ${args[@]}; do arg=$(echo $arg | sed 's/^\(-\)*//'); echo " $arg"; done
 }
 
 IFS_CACHE="$IFS" && alias showIFS="show_IFS" && alias resetIFS="reset_IFS"

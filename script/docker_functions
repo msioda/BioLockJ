@@ -139,7 +139,7 @@ goDock() {
 	docker exec -ti ${id} /bin/bash
 }
 
-## Retruns 0 (TRUE) if running in a Docker container (in which /.dockerenv exists)
+# Retruns 0 (TRUE) if running in a Docker container (in which /.dockerenv exists)
 inDockerContainer() {
 	[ -f "/.dockerenv" ]
 }
