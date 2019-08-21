@@ -6,6 +6,7 @@ Notes: Backend server functions
 
 const path = require('path'),
   fs = require('fs'),
+  errorLogger = require('./errorLogger.js'),
   bljDir = process.env.BLJ;
 
 exports.javaDocsModGetter =  function(req, res, next) {
