@@ -377,6 +377,7 @@ public class MetaUtil {
 			setFile( getMetadata() );
 			refreshCache();
 		}
+		Log.info( MetaUtil.class, "Metadata initialized" );
 	}
 
 	/**
