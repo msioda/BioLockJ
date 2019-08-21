@@ -39,7 +39,7 @@ display_help() {
 # Convert input parameters to array of flag args and "name=value" arg pairs
 # Params $@ passed in from main script input parameters at runtime
 get_params() {
-	args=("$@") && i=0 && name='' && numArgs=${#args[*]} && out=''
+	args=("$@") && i=0 && name='' && out='' && numArgs=${#args[*]} 
     for arg in ${args[@]}; do
     	arg=$(echo $arg | sed 's/^\(-\)*//')
     	$(containsElement $arg docker blj blj_sup gui aws) && out="${out} ${arg}" && continue
@@ -48,6 +48,20 @@ get_params() {
     done
 	[ "${out/'c='}" == "${out}" ] && [ "${out/'r='}" == "${out}" ] && [ ${#name} -gt 0 ] && out="${out} c=${name}"
     echo "${out}" | xargs
+}
+
+# Run main script algorithm
+# Param 1 - Array of biolockj script args
+main() {
+	arg1="${1//-}"
+	if [ $# -eq 1 ] && [ "${arg1:0:1}" == "v" ]; then
+		display_version
+	elif [ $# -eq 1 ] && [ "${arg1:0:1}" == "h" ]; then 
+		display_help
+	else
+		printf "Execute CMD  --------->  biolockj $(echo ${@}) \n"
+		run_biolockj $(get_params $@)
+	fi
 }
 
 # Run biolockj by locally, on AWS, or in Docker mode based on script args
@@ -59,12 +73,10 @@ run_biolockj() {
 		exit_script "Error [ biolockj ]: Either -config or -restart arg is required!"
 	if $(containsElement gui $@) && $(containsElement aws $@); then
 		run_aws_gui
-	elif $(containsElement gui $@); then
-		dockblj $@
 	elif (containsElement aws $@); then
-		[ ${#config} -eq 0 ] && exit_script "Error [ biolockj ]: AWS pipelines require a -config arg!"
+		[ ${#config} -eq 0 ] && exit_script "Error [ biolockj ]: AWS pipelines require config file path arg!"
 		run_aws "${config}"
-	elif $(containsElement docker $@); then
+	elif $(containsElement gui $@) || $(containsElement docker $@); then
 		dockblj $@
 	else # direct local pipeline
 		start_pipeline "$(verify_args $@)"
@@ -111,12 +123,4 @@ verify_args() {
 	echo "${args}"
 }
 
-arg1="${1//-}"
-if [ $# -eq 1 ] && [ "${arg1:0:1}" == "v" ]; then
-	display_version
-elif [ $# -eq 1 ] && [ "${arg1:0:1}" == "h" ]; then 
-	display_help
-else
-	printf "\n ---------> Execute CMD [  biolockj $(echo ${@})  ]\n"
-	run_biolockj $(get_params $@)
-fi
+main $@
