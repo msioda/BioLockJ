@@ -158,17 +158,17 @@ run_docker_clone() {
 	[ -x "${DOCKER_CLONE_SCRIPT}" ] && bash "${DOCKER_CLONE_SCRIPT}"
 }
 
-# Call with source $BLJ/script/docker_functions; verifyHostDir ${path}
 verifyHostDir(){
- 	cmd="-d tmpTest/$(basename $1)"
- 	docker run --rm --mount type=bind,source=$(dirname $1),target=/tmpTest ubuntu [ ${cmd} ] \
- 		&& echo "yes" || echo "no"
- 	
- }
- 
-# Call with: source ${BLJ}/script docker_functions; verifyHostFile ${path}
-verifyHostFile(){
- 	cmd="-f tmpTest/$(basename $1)"
- 	docker run --rm --mount type=bind,source=$(dirname $1),target=/tmpTest ubuntu [ ${cmd} ] \
- 		&& echo "yes" || echo "no"
+	cmd="-d tmpTest/$(basename $1)"
+	docker run --rm --mount type=bind,source=$(dirname $1),target=/tmpTest ubuntu [ ${cmd} ] \
+	&& echo "yes" || echo "no"
+	#Call with source $BLJ/script/docker_functions ; verifyHostDir {path}
+}
+
+verifyHostFile(){`#works for docker container that has docker sock`
+	#Create task for temp container (test if file exits)
+	cmd="-f tmpTest/$(basename $1)"`#tmpTest is defined in docker run command`
+	docker run --rm --mount type=bind,source=$(dirname $1),target=/tmpTest ubuntu [ ${cmd} ] \
+	&& echo "yes" || echo "no"
+	#Call with: source ${BLJ}/script docker_functions ; verifyHostFile /Users/aaronyerke/git/BioLockJ/web_app/Dockerfile
 }
