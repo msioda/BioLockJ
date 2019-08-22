@@ -12,7 +12,9 @@ RUN apt-get update && \
     wget "https://deb.nodesource.com/setup_8.x" | bash -
 
 #2.) Install Nextflow Client
-RUN cd /usr/local/bin && wget -qO- https://get.nextflow.io | bash
+#RUN cd /usr/local/bin && wget -qO- https://get.nextflow.io | bash
+RUN cd /usr/local/bin && wget -qO- https://github.com/nextflow-io/nextflow/releases/download/v19.04.0/nextflow | bash
+
 
 #3.) Install Docker Client
 ARG DOCKER_CLIENT
