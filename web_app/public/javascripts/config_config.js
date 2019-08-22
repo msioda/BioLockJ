@@ -1040,7 +1040,7 @@ document.getElementById('submitDeleteConfig').addEventListener('click', event =>
     request.setRequestHeader("Content-Type", "application/json");
     request.send(JSON.stringify({ configFileName : input }));
   });//end forEach
-})//end submitDeleteConfig').addEventListener(
+})//end submitDeleteConfig').addEventListener
 
 document.getElementById('prevConfigNavBut').addEventListener('click', event => {
   const mdl = document.getElementById('prevConfigModal');
@@ -1108,7 +1108,66 @@ document.getElementById('prevConfigNavBut').addEventListener('click', event => {
   });
 
   toggleShow('prevConfigModal');
-})
+});
+
+(function () {//Self invoking function
+  console.log('self-invoking function');
+  console.log(document.getElementsByClassName('checkDirs'));
+  
+  Array.from(document.getElementsByClassName('checkDirs')).forEach(ele => {
+    ele.addEventListener('keyup', evnt => {
+      console.log(evnt.target);
+      let pth = document.getElementById(evnt.target.id).value;
+      console.log(pth);
+      let checkDir = new Promise((resolve, reject) => {
+        const request = new XMLHttpRequest();
+        request.open('POST', '/verifyHostDir', true);
+        request.setRequestHeader("Content-Type", "application/json");
+        request.send(JSON.stringify({path : pth}));
+        request.onreadystatechange = function() {
+          if (request.readyState === XMLHttpRequest.DONE) {
+            try {
+              if(this.status === 200 && request.readyState === 4){
+                console.log('this.responseText', this.responseText);
+                
+                resolve(this.responseText);
+              }else{
+                reject(this.status + " " + this.statusText)
+              }
+            } catch (e) {
+              reject (e.message)
+            }
+          }
+        }
+      });
+      checkDir.then( check => {
+        console.log('check: ', check.toString().trim() == 'yes');
+        
+        let parent = ele.parentNode;
+        let correct = parent.getElementsByClassName('correctPathIcon')[0];
+        let wrong = parent.getElementsByClassName('wrongPathIcon')[0];
+
+        if (check.toString().trim() == 'yes'){
+          console.log('correct');
+          correct.classList.remove('hidden');
+          if (!wrong.classList.contains('hidden')){
+            wrong.classList.add('hidden');
+          }
+        }else{
+          wrong.classList.remove('hidden');
+          if (!correct.classList.contains('hidden')){
+            correct.classList.add('hidden');
+          }
+        }
+      })
+      
+    })
+  })
+  // Array.from(document.getElementsByClassName('checkFiles')).forEach(ele => {
+  //   console.log(ele);
+  //   console.log('this was a test')
+  // })
+})();
 
 //Updates local list of configs based on list from node.
 function updateConfigManager() {
