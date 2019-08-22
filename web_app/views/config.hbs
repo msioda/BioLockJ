@@ -177,16 +177,17 @@
   <div id="inputTab" class="tabcontent">
       <button class="createDownload">Create configuration file for download</button>
       <a class="downloadlink hidden">Download configuration file to default directory</a>
-      <p>Input directory (or directories): <input class="sp" type="text" size='70' id="input.dirPaths" name="input.dirPaths">
+      <p>Input directory (or directories): <input class="sp checkDirs" type="text" size='70' id="input.dirPaths" name="input.dirPaths">
+        <i class="correctPathIcon hidden"></i> <i class="wrongPathIcon hidden"></i>
         <h5>(Input directory must contain files expected by the first module executed.
         Multiple directories must be comma-separated.)</h5></p>
-      <p>Files in input directory to ignore: <input class="sp" type="text" id="input.ignoreFiles" name="input.ignoreFiles"><br>
+      <p>Files in input directory to ignore: <input class="sp checkFiles" type="text" id="input.ignoreFiles" name="input.ignoreFiles">
+        <i class="correctPathIcon hidden"></i> <i class="wrongPathIcon hidden"></i><br>
         <h5>(Multiple files must be comma-separated.)</h5></p>
       <p>File name suffix to indicate a forward read:
           <input class="sp" type="text" id="input.suffixFw" name="input.suffixFw"><br>
         File name suffix to indicate a reverse read.
-        <input class="sp" type="text" id="input.suffixRv" name="input.suffixRv"><br>
-            </p>
+        <input class="sp" type="text" id="input.suffixRv" name="input.suffixRv"><br></p>
       <p>Trim prefix:
         <input class="sp" type="text" id="input.trimPrefix" name="input.trimPrefix">
       <h5>(For files named by Sample ID, provide the
@@ -201,7 +202,9 @@
            If input.demultiplex=Y, provide 1st character in the sequence header after ID;
            for fastq, typically “:” char.)</h5></p>
       <p>Path to file containing primers to trim (File must contain only one sequence per line):
-        <input class="sp" type="text" id="trimPrimers.filePath" name="trimPrimers.filePath" size='70'><br></p>
+        <input class="sp checkFiles" type="text" id="trimPrimers.filePath" name="trimPrimers.filePath" size='70'>
+        <i class="correctPathIcon hidden hidden"></i><i class="wrongPathIcon hidden hidden"></i>
+        </p>
       <p>Discard reads with no primers?
         <select class="sp" id="trimPrimers.requirePrimer" name="trimPrimers.requirePrimer">
           <option selected default value="">Click for options</option>
@@ -226,7 +229,9 @@
     <p>Metadata column name containing the barcode used for demultiplexing:
       <input class="sp" type="text" id="metadata.barcodeColumn" name="metadata.barcodeColumn"><br></p>
     <p>Metadata file path (file must have unique column headers):
-      <input class="sp" type="text" id="metadata.filePath" name="metadata.filePath" size='70'><br></p>
+      <input class="sp checkFiles" type="text" id="metadata.filePath" name="metadata.filePath" size='70'>
+      <i class="correctPathIcon hidden hidden"></i> <i class="wrongPathIcon hidden hidden"></i>
+      <br></p>
     <p>Define how comments are represented in metadata:
       <input class="sp" type="text" id="metadata.commentChar" name="metadata.commentChar"><br></p>
     <p>Define how null values are represented in metadata:
