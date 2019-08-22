@@ -19,6 +19,7 @@ let express = require('express'),
   propertiesIo = require(path.join('..','controllers','propertiesIo.js')),
   awsUtil = require(path.join('..','controllers','awsUtil.js')),
   launcher = require(path.join('..','controllers','launcher.js')),
+  dockerUtil = require(path.join('..','controllers','dockerUtil.js')),
   javaDocs = require(path.join('..','controllers','javaDocs.js'));
 
 const { spawn } = require('child_process');//for running child processes
@@ -68,7 +69,6 @@ router.post('/launch', launcher.launch);
 
 router.get('/streamLog', launcher.streamLog);
 
-//begin serverside events
 router.get('/streamProgress', launcher.streamProgress );
 
 router.post('/listAwsProfiles', awsUtil.listAwsProfiles);
@@ -76,6 +76,8 @@ router.post('/listAwsProfiles', awsUtil.listAwsProfiles);
 router.post('/listS3Buckets', awsUtil.listS3Buckets);
 
 router.post('/listEc2InstanceIds', awsUtil.listEc2InstanceIds);
+
+router.post('/verifyHostDir', dockerUtil.verifyHostDir);
 
 // source ~/.batchawsdeploy/config ; getcloudformationstack.sh testing2
 
