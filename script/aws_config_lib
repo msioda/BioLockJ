@@ -129,7 +129,7 @@ init_aws_config() {
 	done
 
 	set_pipeline_conig_props "${1}"
-	[ $# -eq 2 ] && set_blj_prop "aws.profile" "${2}"
+	#[ $# -eq 2 ] && set_blj_prop "aws.profile" "${2}"
  	export AWS_DEFAULT_PROFILE="$(aws_profile)"
 	verify_config
 	aws_log "Using AWS profile: $(aws_profile)"
@@ -196,6 +196,6 @@ verify_ec2_props() {
 		exit_script "Error [ aws_config_lib.verify_ec2_props() ]: Required property \"aws.ec2AcquisitionStrategy\" is undefined!"
 	[ "${ec2strategy}" != "SPOT" ] && [ "${ec2strategy}" != "DEMAND" ] && 
 		exit_script "Error [ aws_config_lib.verify_ec2_props() ]: Required property \"aws.ec2AcquisitionStrategy\" is invalid \"${ec2strategy}\".  Update to \"spot\" or \"demand\"!"
-	[ "${ec2strategy}" == "SPOT" ] && [ ${#ec2SpotPer} -lt 1 ] || [ ${ec2SpotPer} -gt 100 ] && \
-		exit_script "Error [ aws_config_lib.verify_ec2_props() ]: Dependent property \"aws.ec2SpotPer=${ec2SpotPer}\" is required for \"aws.ec2AcquisitionStrategy=SPOT\".  Update to integer value in the range {0-100}"
+	[ "${ec2strategy}" == "SPOT" ] && [ ${#ec2SpotPer} -eq 0 ] || [ ${ec2SpotPer} -lt 1 || [ ${ec2SpotPer} -gt 99 ] && \
+		exit_script "Error [ aws_config_lib.verify_ec2_props() ]: Dependent property \"aws.ec2SpotPer=${ec2SpotPer}\" is required for \"aws.ec2AcquisitionStrategy=SPOT\".  Update to integer value in the range {1-99}"
 }

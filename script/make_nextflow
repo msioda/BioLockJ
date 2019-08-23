@@ -8,7 +8,7 @@
 ################################################################################
 . /app/biolockj/script/blj_config
 . "${AWS_LIB}"
-echo "NEW BUILD Nextflow Template"
+
 # Build the template file that NextflowUtil.java will use to create the pipeline main.nf
 # Param 1 - All make_nextflow script args
 build_template() {

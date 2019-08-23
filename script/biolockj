@@ -12,6 +12,9 @@
 ##########################################################################
 . "${AWS_LIB}"
 
+
+BLAH="BLAH42"
+
 BLJ_JAR=${BLJ}/dist/BioLockJ.jar
 
 # Display BioLockJ release version
@@ -74,7 +77,7 @@ run_biolockj() {
 	if $(containsElement gui $@) && $(containsElement aws $@); then
 		run_aws_gui
 	elif (containsElement aws $@); then
-		[ ${#config} -eq 0 ] && exit_script "Error [ biolockj ]: AWS pipelines require config file path arg!"
+		[ ${#restart} -eq 0 ] && [ ${#config} -eq 0 ] && exit_script "Error [ biolockj ]: AWS pipelines require config file path arg!"
 		run_aws "${config}"
 	elif $(containsElement gui $@) || $(containsElement docker $@); then
 		dockblj $@

@@ -123,16 +123,16 @@ get_volumes() {
 main() {
 	printf "Execute CMD  --------->  dockblj $(echo $@) \n"
 	parse_script_input $@
-	on_host_filesystem  && ! $startGUI && verify_inputs 
+	( $(on_aws) || ! $(inDockerContainer) ) && ! $startGUI && verify_inputs 
 	print_docker_run_cmd
 	build_clone_script
 	run_docker
 	$startGUI && startBrowser
 }
 
-# Return TRUE if running on host filesystem
-on_host_filesystem() {
-	[ "${HOME}" != "${EC2_HOME}" ] && ! $(inDockerContainer)
+# Return TRUE if running on AWS EC2 instance
+on_aws() {
+	[ "${HOME}" == "${EC2_HOME}" ]
 }
 
 # Read script args and bash env vars

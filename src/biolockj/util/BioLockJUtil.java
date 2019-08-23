@@ -94,38 +94,7 @@ public class BioLockJUtil {
 		return f;
 	}
 
-	/**
-	 * Delete file or directory with retry. Wait 3 seconds between each try - waiting for resource to release lock if .
-	 * 
-	 * @param file File or directory
-	 * @param numTries Number of attempts
-	 * @return boolean status
-	 * @throws Exception if errors occur
-	 */
-	public static boolean deleteWithRetry( final File file, final int numTries ) throws Exception {
-		int i = 0;
-		while( i++ < numTries )
-			try {
-				Thread.sleep( 3 * 1000 );
-				if( i == 0 || i == numTries ) {
-					file.delete();
-					Log.warn( BioLockJUtil.class, "file.delete() removed: " + file.getAbsolutePath() );
-				} else {
-					FileUtils.forceDelete( file );
-					Log.warn( BioLockJUtil.class, "FileUtils.forceDelete( file ) removed: " + file.getAbsolutePath() );
-				}
-
-				return true;
-			} catch( final IOException ex ) {
-				Log.error( BioLockJUtil.class,
-					"Failed while still waiting for resource to become free [" + i + "]: " + file.getAbsolutePath(),
-					ex );
-			}
-
-		Log.warn( BioLockJUtil.class, "Failed to delete file: " + file.getAbsolutePath() );
-
-		return false;
-	}
+	
 
 	/**
 	 * Return the file extension - but ignore {@value biolockj.Constants#GZIP_EXT}.
@@ -190,7 +159,6 @@ public class BioLockJUtil {
 		final DecimalFormat df = new DecimalFormat( "##.##" );
 		String percentage = Double.valueOf( df.format( 100 * ( (double) num / denom ) ) ).toString();
 		if( percentage.indexOf( "." ) < 3 ) percentage += "0";
-
 		return percentage + "%";
 	}
 

@@ -36,7 +36,7 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 	@Override
 	public List<List<String>> buildScript( final List<File> files ) throws Exception {
 		final List<List<String>> data = new ArrayList<>();
-		Log.warn( getClass(), "Total # worker scripts = " + ModuleUtil.getNumWorkers( this ) );
+		Log.debug( getClass(), "Total # worker scripts = " + ModuleUtil.getNumWorkers( this ) );
 		for( final File file: files ) {
 			final List<String> lines = new ArrayList<>();
 			File hn2InputSeq = file;
@@ -107,12 +107,12 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 		try {
 			for( final Long id: threadRegister )
 				while( Processor.subProcAlive( id ) ) {
-					Log.warn( NextflowUtil.class,
+					Log.warn( getClass(),
 						"Humann2 classifier scripts are ready, waiting on database downloads to complete" );
 					Thread.sleep( BioLockJUtil.minutesToMillis( 1 ) );
 				}
 		} catch( final InterruptedException ex ) {
-			Log.error( NextflowUtil.class, "Error occurred waiting for HumanN2 Download-DB subprocess to compelete!",
+			Log.error( getClass(), "Error occurred waiting for HumanN2 Download-DB subprocess to compelete!",
 				ex );
 		}
 	}
@@ -159,7 +159,7 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 		final StringBuffer sb = new StringBuffer();
 		try {
 			sb.append( "HumanN2 nucleotide DB: " + getNuclDbPath() + RETURN );
-			sb.append( "HumanN2 protein DB: " + getNuclDbPath() + RETURN );
+			sb.append( "HumanN2 protein DB: " + getProtDbPath() + RETURN );
 		} catch( final Exception ex ) {
 			final String msg = "Unable to complete module summary: " + ex.getMessage();
 			sb.append( msg + RETURN );
@@ -200,7 +200,7 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 		final List<String> lines = new ArrayList<>();
 		lines.add( BLOCK_FOR_DB_COMMENT );
 		lines.add( "function " + FUNCTION_BLOCK_FOR_DBS + "() {" );
-		lines.add( "count=0 && touch " + getDbFlag( HN2_NUCL_DB, Constants.BLJ_STARTED ).getAbsolutePath() );
+		lines.add( "count=0" );
 		lines.add( "while [ ! -f \"" + getDbFlag( HN2_PROT_DB, Constants.BLJ_COMPLETE ).getAbsolutePath() +
 			"\" ] || [ ! -f \"" + getDbFlag( HN2_NUCL_DB, Constants.BLJ_COMPLETE ).getAbsolutePath() + "\" ]; do" );
 		lines.add( "sleep 60 && let \"count++\"" );
@@ -292,6 +292,7 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 	private List<String> downloadDbLines( final String prop ) throws ConfigNotFoundException {
 		final List<String> lines = new ArrayList<>();
 		final String[] db = Config.requireString( this, prop ).split( "\\s" );
+		lines.add( "touch " + getDbFlag( prop, Constants.BLJ_STARTED ).getAbsolutePath() );
 		lines.add( DOWNLOAD_DB_CMD + " " + DL_DB_SWITCH + " " + db[ 0 ] + " " + db[ 1 ] + " " + db[ 2 ] );
 		lines.add( "touch " + getDbFlag( prop, Constants.BLJ_COMPLETE ).getAbsolutePath() );
 		return lines;
@@ -394,10 +395,6 @@ public class Humann2Classifier extends ClassifierModuleImpl {
 		lines.add( "}" + RETURN );
 		return lines;
 	}
-
-	// private int numWorkers() throws ConfigNotFoundException, ConfigFormatException {
-	// return getBatchNum( getInputFiles().size() );
-	// }
 
 	private List<String> renormTableFunction() throws ConfigException {
 		final List<String> lines = new ArrayList<>();

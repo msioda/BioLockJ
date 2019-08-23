@@ -31,7 +31,8 @@ build_s3() {
 	testAws=$(aws s3api list-buckets --region $(aws_region) --query "Buckets[?Name=='$awsS3']|[*].Name")
 	if [ ${#testAws} -eq 0 ] || [ "${testAws}" == "None" ]; then
 		testAws=$(aws s3api create-bucket --region $(aws_region) --bucket ${awsS3})
-		aws s3api put-object --bucket "${awsS3}" --key OWNER --tagging $(get_aws_user)
+		# This doesn't work - still need to figure out how to add tag --> key=ower, value=$(get_aws_user)
+		#aws s3api put-object --bucket "${awsS3}" --key OWNER --tagging $(get_aws_user)
 		[ ${#testAws} -eq 0 ] || [ "${testAws}" == "None" ] && exit_script "Error [ aws_functions.build_s3() ]:  Failed to create S3 bucket: ${awsS3}"
 		aws_log "Set aws.s3=${awsS3}"
 	else
@@ -135,7 +136,7 @@ set_stack_name() {
 	enabledStacks=$(aws_stacks CREATE_COMPLETE)
 	if [ "${enabledStacks/$stack}" == "${enabledStacks}" ]; then
 		stacks=$(aws cloudformation list-stacks --query "StackSummaries[].StackName")
-		set_blj_prop aws.stack $(generate_name $(get_blj_prop aws.stack) "${stacks}")
+		set_blj_prop aws.stack $(generate_name $stack "${stacks}")
 	fi
 	aws_log "Cloudformation: \"aws.stack=$(get_blj_prop aws.stack)\""
 }
@@ -153,7 +154,7 @@ verify_stack() {
 	elif [ ${#allStacks} -gt 0 ] && [ "${allStacks/$stack}" != "${allStacks}" ]; then
 		status=$(aws cloudformation describe-stacks --stack-name "${stack}" --query "Stacks[*].StackStatus")
 		exit_script "Error [ aws_functions.verify_stack() ]:  Configured AWS Stack \"${stack}\" exists but is disabled --> status=$status"
-	else 
+	else # Malcolm says we may not need to verify stack name is unique!!!
 		build_stack
 	fi
 }

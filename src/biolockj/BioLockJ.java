@@ -245,12 +245,11 @@ public class BioLockJ {
 	 * Delete all {@link biolockj.module.BioModule}/{@value biolockj.module.BioModule#TEMP_DIR} folders.
 	 */
 	protected static void removeTempFiles() {
-		Log.info( BioLockJ.class, "Cleaning up BioLockJ Modules..." );
-		for( final BioModule bioModule: Pipeline.getModules() )
-			if( ModuleUtil.subDirExists( bioModule, BioModule.TEMP_DIR ) ) {
-				Log.info( BioLockJ.class, "Delete temp dir for BioLockJ Module: " + bioModule.getClass().getName() );
-				ModuleUtil.requireSubDir( bioModule, BioModule.TEMP_DIR ).delete();
-				// BioLockJUtil.deleteWithRetry( ModuleUtil.requireSubDir( bioModule, BioModule.TEMP_DIR ), 10 );
+		Log.info( BioLockJ.class, "Cleanup BioLockJ module temp data" );
+		for( final BioModule module: Pipeline.getModules() )
+			if( ModuleUtil.subDirExists( module, BioModule.TEMP_DIR ) ) {
+				Log.info( BioLockJ.class, "Delete temp dir for BioModule: " + module.getClass().getName() );
+				module.getTempDir().delete();
 			}
 	}
 
@@ -309,12 +308,9 @@ public class BioLockJ {
 		final File modDir = new File( Config.pipelinePath() + File.separator + moduleDir );
 		if( !modDir.isDirectory() )
 			throw new Exception( "Direct module directory not found --> " + modDir.getAbsolutePath() );
-
 		final File tempDir = new File( modDir.getAbsoluteFile() + File.separator + BioModule.TEMP_DIR );
 		if( !tempDir.isDirectory() ) tempDir.mkdir();
-
 		return modDir.getName() + File.separator + tempDir.getName() + File.separator + moduleDir;
-
 	}
 
 	private static Integer getDirectModuleID( final String moduleDir ) throws Exception {
