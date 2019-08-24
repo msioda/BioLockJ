@@ -963,6 +963,29 @@ function retreiveDefaultProps(dpropPath) {
 //     }
 // }
 
+function promiseFromNode(method, address, jsonParam,) {
+  return new Promise((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.open(method, address, true);
+    request.setRequestHeader("Content-Type", "application/json");
+    request.send(JSON.stringify(jsonParam));
+    request.onreadystatechange = function() {
+      if (request.readyState === XMLHttpRequest.DONE) {
+        try {
+          if(this.status === 200 && request.readyState === 4){
+            console.log('this.responseText', this.responseText);
+            resolve(this.responseText);
+          }else{
+            reject(this.status + " " + this.statusText)
+          }
+        } catch (e) {
+          reject (e.message)
+        }
+      }
+    }
+  });
+}
+
 function sendFormToNode( formElementId, nodeAddress, requestMethod = 'POST') {
   return new Promise((resolve, reject) => {
     let formData = {};
@@ -1114,8 +1137,6 @@ Array.from(document.getElementsByClassName('checkDirs')).forEach(ele => {
   ['keyup', 'focusout', 'focusin'].forEach( evt => {
     ele.addEventListener(evt, evnt => {
       let pths = document.getElementById(evnt.target.id).value.split(',').map( pth => {
-        console.log('pth: ', pth);
-        
         return new Promise((resolve, reject) => {
           const request = new XMLHttpRequest();
           request.open('POST', '/verifyHostDir', true);
