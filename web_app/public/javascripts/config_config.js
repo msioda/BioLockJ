@@ -963,12 +963,12 @@ function retreiveDefaultProps(dpropPath) {
 //     }
 // }
 
-function promiseFromNode(method, address, jsonParam,) {
+function promiseFromNode(address, jsonParam, method = 'POST') {
   return new Promise((resolve, reject) => {
     const request = new XMLHttpRequest();
     request.open(method, address, true);
     request.setRequestHeader("Content-Type", "application/json");
-    request.send(JSON.stringify(jsonParam));
+    request.send(jsonParam);
     request.onreadystatechange = function() {
       if (request.readyState === XMLHttpRequest.DONE) {
         try {
@@ -1137,27 +1137,8 @@ Array.from(document.getElementsByClassName('checkDirs')).forEach(ele => {
   ['keyup', 'focusout', 'focusin'].forEach( evt => {
     ele.addEventListener(evt, evnt => {
       let pths = document.getElementById(evnt.target.id).value.split(',').map( pth => {
-        return new Promise((resolve, reject) => {
-          const request = new XMLHttpRequest();
-          request.open('POST', '/verifyHostDir', true);
-          request.setRequestHeader("Content-Type", "application/json");
-          request.send(JSON.stringify({path : pth.trim()}));
-          request.onreadystatechange = function() {
-            if (request.readyState === XMLHttpRequest.DONE) {
-              try {
-                if(this.status === 200 && request.readyState === 4){
-                  console.log('this.responseText', this.responseText);
-                  resolve(this.responseText);
-                }else{
-                  reject(this.status + " " + this.statusText)
-                }
-              } catch (e) {
-                reject (e.message)
-              }
-            }
-          }
-        });
-      })
+        return promiseFromNode('/verifyHostDir', JSON.stringify({path : pth.trim()}));
+      });
       Promise.all(pths).then( check => {
         console.log('check: ', typeof(check));
         let parent = ele.parentNode;
@@ -1179,10 +1160,6 @@ Array.from(document.getElementsByClassName('checkDirs')).forEach(ele => {
     })
   })
 })
-  // Array.from(document.getElementsByClassName('checkFiles')).forEach(ele => {
-  //   console.log(ele);
-  //   console.log('this was a test')
-  // })
 
 //Updates local list of configs based on list from node.
 function updateConfigManager() {
