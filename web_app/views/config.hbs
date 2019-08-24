@@ -202,7 +202,7 @@
            If input.demultiplex=Y, provide 1st character in the sequence header after ID;
            for fastq, typically “:” char.)</h5></p>
       <p>Path to file containing primers to trim (File must contain only one sequence per line):
-        <input class="sp checkFiles" type="text" id="trimPrimers.filePath" name="trimPrimers.filePath" size='70'>
+        <input class="sp checkFile" type="text" id="trimPrimers.filePath" name="trimPrimers.filePath" size='70'>
         <i class="correctPathIcon hidden hidden"></i><i class="wrongPathIcon hidden hidden"></i>
         </p>
       <p>Discard reads with no primers?
@@ -229,8 +229,8 @@
     <p>Metadata column name containing the barcode used for demultiplexing:
       <input class="sp" type="text" id="metadata.barcodeColumn" name="metadata.barcodeColumn"><br></p>
     <p>Metadata file path (file must have unique column headers):
-      <input class="sp checkFiles" type="text" id="metadata.filePath" name="metadata.filePath" size='70'>
-      <i class="correctPathIcon hidden hidden"></i> <i class="wrongPathIcon hidden hidden"></i>
+      <input class="sp checkFile" type="text" id="metadata.filePath" name="metadata.filePath" size='70'>
+      <i class="correctPathIcon hidden"></i> <i class="wrongPathIcon hidden hidden"></i>
       <br></p>
     <p>Define how comments are represented in metadata:
       <input class="sp" type="text" id="metadata.commentChar" name="metadata.commentChar"><br></p>
