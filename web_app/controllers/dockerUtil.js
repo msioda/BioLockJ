@@ -23,3 +23,17 @@ exports.verifyHostDir = function (req, res, next) {
     console.error(error);
   }
 }
+
+exports.verifyHostFile = function (req, res, next) {
+  try {//source ${BLJ}/script docker_functions ; verifyHostFile /Users/aaronyerke/git/BioLockJ/web_app/Dockerfile
+    let spwn = spawn(`source ${path.join(bljDir, 'script', 'docker_functions')} ; verifyHostFile ${req.body.path}`, {shell: '/bin/bash'});
+    spwn.stdout.on('data', function (data) {
+      console.log('stdout: ' + data);
+      res.setHeader('Content-Type', 'text/html');
+      res.write(data);
+      res.end();
+    })
+  } catch (error) {
+    console.error(error);
+  }
+}
