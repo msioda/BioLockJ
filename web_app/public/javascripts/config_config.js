@@ -1136,9 +1136,14 @@ document.getElementById('prevConfigNavBut').addEventListener('click', event => {
 Array.from(document.getElementsByClassName('checkDirs')).forEach(ele => {
   ['keyup', 'focusout', 'focusin'].forEach( evt => {
     ele.addEventListener(evt, evnt => {
-      let pths = document.getElementById(evnt.target.id).value.split(',').map( pth => {
-        return promiseFromNode('/verifyHostDir', JSON.stringify({path : pth.trim()}));
-      });
+      let pths = document.getElementById(evnt.target.id)
+        .value
+        .trim()
+        .trim(',')
+        .split(',')
+        .map( pth => {
+          return promiseFromNode('/verifyHostDir', JSON.stringify({path : pth.trim()}));
+          });
       Promise.all(pths).then( check => {
         console.log('check: ', typeof(check));
         let parent = ele.parentNode;
@@ -1160,6 +1165,40 @@ Array.from(document.getElementsByClassName('checkDirs')).forEach(ele => {
     })
   })
 })
+
+Array.from(document.getElementsByClassName('checkFiles')).forEach(ele => {
+  ['keyup', 'focusout', 'focusin'].forEach( evt => {
+    ele.addEventListener(evt, evnt => {
+      let pths = document.getElementById(evnt.target.id)
+        .value
+        .trim()
+        .trim(',')
+        .split(',')
+        .map( pth => {
+          return promiseFromNode('/verifyHostFile', JSON.stringify({path : pth.trim()}));
+          });
+      Promise.all(pths).then( check => {
+        console.log('check: ', typeof(check));
+        let parent = ele.parentNode;
+        let correct = parent.getElementsByClassName('correctPathIcon')[0];
+        let wrong = parent.getElementsByClassName('wrongPathIcon')[0];
+        if (check.some( resp => resp.trim() !== 'yes')){
+          wrong.classList.remove('hidden');
+          if (!correct.classList.contains('hidden')){
+            correct.classList.add('hidden');
+          }
+        }else{
+          console.log('correct');
+          correct.classList.remove('hidden');
+          if (!wrong.classList.contains('hidden')){
+            wrong.classList.add('hidden');
+          }
+        }
+      })
+    })
+  })
+})
+
 
 //Updates local list of configs based on list from node.
 function updateConfigManager() {
