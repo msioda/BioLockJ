@@ -1139,28 +1139,14 @@ Array.from(document.getElementsByClassName('checkDirs')).forEach(ele => {
       let pths = document.getElementById(evnt.target.id)
         .value
         .trim()
-        .trim(',')
+        .replace(/(^,)|(,$)/g, "")
         .split(',')
         .map( pth => {
           return promiseFromNode('/verifyHostDir', JSON.stringify({path : pth.trim()}));
           });
       Promise.all(pths).then( check => {
-        console.log('check: ', typeof(check));
-        let parent = ele.parentNode;
-        let correct = parent.getElementsByClassName('correctPathIcon')[0];
-        let wrong = parent.getElementsByClassName('wrongPathIcon')[0];
-        if (check.some( resp => resp.trim() !== 'yes')){
-          wrong.classList.remove('hidden');
-          if (!correct.classList.contains('hidden')){
-            correct.classList.add('hidden');
-          }
-        }else{
-          console.log('correct');
-          correct.classList.remove('hidden');
-          if (!wrong.classList.contains('hidden')){
-            wrong.classList.add('hidden');
-          }
-        }
+        console.log('in evnt listener', this);
+        displayPathStatus(ele, check);
       })
     })
   })
@@ -1172,32 +1158,36 @@ Array.from(document.getElementsByClassName('checkFiles')).forEach(ele => {
       let pths = document.getElementById(evnt.target.id)
         .value
         .trim()
-        .trim(',')
+        .replace(/(^,)|(,$)/g, "")
         .split(',')
         .map( pth => {
           return promiseFromNode('/verifyHostFile', JSON.stringify({path : pth.trim()}));
           });
       Promise.all(pths).then( check => {
-        console.log('check: ', typeof(check));
-        let parent = ele.parentNode;
-        let correct = parent.getElementsByClassName('correctPathIcon')[0];
-        let wrong = parent.getElementsByClassName('wrongPathIcon')[0];
-        if (check.some( resp => resp.trim() !== 'yes')){
-          wrong.classList.remove('hidden');
-          if (!correct.classList.contains('hidden')){
-            correct.classList.add('hidden');
-          }
-        }else{
-          console.log('correct');
-          correct.classList.remove('hidden');
-          if (!wrong.classList.contains('hidden')){
-            wrong.classList.add('hidden');
-          }
-        }
+        displayPathStatus(ele, check);
       })
     })
   })
 })
+
+function displayPathStatus(targetEle, statuses) {
+  let parent = targetEle.parentNode;
+  let correct = parent.getElementsByClassName('correctPathIcon')[0];
+  let wrong = parent.getElementsByClassName('wrongPathIcon')[0];
+  if (statuses.some( resp => resp.trim() !== 'yes')){
+    wrong.classList.remove('hidden');
+    if (!correct.classList.contains('hidden')){
+      correct.classList.add('hidden');
+    }
+  }else{
+    correct.classList.remove('hidden');
+    if (!wrong.classList.contains('hidden')){
+      wrong.classList.add('hidden');
+    }
+  }
+}
+
+
 
 
 //Updates local list of configs based on list from node.
