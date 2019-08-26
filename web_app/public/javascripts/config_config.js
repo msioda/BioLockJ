@@ -1145,7 +1145,6 @@ Array.from(document.getElementsByClassName('checkDirs')).forEach(ele => {
           return promiseFromNode('/verifyHostDir', JSON.stringify({path : pth.trim()}));
           });
       Promise.all(pths).then( check => {
-        console.log('in evnt listener', this);
         displayPathStatus(ele, check);
       })
     })
@@ -1170,6 +1169,18 @@ Array.from(document.getElementsByClassName('checkFiles')).forEach(ele => {
   })
 })
 
+Array.from(document.getElementsByClassName('checkFile')).forEach(ele => {
+  ['keyup', 'focusout', 'focusin'].forEach( evt => {
+    ele.addEventListener(evt, evnt => {
+      let val = document.getElementById(evnt.target.id).value;
+      let pth = promiseFromNode('/verifyHostFile', JSON.stringify({path : val}));
+      pth.then( check => {
+        displayPathStatus(ele, [check]);
+      })
+    })
+  })
+})
+
 function displayPathStatus(targetEle, statuses) {
   let parent = targetEle.parentNode;
   let correct = parent.getElementsByClassName('correctPathIcon')[0];
@@ -1186,9 +1197,6 @@ function displayPathStatus(targetEle, statuses) {
     }
   }
 }
-
-
-
 
 //Updates local list of configs based on list from node.
 function updateConfigManager() {
