@@ -67,7 +67,8 @@ exe_remote_cmd() {
 
 # Stage AWS config and credentials files to push to AWS cloud
 stage_aws_and_nf_config_to_efs() {
-	aws_log "Staging AWS/Nextflow Config on new EC2 Head-Node" && AWS_STAGE=~/.aws/stage 
+	aws_log "Staging AWS/Nextflow Config on new EC2 Head-Node"
+	AWS_STAGE=~/.aws/stage 
 	[ ! -d "${AWS_STAGE}" ] && mkdir "${AWS_STAGE}"
 	echo "[default]" > "${AWS_STAGE}/config"
 	echo "region = $(aws_region)" >> "${AWS_STAGE}/config"
@@ -91,7 +92,8 @@ stage_aws_and_nf_config_to_efs() {
 
 # Upload local pipeline inputs and aws/nextflow config files to EFS
 stage_pipeline() {
-	aws_log "Starting --> [ stage_pipeline ]" && stage_aws_and_nf_config_to_efs 
+	aws_log "Starting --> [ stage_pipeline ]"
+	stage_aws_and_nf_config_to_efs 
 	stage_pipeline_config_to_efs
 	stage_pipeline_inputs_to_efs
 	stage_pipeline_dbs_to_efs

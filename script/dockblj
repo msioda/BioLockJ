@@ -135,20 +135,41 @@ on_aws() {
 	[ "${HOME}" == "${EC2_HOME}" ]
 }
 
+docker_config_path() {
+	localConfig="${configPath}"
+	$(inDockerContainer) && localConfig="${BLJ_CONFIG}/$(basename $1)" 
+	echo "${localConfig}"
+}
+
+
+
 # Read script args and bash env vars
 # Param 1 - Array of dockblj script args
 parse_script_input() {
+	set_arg_flags $@
 	configPath=$(named_arg $@ c)
-	newPass=$(named_arg $@ p)
-	restartPath=$(named_arg $@ r)
+	if [ $# -eq 1 ] && ! $startGUI; then
+		echo "[ BioLockJ ] Single input arg = valid system filepath" 
+		[ -f "${1}" ] && configPath="${1}" && echo "[ BioLockJ ] Run Docker-BioLockJ in  w/ Config file --> " 
+		[ -d "${1}" ] && restartPath="${1}" && echo "[ BioLockJ ] Run Restart Docker-BioLockJ for failed pipeline --> " 
+	fi
+
 	if [ ${#configPath} -gt 0 ]; then
 		echo "BLJ config: $configPath"
-		localConfig="${configPath}"
-		$(inDockerContainer) && localConfig="${BLJ_CONFIG}/$(basename $configPath)" && echo "Docker BLJ config: $localConfig"
+		localConfig="$(docker_config_path $configPath)" 
+		$(inDockerContainer) && echo "Docker BLJ config: $localConfig"
 		inputPath="$(get_property $localConfig input.dirPaths)" && echo "BLJ inputPath: $inputPath"
 		metaPath="$(get_property $localConfig metadata.filePath)" && [ ${#metaPath} -gt 0 ] && metaPath="$(dirname $metaPath)" && echo "BLJ metaPath: $metaPath"
 		primerPath="$(get_property $localConfig trimPrimers.filePath)" && [ ${#primerPath} -gt 0 ] && primerPath="$(dirname $primerPath)" && echo "BLJ primerPath: $primerPath"
 	fi
+}
+
+# Set arg flags
+# Params - $@ --> all script input args
+set_arg_flags() {
+	configPath=$(named_arg $@ c)
+	newPass=$(named_arg $@ p)
+	restartPath=$(named_arg $@ r)
 	if [ ${#configPath} -gt 0 ]; then mapConfigDir=true; else mapConfigDir=false; fi
 	if [ ${#inputPath} -gt 0 ]; then mapInputDir=true; else mapInputDir=false; fi
 	if [ ${#metaPath} -gt 0 ]; then mapMetaDir=true; else mapMetaDir=false; fi
@@ -217,4 +238,5 @@ verify_inputs() {
 	echo "Verifications complete"
 }
 
+# See line 125 for main() function
 main $@
