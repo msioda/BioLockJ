@@ -88,6 +88,14 @@ build_clone_script() {
 	echo "alias \"dclone\" can be used to run \"${DOCKER_CLONE_SCRIPT}\""
 }
 
+# Get local Docker Config filepath
+# Param 1 - Host Config filepath
+docker_config_path() {
+	localConfig="${configPath}"
+	$(inDockerContainer) && localConfig="${BLJ_CONFIG}/$(basename $1)" 
+	echo "${localConfig}"
+}
+
 # Get Docker image - add port, entrypoint, anc command if launching GUI
 get_docker_img() {
 	cmd=$(dock_id)/biolockj_controller
@@ -135,14 +143,6 @@ on_aws() {
 	[ "${HOME}" == "${EC2_HOME}" ]
 }
 
-docker_config_path() {
-	localConfig="${configPath}"
-	$(inDockerContainer) && localConfig="${BLJ_CONFIG}/$(basename $1)" 
-	echo "${localConfig}"
-}
-
-
-
 # Read script args and bash env vars
 # Param 1 - Array of dockblj script args
 parse_script_input() {
@@ -164,6 +164,22 @@ parse_script_input() {
 	fi
 }
 
+# Print the docker run command to the console.
+print_docker_run_cmd() {
+	printableCmd="docker run --rm -e \"BLJ_OPTIONS=$(blj_options)\" $(get_volumes) $(get_docker_img)"
+	$startGUI && printableCmd="${printableCmd} &"
+	printf "Execute CMD  --------->  ${printableCmd} \n"
+}
+
+# Build and execute docker run command.  If running GUI, must run in background with "&"
+run_docker() {
+	if $startGUI; then
+		docker run --rm -e "BLJ_OPTIONS=$(blj_options)" $(get_volumes) $(get_docker_img) &
+	else
+		docker run --rm -e "BLJ_OPTIONS=$(blj_options)" $(get_volumes) $(get_docker_img)
+	fi
+}
+
 # Set arg flags
 # Params - $@ --> all script input args
 set_arg_flags() {
@@ -180,22 +196,6 @@ set_arg_flags() {
 	if $(containsElement gui $@); then startGUI=true; else startGUI=false; fi
 	if $(containsElement blj $@); then mapBlj=true; else mapBlj=false; fi
 	if $(containsElement blj_sup $@); then mapBljSup=true; else mapBljSup=false; fi
-}
-
-# Print the docker run command to the console.
-print_docker_run_cmd() {
-	printableCmd="docker run --rm -e \"BLJ_OPTIONS=$(blj_options)\" $(get_volumes) $(get_docker_img)"
-	$startGUI && printableCmd="${printableCmd} &"
-	printf "Execute CMD  --------->  ${printableCmd} \n"
-}
-
-# Build and execute docker run command.  If running GUI, must run in background with "&"
-run_docker() {
-	if $startGUI; then
-		docker run --rm -e "BLJ_OPTIONS=$(blj_options)" $(get_volumes) $(get_docker_img) &
-	else
-		docker run --rm -e "BLJ_OPTIONS=$(blj_options)" $(get_volumes) $(get_docker_img)
-	fi
 }
 
 # Start the local browswer
