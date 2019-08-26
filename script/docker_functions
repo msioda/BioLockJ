@@ -172,6 +172,3 @@ verifyHostFile(){
 	&& echo "yes" || echo "no"
 	#Call with: source ${BLJ}/script docker_functions ; verifyHostFile /Users/aaronyerke/git/BioLockJ/web_app/Dockerfile
 }
-
-#docker run --rm --mount type=bind,source=$(dirname $1),target=/tmpTest ubuntu [ ${cmd} ] \
-#	&& echo "yes" || echo "no"
