@@ -79,6 +79,8 @@ router.post('/listEc2InstanceIds', awsUtil.listEc2InstanceIds);
 
 router.post('/verifyHostDir', dockerUtil.verifyHostDir);
 
+router.post('/verifyHostFile', dockerUtil.verifyHostFile);
+
 // source ~/.batchawsdeploy/config ; getcloudformationstack.sh testing2
 
 const batchAwsConfigFile = "~/.batchawsdeploy/config"; //find a good place to put this
