@@ -1,4 +1,4 @@
-# Deployment path:  $DOCKER_DIR/kraken_classifier_dbfree.Dockerfile
+# Deployment path: $DOCKER_DIR/kraken_classifier_dbfree.Dockerfile
 
 FROM biolockj/blj_basic
 
@@ -7,22 +7,19 @@ ENV KRAKEN_VER=0.10.5-beta
 ENV BASE_URL="https://github.com/DerrickWood/kraken/archive/v"
 ENV KRAKEN_URL=${BASE_URL}${KRAKEN_VER}.tar.gz
 ENV KRAKEN=kraken-${KRAKEN_VER}
-ENV BUILD_DIR=/usr/local/bin
-RUN cd $BUILD_DIR && \
-	wget -qO- $KRAKEN_URL | bsdtar -xf- && \
-	chmod o+x -R $KRAKEN && \
-	cd $KRAKEN && \
-  	./install_kraken.sh $BUILD_DIR && \
-  	chmod o+x -R $BUILD_DIR && \
-  	rm -rf $KRAKEN
+RUN cd $BIN && wget -qO- $KRAKEN_URL | bsdtar -xf- && \
+	chmod o+x -R $KRAKEN && cd $KRAKEN && ./install_kraken.sh $BIN && \
+	chmod o+x -R $BIN && rm -rf $KRAKEN
 
-#2.) Cleanup - save ca-certificates so kraken_classifier can download from the Internet
+#2.) Cleanup
 RUN	apt-get clean && \
 	find / -name *python* | xargs rm -rf && \
 	rm -rf /tmp/* && \
-	mv /usr/share/ca-certificates ~ && \
-	rm -rf /usr/share/* && \
-	mv ~/ca-certificates /usr/share && \
 	rm -rf /var/cache/* && \
 	rm -rf /var/lib/apt/lists/* && \
 	rm -rf /var/log/*
+
+#3.) Remove shares (except ca-certificates) to allow internet downloads
+RUN	mv /usr/share/ca-certificates* ~ && \
+	rm -rf /usr/share/* && \
+	mv ~/ca-certificates* /usr/share

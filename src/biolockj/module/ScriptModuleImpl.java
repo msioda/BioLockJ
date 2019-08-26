@@ -161,12 +161,14 @@ public abstract class ScriptModuleImpl extends BioModuleImpl implements ScriptMo
 	 */
 	protected String getRuntimeParams( final List<String> params, final String numThreadsParam )
 		throws ConfigException {
-		final String threadsParam = numThreadsParam == null ? "": numThreadsParam + " " + getNumThreads() + " ";
-		final String paramVals = params == null || params.isEmpty() ? "": BioLockJUtil.join( params );
+		String threadsParam = numThreadsParam == null ? "": numThreadsParam + " " + getNumThreads() + " ";
+		String paramVals = params == null || params.isEmpty() ? "": BioLockJUtil.join( params );
 		if( threadsParam.isEmpty() && paramVals.isEmpty() ) return "";
-		if( paramVals.isEmpty() ) return threadsParam;
-		if( threadsParam.isEmpty() ) return paramVals;
-		return threadsParam + paramVals;
+		if( paramVals.isEmpty() ) paramVals = "";
+		if( threadsParam.isEmpty() ) threadsParam = "";
+		String returnVal = threadsParam + paramVals;
+		if( !returnVal.endsWith( " " ) ) returnVal += " ";
+		return returnVal;
 	}
 
 	/**

@@ -81,18 +81,19 @@ docker_cmd() {
 	ind=$((ind+1)) && $(exe_cmd) && echo "$(get_cmd ${1} blj_basic_java)" && $(get_cmd ${1} blj_basic_java)
 	ind=$((ind+1)) && $(exe_cmd) && echo "$(get_cmd ${1} java_module)" && $(get_cmd ${1} java_module) #5
 	ind=$((ind+1)) && $(exe_cmd) && echo "$(get_cmd ${1} biolockj_controller)" && $(get_cmd ${1} biolockj_controller) 
+	ind=$((ind+1)) && $(exe_cmd) && echo "$(get_cmd ${1} genome_assembly)" && $(get_cmd ${1} genome_assembly)
 	ind=$((ind+1)) && $(exe_cmd) && echo "$(get_cmd ${1} kraken_classifier_dbfree)" && $(get_cmd ${1} kraken_classifier_dbfree)
 	ind=$((ind+1)) && $(exe_cmd) && echo "$(get_cmd ${1} kraken2_classifier_dbfree)" && $(get_cmd ${1} kraken2_classifier_dbfree)
-	ind=$((ind+1)) && $(exe_cmd) && echo "$(get_cmd ${1} knead_data_dbfree)" && $(get_cmd ${1} knead_data_dbfree)
-	ind=$((ind+1)) && $(exe_cmd) && echo "$(get_cmd ${1} metaphlan2_classifier_dbfree)" && $(get_cmd ${1} metaphlan2_classifier_dbfree) #10
+	ind=$((ind+1)) && $(exe_cmd) && echo "$(get_cmd ${1} knead_data_dbfree)" && $(get_cmd ${1} knead_data_dbfree) #10
+	ind=$((ind+1)) && $(exe_cmd) && echo "$(get_cmd ${1} metaphlan2_classifier_dbfree)" && $(get_cmd ${1} metaphlan2_classifier_dbfree)
 	ind=$((ind+1)) && $(exe_cmd) && echo "$(get_cmd ${1} r_module)" && $(get_cmd ${1} r_module)
 	ind=$((ind+1)) && $(exe_cmd) && echo "$(get_cmd ${1} rdp_classifier)" && $(get_cmd ${1} rdp_classifier)
 	ind=$((ind+1)) && $(exe_cmd) && echo "$(get_cmd ${1} qiime_classifier)" && $(get_cmd ${1} qiime_classifier)
-	ind=$((ind+1)) && $(exe_cmd) && echo "$(get_cmd ${1} metaphlan2_classifier)" && $(get_cmd ${1} metaphlan2_classifier)
-	ind=$((ind+1)) && $(exe_cmd) && echo "$(get_cmd ${1} knead_data) " && $(get_cmd ${1} knead_data) #15
+	ind=$((ind+1)) && $(exe_cmd) && echo "$(get_cmd ${1} metaphlan2_classifier)" && $(get_cmd ${1} metaphlan2_classifier) #15
+	ind=$((ind+1)) && $(exe_cmd) && echo "$(get_cmd ${1} knead_data) " && $(get_cmd ${1} knead_data)
 	ind=$((ind+1)) && $(exe_cmd) && echo "$(get_cmd ${1} kraken_classifier)" && $(get_cmd ${1} kraken_classifier) 
 	ind=$((ind+1)) && $(exe_cmd) && echo "$(get_cmd ${1} kraken2_classifier)" && $(get_cmd ${1} kraken2_classifier)
-	ind=$((ind+1)) && $(exe_cmd) && echo "$(get_cmd ${1} humann2_classifier)" && $(get_cmd ${1} humann2_classifier) #17
+	ind=$((ind+1)) && $(exe_cmd) && echo "$(get_cmd ${1} humann2_classifier)" && $(get_cmd ${1} humann2_classifier)  #19
 	echo "COMPLETED Docker ${1} for ${displayNum} modules starting with index #${startInd}!"
 }
 

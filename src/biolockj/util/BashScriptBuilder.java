@@ -197,18 +197,18 @@ public class BashScriptBuilder {
 		final String header = Config.getString( module, Constants.SCRIPT_DEFAULT_HEADER );
 		if( header != null ) lines.add( header + RETURN );
 		lines.add( "# BioLockJ " + BioLockJUtil.getVersion() + ": " + mainScriptPath + RETURN );
-		lines.add( SCRIPT_DIR + "=\"" + module.getScriptDir() + "\"" + RETURN );
+		lines.add( PIPE_DIR + "=\"" + Config.pipelinePath() + "\"" );
+		lines.add( MOD_DIR + "=\"" + module.getModuleDir().getAbsolutePath() + "\"" );
+		lines.add( SCRIPT_DIR + "=\"" + module.getScriptDir().getAbsolutePath() + "\"" + RETURN );
 		lines.add( "touch \"" + mainScriptPath + "_" + Constants.SCRIPT_STARTED + "\"" + RETURN );
-		lines.add( "cd " + module.getScriptDir() + RETURN );
-
+		lines.add( "cd " + module.getScriptDir().getAbsolutePath() + RETURN );
 		if( DockerUtil.inDockerEnv() ) lines.addAll( DockerUtil.buildSpawnDockerContainerFunction( module ) );
 		else if( Config.isOnCluster() ) {
 			lines.add( "# Submit job script" );
 			lines.add( "function " + FUNCTION_RUN_JOB + "() {" );
 			lines.add( Config.requireString( module, CLUSTER_BATCH_COMMAND ) + " $1" );
-			lines.add( "}" );
+			lines.add( "}" + RETURN );
 		}
-
 		lines.addAll( buildScriptFailureFunction( mainScriptPath ) );
 		lines.addAll( buildExecuteFunction() );
 		return lines;
@@ -234,16 +234,17 @@ public class BashScriptBuilder {
 		final List<String> lines = new ArrayList<>();
 		final String header = Config.getString( module, SCRIPT_JOB_HEADER );
 		final String defaultHeader = Config.getString( module, Constants.SCRIPT_DEFAULT_HEADER );
-		if( Config.isOnCluster() && header != null ) lines.add( header + RETURN );
-		else if( defaultHeader != null ) lines.add( defaultHeader + RETURN );
+		if( Config.isOnCluster() && header != null ) lines.add( header );
+		else if( defaultHeader != null ) lines.add( defaultHeader );
+		lines.add( "" );
 		lines.add( "# BioLockJ." + BioLockJUtil.getVersion() + ": " + scriptPath + RETURN );
-		
-		lines.add( MOD_DIR + "=\"" + module.getModuleDir() + "\"" );
-		lines.add( OUTPUT_DIR + "=\"" + module.getOutputDir() + "\"" );
-		lines.add( SCRIPT_DIR + "=\"" + module.getScriptDir() + "\"" );
+		lines.add( PIPE_DIR + "=\"" + Config.pipelinePath() + "\"" );
+		lines.add( MOD_DIR + "=\"" + module.getModuleDir().getAbsolutePath() + "\"" );
+		lines.add( OUTPUT_DIR + "=\"" + module.getOutputDir().getAbsolutePath() + "\"" );
+		lines.add( SCRIPT_DIR + "=\"" + module.getScriptDir().getAbsolutePath() + "\"" );
 		if( hasTempDir( module ) ) 
-			lines.add( TEMP_DIR + "=\"" + module.getTempDir() + "\"" + RETURN );
-		else lines.add( "" );
+			lines.add( TEMP_DIR + "=\"" + module.getTempDir().getAbsolutePath() + "\"" );
+		lines.add( "" );
 		lines.add( "touch \"" + scriptPath + "_" + Constants.SCRIPT_STARTED  + "\"" + RETURN );
 		lines.addAll( loadModules( module ) );
 
@@ -268,22 +269,23 @@ public class BashScriptBuilder {
 		final List<String> lines = new ArrayList<>();
 		try {
 			for( final String line: scriptLines ) {
-				String data = line.trim();
-				if( hasTempDir( module ) && !data.startsWith( TEMP_DIR ) && data.contains( module.getTempDir().getAbsolutePath() ) ) 
+				String data = line;
+				if( hasTempDir( module ) && !data.trim().startsWith( TEMP_DIR ) && data.contains( module.getTempDir().getAbsolutePath() ) ) 
 					data = data.replaceAll( module.getTempDir().getAbsolutePath(), Matcher.quoteReplacement( TEMP_DIR_VAR ) );
-				else if( !data.startsWith( SCRIPT_DIR ) && data.contains( module.getScriptDir().getAbsolutePath() ) ) 
+				if( !data.trim().startsWith( SCRIPT_DIR ) && data.contains( module.getScriptDir().getAbsolutePath() ) ) 
 					data = data.replaceAll( module.getScriptDir().getAbsolutePath(), Matcher.quoteReplacement( SCRIPT_DIR_VAR ) );
-				else if( !data.startsWith( OUTPUT_DIR ) && data.contains( module.getOutputDir().getAbsolutePath() ) ) 
+				if( !data.trim().startsWith( OUTPUT_DIR ) && data.contains( module.getOutputDir().getAbsolutePath() ) ) 
 					data = data.replaceAll( module.getOutputDir().getAbsolutePath(), Matcher.quoteReplacement( OUTPUT_DIR_VAR ) );
-				
-				if( !data.startsWith( MOD_DIR ) && data.contains( module.getModuleDir().getAbsolutePath() ) ) 
+				if( !data.trim().startsWith( MOD_DIR ) && data.contains( module.getModuleDir().getAbsolutePath() ) ) 
 					data = data.replaceAll( module.getModuleDir().getAbsolutePath(), Matcher.quoteReplacement( MOD_DIR_VAR ) );
-
+				if( !data.trim().startsWith( PIPE_DIR ) && data.contains( Config.pipelinePath() ) ) 
+					data = data.replaceAll( Config.pipelinePath(), Matcher.quoteReplacement( PIPE_DIR_VAR ) );
 				lines.add( data );
 			}
 			for( String line: lines ) {
-				if( line.equals( "fi" ) || line.equals( "}" ) || line.equals( "elif" ) ||
-					line.equals( "else" ) || line.equals( "done" ) ) indentCount--;
+				String data = line.trim();
+				if( data.equals( "fi" ) || data.equals( "}" ) || data.equals( "elif" ) ||
+					data.equals( "else" ) || data.equals( "done" ) ) indentCount--;
 
 				int i = 0;
 				while( i++ < indentCount )
@@ -291,9 +293,9 @@ public class BashScriptBuilder {
 				writer.write( line + RETURN );
 				Log.debug( BashScriptBuilder.class, line );
 
-				if( line.endsWith( "{" ) || line.equals( "elif" ) || line.equals( "else" ) ||
-					line.startsWith( "if" ) && line.endsWith( "then" ) ||
-					line.startsWith( "while" ) && line.endsWith( "do" ) ) indentCount++;
+				if( data.endsWith( "{" ) || line.equals( "elif" ) || data.equals( "else" ) ||
+					data.startsWith( "if" ) && data.endsWith( "then" ) ||
+					data.startsWith( "while" ) && data.endsWith( "do" ) ) indentCount++;
 			}
 		} finally {
 			if( writer != null ) writer.close();

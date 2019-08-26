@@ -6,6 +6,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 #1.) Setup Standard Dirs (used by some but not all ancestors)
 ENV APP="/app"
 ENV APP_BIN="${APP}/bin"
+ENV BIN="/usr/local/bin"
 ENV BLJ="${APP}/biolockj"
 ENV BLJ_SUP="${APP}/blj_support"
 ENV EFS="/mnt/efs"

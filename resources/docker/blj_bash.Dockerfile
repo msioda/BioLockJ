@@ -3,8 +3,8 @@
 FROM biolockj/blj_basic
 
 #1.) Install PEAR
-RUN cd /usr/local/bin && wget -qO- "https://github.com/msioda/BioLockJ/releases/download/pear-0.9.10/pear.zip" \
-	| bsdtar -xf- && chmod 777 /usr/local/bin/pear
+ENV P_URL="https://github.com/msioda/BioLockJ/releases/download/pear-0.9.10/pear.zip"
+RUN cd $BIN && wget -qO- $P_URL | bsdtar -xf- && chmod 777 $BIN/pear
 	
 #2.) Cleanup
 RUN	apt-get clean && find / -name *python* | xargs rm -rf && \
