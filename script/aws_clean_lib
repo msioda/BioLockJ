@@ -8,15 +8,18 @@ aws_deregister_job_defs() {
 	count=0 && numComplete=0 && ids=$(aws batch describe-job-definitions --status ACTIVE --query "jobDefinitions[*].jobDefinitionArn")
 	aws_log "De-register ACTIVE job-definitions...${ids}" 
 	while $(has_data $ids); do
-		id=$(get_id $ids) && count=$[$count+1] && [ ${#id} -eq 0 ] && break
-		aws_log "De-register Job-definition ARN #${count}: ${id}" && aws batch deregister-job-definition --job-definition "${id}" && status=ACTIVE
+		id=$(get_id $ids) && [ ${#id} -eq 0 ] && break
+		! $(is_owner $id) && ids="${ids/$id}" && continue
+		count=$[$count+1] && aws_log "De-register Job-definition ARN #${count}: ${id}" && \
+			aws batch deregister-job-definition --job-definition "${id}" && status=ACTIVE
 		while [ ${#status} -gt 0 ] && [ "$status" != "INACTIVE" ]; do
 			sleep 5 && status=$(aws batch describe-job-definitions --job-definitions ${id} --query "jobDefinitions[*].status")
 		done
 		[ "${ids/$id}" == "${ids}" ] && aws_log "UNEXPECTED error - invalid ID: ${id}" && break
 		ids="${ids/$id}" && ((numComplete++))
 	done
-	aws_log "De-registered ${numComplete}/${count} job-definitions" && rm $(get_docker_job_def_flag)
+	[ -f "$(get_docker_job_def_flag)" ] && rm $(get_docker_job_def_flag)
+	aws_log "De-registered ${numComplete}/${count} job-definitions"
 	aws_log "Check for any job-definitions with status != 'INACTIVE':"
 	aws batch describe-job-definitions --query "jobDefinitions[?status!='INACTIVE']|[*]"
 }
@@ -36,8 +39,9 @@ aws_rm_key_pairs() {
 	count=0 && numComplete=0 && ids=$(aws ec2 describe-key-pairs --query "KeyPairs[*].KeyName")
 	aws_log "Deleting key-pairs...${ids}" 
 	while $(has_data $ids); do
-		id=$(get_id $ids) && count=$[$count+1] && [ ${#id} -eq 0 ] && break
-		aws_log "Deleting key-pair ARN #${count}: ${id}" && aws ec2 delete-key-pair --key-name "${id}"
+		id=$(get_id $ids) && [ ${#id} -eq 0 ] && break
+		! $(is_owner $id) && ids="${ids/$id}" && continue
+		count=$[$count+1] && aws_log "Deleting key-pair ARN #${count}: ${id}" && aws ec2 delete-key-pair --key-name "${id}"
 		[ "${ids/$id}" == "${ids}" ] && aws_log "UNEXPECTED error - invalid ID: ${id}" && break
 		ids="${ids/$id}" && ((numComplete++))
 	done
@@ -47,21 +51,14 @@ aws_rm_key_pairs() {
 }
 
 # Remove AWS Stacks
-# Param 1 - (Optional) Set to "-all" to Remove all Ec2 for all StackNames
 aws_rm_stacks() {
-	count=0 && numComplete=0 
-	if [ "${1}" == "-all" ]; then
-		ids=$(aws cloudformation describe-stacks --query "Stacks[*].StackId")
-	else
-		echo "TBD handle delete onwer stacks only"
-		#ids=$(aws cloudformation describe-stacks --query "Stacks[*].Tags[?Key!='owner']|Stacks[*].StackId")
-	fi
-
+	count=0 && numComplete=0 && ids=$(aws cloudformation describe-stacks --query "Stacks[*].StackId")
 	aws_log "Deleting cloudformation stacks...${ids}" 
 	while $(has_data $ids); do
-		id=$(get_id $ids) && count=$[$count+1] && status=$(aws cloudformation describe-stacks --stack-name "${id}" --query "Stacks[*].StackStatus")
+		id=$(get_id $ids) && ! $(is_owner $id) && ids="${ids/$id}" && continue
+		status=$(aws cloudformation describe-stacks --stack-name "${id}" --query "Stacks[*].StackStatus")
 		[ "${status/DELETE}" != "${status}" ] && ids="${ids/$id}" && aws_log "Skipping Stack [ ${id} ] status=${status}..." && continue
-		aws_log "Deleting stack ARN #${count}: ${id}" && aws cloudformation delete-stack --stack-name "${id}" && status=DO_CHECK
+		count=$[$count+1] && aws_log "Deleting stack ARN #${count}: ${id}" && aws cloudformation delete-stack --stack-name "${id}" && status=DO_CHECK
 		while [ "${status}" != "DELETE_COMPLETE" ]; do
 			sleep 10 && status=$(aws cloudformation describe-stacks --stack-name ${id} --query "Stacks[*].StackStatus")
 		done
@@ -74,17 +71,11 @@ aws_rm_stacks() {
 # Remove S3 buckets
 # Param 1 - (Optional) Set to "-all" to Remove all S3 buckets
 aws_rm_s3_buckets() {
-	count=0 && numComplete=0 
-	if [ "${1}" == "-all" ]; then
-		ids=$(aws s3api list-buckets --query "Buckets[*].Name")
-	else
-		echo "TBD handle delete owner stacks only - still currently deleting all"
-		ids=$(aws s3api list-buckets --query "Buckets[*].Name")
-	fi
-
+	count=0 && numComplete=0 && ids=$(aws s3api list-buckets --query "Buckets[*].Name")
 	! $(has_data $ids) && aws_log "No S3 buckets to remove" && return
 	aws_log "Deleting S3 buckets...${ids}" && buckets=( "$ids" )
 	for bucket in ${buckets[@]}; do
+		! $(is_owner $bucket) && continue
 		aws s3 rb --force "${bucket}"  && count=$[$count+1] && aws_log "Deleted s3-bucket #${count}: ${bucket}" && ((numComplete++))
 	done
 	aws_log "Deleted $numComplete/$count S3-buckets" && aws_log "Remaining S3-buckets:  $(aws s3api list-buckets)" 
@@ -142,6 +133,12 @@ get_id() {
 # Param 1 - input data
 has_data() {
 	[ ${#1} -gt 0 ] && [ "${1}" != "None" ] && ! $(is_empty $1)
+}
+
+# Check if aws user name is part of input
+# Param 1 - ID param with AWS user name
+is_owner() {
+	[ "${id/$(get_aws_user)}" != "${id}" ]
 }
 
 # Delee all EC2 instances and pem files locally and on AWS console.

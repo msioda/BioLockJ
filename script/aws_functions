@@ -12,11 +12,8 @@ build_stack() {
 	numSecs=0 && stackYml="file://${BLJ}/resources/aws/StackEFS.yml" && stack="$(get_blj_prop aws.stack)"
 	[ $(is_stack_complete) == "true" ] && aws_log "Reusing configured CREATE_COMPLETE AWS Stack: ${stack}" && return 
 	aws_log "Please wait while building AWS cloud formation stack: ${stack}..." 
-	#myIP=$(curl -s checkip.dyndns.org | sed -e 's/.*Current IP Address: //' -e 's/<.*$//')
-	
-	ec2SpotPer=$(get_blj_prop aws.ec2SpotPer)
-	[ ${#ec2SpotPer} -eq 0 ] && ec2SpotPer=80
-	params="ParameterKey=SpotBidPercentage,ParameterValue=${ec2SpotPer}"
+	params="ParameterKey=SpotBidPercentage,ParameterValue=$(get_blj_prop aws.ec2SpotPer 80)"
+	params="${params} ParameterKey=OnDemandBatchMaxvCPUs,ParameterValue=$(get_blj_prop aws.maxBatchvCpus 512)"
 	aws_log "aws cloudformation create-stack --tags \"Name=owner,Values=$(get_aws_user)\" --template-body ${stackYml} --stack-name ${stack} --capabilities CAPABILITY_IAM --parameters ${params}"
 	aws cloudformation create-stack --tags "Key=owner,Value=$(get_aws_user)" --template-body "${stackYml}" --stack-name "${stack}" --capabilities CAPABILITY_IAM --parameters ${params}
 	#aws cloudformation create-stack --template-body "${stackYml}" --stack-name "${stack}" --capabilities CAPABILITY_IAM --parameters ${params}
@@ -131,12 +128,11 @@ run_aws_gui() {
 
 # Create default stack name if $(get_blj_prop aws.stack) is undefined in AWS Config
 set_stack_name() {
+	[ "$(get_blj_prop aws.stack)" == "" ] && set_blj_prop aws.stack "$(get_aws_user)-biolockj"
 	stack="$(get_blj_prop aws.stack)"
-	[ ${#stack} -eq 0 ] && set_blj_prop aws.stack "$(get_aws_user)-biolockj"
-	enabledStacks=$(aws_stacks CREATE_COMPLETE)
-	if [ "${enabledStacks/$stack}" == "${enabledStacks}" ]; then
-		stacks=$(aws cloudformation list-stacks --query "StackSummaries[].StackName")
-		set_blj_prop aws.stack $(generate_name $stack "${stacks}")
+	stacks=$(aws cloudformation list-stacks --query "StackSummaries[].StackName")
+	if [ "${stacks/$stack}" != "${stacks}" ]; then
+		set_blj_prop aws.stack $(generate_name $stack "$stacks")
 	fi
 	aws_log "Cloudformation: \"aws.stack=$(get_blj_prop aws.stack)\""
 }

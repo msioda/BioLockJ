@@ -13,7 +13,7 @@ Parameters:
   SpotBatchMaxvCPUs:
     Description: Max number of vCPUs for Batch environments
     Type: Number
-    Default: 1024
+    Default: 256
   OnDemandBatchMaxvCPUs:
     Description: Max number of vCPUs for Batch environments
     Type: Number
@@ -293,7 +293,7 @@ Resources:
           - SpotComputeEnv
       ComputeResources:
         MinvCpus: 0
-        MaxvCpus: 512
+        MaxvCpus: !Ref SpotBatchMaxvCPUs
         DesiredvCpus: 0
         SecurityGroupIds:
           - Ref: BastionSecurityGroup
@@ -343,7 +343,7 @@ Resources:
           - OnDemandComputeEnv
       ComputeResources:
         MinvCpus: 0
-        MaxvCpus: 512
+        MaxvCpus: !Ref OnDemandBatchMaxvCPUs
         DesiredvCpus: 0
         SecurityGroupIds:
           - Ref: BastionSecurityGroup
