@@ -12,9 +12,6 @@
 ##########################################################################
 . "${AWS_LIB}"
 
-
-BLAH="BLAH42"
-
 BLJ_JAR=${BLJ}/dist/BioLockJ.jar
 
 # Display BioLockJ release version

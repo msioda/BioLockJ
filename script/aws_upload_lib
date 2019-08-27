@@ -6,6 +6,12 @@
 #####################################################################
 alias dl_efs="download_dir_from_efs"
 
+# Return AWS Staging dir (first create AWS stage dir if dir doesn't exist) 
+aws_stage_dir() {
+	[ ! -d ~/.aws/stage  ] && mkdir ~/.aws/stage
+	echo ~/.aws/stage 
+}
+
 # Build start script for given Pipeline Config file and reutnr local path
 # Param 1 - Pipeline Config file
 build_start_script() {
@@ -65,44 +71,35 @@ exe_remote_cmd() {
 	ssh -o StrictHostKeyChecking=no -i $(key_file) ${EC2_USER}@$(get_ec2_public_ip) "${1}"
 }
 
-# Stage AWS config and credentials files to push to AWS cloud
-stage_aws_and_nf_config_to_efs() {
-	aws_log "Staging AWS/Nextflow Config on new EC2 Head-Node"
-	AWS_STAGE=~/.aws/stage 
-	[ ! -d "${AWS_STAGE}" ] && mkdir "${AWS_STAGE}"
-	echo "[default]" > "${AWS_STAGE}/config"
-	echo "region = $(aws_region)" >> "${AWS_STAGE}/config"
-	echo "output = text" >> "${AWS_STAGE}/config"
-	echo "Created file:  ${AWS_STAGE}/config"
-	cat "${AWS_STAGE}/config" 
-	echo "[default]" > "${AWS_STAGE}/credentials"
-	echo "aws_access_key_id = $(get_aws_access_key_id)" >> "${AWS_STAGE}/credentials"
-	echo "aws_secret_access_key = $(get_aws_secret_access_key)" >> "${AWS_STAGE}/credentials"
-	echo "Created file:  ${AWS_STAGE}/credentials"
-	cat "${AWS_STAGE}/credentials"
-	upload_to_efs "${AWS_STAGE}/config" "${EC2_HOME}/.aws"
-	upload_to_efs "${AWS_STAGE}/credentials" "${EC2_HOME}/.aws"
-	upload_to_efs "$(local_nf_conf)" "${EC2_HOME}/.nextflow/config"
-	upload_to_efs "${BLJ}/resources/aws/ec2_head_node_profile"
+# Stage AWS cache, config, & credentials + Nextflow config to the AWS cloud
+stage_aws_config() {
+	aws_conf="$(aws_stage_dir)/config" && aws_cred="$(aws_stage_dir)/credentials"
+	echo "[default]" > "${aws_conf}"
+	echo "region = $(aws_region)" >> "${aws_conf}"
+	echo "output = text" >> "${aws_conf}"
+	echo "[default]" > "${aws_cred}"
+	echo "aws_access_key_id = $(get_aws_access_key_id)" >> "${aws_cred}"
+	echo "aws_secret_access_key = $(get_aws_secret_access_key)" >> "${aws_cred}"
+	upload_to_efs "${aws_conf}" "${EC2_HOME}/.aws"
+	upload_to_efs "${aws_cred}" "${EC2_HOME}/.aws"
 	upload_to_efs "${AWS_CONF}" "${EC2_HOME}/.aws"
-	upload_to_efs "${BLJ_SCRIPT}" "${EFS}"
-	upload_to_efs "~/ec2_head_node_profile"
-	exe_remote_cmd 'mv ~/.bash_profile ~/.bash_profile~; mv ~/ec2_head_node_profile ~/.bash_profile'
-	exe_remote_cmd "sudo chmod -R 777 ${EFS}"
+	cache_status=$(exe_remote_cmd "[ ! -f ${EC2_HOME}/.aws/$(basename $AWS_CONF) ] && echo \"Failed to upload ${AWS_CONF} --> EFS:  ${EC2_HOME}/.aws/$(basename $AWS_CONF)\"")
+	conf_status=$(exe_remote_cmd "[ ! -f ${EC2_HOME}/.aws/config ] && echo \"Failed to upload ${aws_conf} --> EFS:  ${EC2_HOME}/.aws/config\"")
+	cred_status=$(exe_remote_cmd "[ ! -f ${EC2_HOME}/.aws/credentials ] && echo \"Failed to upload ${aws_cred} --> EFS:  ${EC2_HOME}/.aws/credentials\"")
+	[ ${#cache_status} -gt 0 ] && exit_script "${cache_status}"
+	[ ${#conf_status} -gt 0 ] && exit_script "${conf_status}"
+	[ ${#cred_status} -gt 0 ] && exit_script "${cred_status}"
 }
 
-# Upload local pipeline inputs and aws/nextflow config files to EFS
-stage_pipeline() {
-	aws_log "Starting --> [ stage_pipeline ]"
-	stage_aws_and_nf_config_to_efs 
-	stage_pipeline_config_to_efs
-	stage_pipeline_inputs_to_efs
-	stage_pipeline_dbs_to_efs
-}
 
 # The method creates a new version of the pipeline Config files by replacing 
-stage_pipeline_config_to_efs() {
-	aws_log "Uploading pipeline Config files to EFS: $(get_config ec2)"
+stage_blj_config() {
+	aws_log "Starting --> [ stage_blj_config  ]: Upload Pipeline Config --> EFS: $(basename $(get_config ec2))"
+	upload_to_efs "$(local_nf_conf)" "${EC2_HOME}/.nextflow/config"
+	upload_to_efs "${BLJ}/resources/aws/ec2_head_node_profile"
+	upload_to_efs "${BLJ_SCRIPT}" "${EFS}"
+	exe_remote_cmd 'mv ~/.bash_profile ~/.bash_profile~; mv ~/ec2_head_node_profile ~/.bash_profile'
+	
 	upload_to_efs $(get_blj_prop internal.config) $BLJ_CONFIG
 	localS3=$(get_property $(get_config local) "aws.s3")
 	[ ${#localS3} -eq 0 ] && update_efs_config "aws.s3" "$(get_blj_prop aws.s3)"
@@ -110,13 +107,28 @@ stage_pipeline_config_to_efs() {
 	if [ ${#defaultConf} -gt 0 ]; then
 		upload_to_efs $defaultConf $BLJ_CONFIG
 		update_efs_config "pipeline.defaultProps" "$BLJ_CONFIG/$(basename $defaultConf)"
-	fi 
+	fi
+	aws_log "Finished --> [  stage_blj_config  ]: Config uploads complete (if any)..."
+}
+
+
+# Upload local pipeline inputs and aws/nextflow config files to EFS
+stage_pipeline() {
+	aws_log "Starting --> [  stage_pipeline  ]: Upload pipeline config to EC2: $(get_blj_prop aws.ec2InstanceID)"
+	stage_aws_config
+	stage_blj_config
+	stage_efs_inputs
+	stage_efs_dbs
+	exe_remote_cmd "sudo chmod -R 777 ${EFS}"
+	aws_log "Finished --> [  stage_pipeline  ]: Pipeline inputs + config staged to to EC2: $(get_blj_prop aws.ec2InstanceID)"
 }
 
 # Stage custom database files for pipeline onto EFS volume
-stage_pipeline_dbs_to_efs() {
-	aws_log "Starting --> [  stage_pipeline_dbs_to_efs  ]: Upload custom databases (if configured)..."
+stage_efs_dbs() {
+	aws_log "Starting --> [  stage_efs_dbs  ]: Check for custom databases..."
+	kdDB="$(get_blj_prop kneaddata.dbs)" && kDB="$(get_blj_prop kraken.db)" && k2DB="$(get_blj_prop kraken2.db)" && rdpDb="$(get_blj_prop rdp.db)"
 	m2DB="$(get_blj_prop metaphlan2.db)" && m2DbPkl="$(get_blj_prop metaphlan2.mpa_pkl)"
+	qpDB="$(get_blj_prop qiime.pynastAlignDB)" && qrDB="$(get_blj_prop qiime.refSeqDB)" && qtDB="$(get_blj_prop qiime.taxaDB)"
 	if [ -d "${m2DB}" ] || [ -f "${m2DbPkl}" ]; then
 		if [ -d "${m2DB}" ] && [ -f "${m2DbPkl}" ]; then
 			[ "$(dirname $m2DbPkl)" != "${m2DB}"  ] &&
@@ -128,7 +140,7 @@ stage_pipeline_dbs_to_efs() {
 			exit_script "Error [ aws_upload_lib.stage_input_files_to_efs() ]: Required Config missing - if any defined, all must be defined {\"metaphlan2.db\", \"metaphlan2.mpa_pkl\" }"
 		fi
 	fi
-	qpDB="$(get_blj_prop qiime.pynastAlignDB)" && qrDB="$(get_blj_prop qiime.refSeqDB)" && qtDB="$(get_blj_prop qiime.taxaDB)"
+	
 	if [ -f "${qpDB}" ] || [ -f "${qrDB}" ] || [ -f "${qtDB}" ]; then
 		if [ -f "${qpDB}" ] && [ -f "${qrDB}" ] && [ -f "${qtDB}" ]; then
 			parentDir="$(common_parent_dir $qpDB $qrDB $qtDB)"
@@ -143,7 +155,6 @@ stage_pipeline_dbs_to_efs() {
 		fi
 	fi
 	
-	kdDB="$(get_blj_prop kneaddata.dbs)" && kDB="$(get_blj_prop kraken.db)" && k2DB="$(get_blj_prop kraken2.db)" && rdpDb="$(get_blj_prop rdp.db)"
 	[ -d "${kdDB}" ] && aws_log "Uploading KneadData DBs: ${kdDB}" && upload_to_efs_and_update_config "kneaddata.dbs" "${kdDB}" "${BLJ_DB}"
 	[ -d "${kDB}" ] && aws_log "Uploading Kraken DB: ${kDB}" && upload_to_efs_and_update_config "kraken.db" "${kDB}" "${BLJ_DB}"
 	[ -d "${k2DB}" ] && aws_log "Uploading Kraken2 DB: ${k2DB}" && upload_to_efs_and_update_config "kraken2.db" "${k2DB}" "${BLJ_DB}"
@@ -151,10 +162,11 @@ stage_pipeline_dbs_to_efs() {
 		filePath="$(upload_to_efs $(dirname $rdpDb) $BLJ_DB)" && echo "Uploading RDP DB: $(dirname $rdpDb) --> ${filePath}"
 		exe_remote_cmd ". ${EC2_HOME}/.bash_profile; set_property $(get_config ec2) rdp.db ${filePath}/$(basename $rdpDb)"
 	fi 
+	aws_log "Finished --> [  stage_efs_dbs  ]: DB uploads complete (if any)..."
 }
 
 # Stage data for pipeline onto EFS volume
-stage_pipeline_inputs_to_efs() {
+stage_efs_inputs() {
 	aws_log "Upload pipeline inputs to EFS"
 	inputDir="$(get_blj_prop input.dirPaths)" && metaFile="$(get_blj_prop metadata.filePath)" && primerFile="$(get_blj_prop trimPrimers.filePath)"
 	[ ! -d "${inputDir}" ] && exit_script "Error [ aws_upload_lib.stage_input_files_to_efs() ]: input.dirPaths=\"${inputDir}\" is not a valid directory"
@@ -162,6 +174,7 @@ stage_pipeline_inputs_to_efs() {
 	[ -f "${metaFile}" ] && aws_log "Upload metaFile:  ${metaFile}" && upload_to_efs_and_update_config "metadata.filePath" "${metaFile}" "${EFS}/metadata"
 	[ -f "${primerFile}" ] && aws_log "Upload primerFile:  ${primerFile}" && upload_to_efs_and_update_config "trimPrimers.filePath" "${primerFile}" "${BLJ_PRIMER}"
 	upload_to_efs "$(build_start_script)"
+	aws_log "Finished --> [  stage_efs_inputs  ]: Pipeline input uploads complete (if any)..."
 }
 
 # Update EC2 config 
