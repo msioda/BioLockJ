@@ -89,11 +89,11 @@ build_clone_script() {
 }
 
 # Get local Docker Config filepath
-# Param 1 - Host Config filepath
 docker_config_path() {
-	localConfig="${configPath}"
-	$(inDockerContainer) && localConfig="${BLJ_CONFIG}/$(basename $1)" 
-	echo "${localConfig}"
+	if $(inDockerContainer); 
+		then echo "${BLJ_CONFIG}/$(basename $configPath)" 
+		else echo "${configPath}"
+	fi
 }
 
 # Get Docker image - add port, entrypoint, anc command if launching GUI
@@ -148,19 +148,19 @@ on_aws() {
 parse_script_input() {
 	set_arg_flags $@
 	configPath=$(named_arg $@ c)
-	if [ $# -eq 1 ] && ! $startGUI; then
-		echo "[ BioLockJ ] Single input arg = valid system filepath" 
+	if [ $# -eq 1 ] && [ ${#configPath} -eq 0 ] && ! $startGUI; then
+		echo "Single input arg = valid system filepath" 
 		[ -f "${1}" ] && configPath="${1}" && echo "[ BioLockJ ] Run Docker-BioLockJ in  w/ Config file --> " 
 		[ -d "${1}" ] && restartPath="${1}" && echo "[ BioLockJ ] Run Restart Docker-BioLockJ for failed pipeline --> " 
 	fi
 
 	if [ ${#configPath} -gt 0 ]; then
 		echo "BLJ config: $configPath"
-		localConfig="$(docker_config_path $configPath)" 
-		$(inDockerContainer) && echo "Docker BLJ config: $localConfig"
-		inputPath="$(get_property $localConfig input.dirPaths)" && echo "BLJ inputPath: $inputPath"
-		metaPath="$(get_property $localConfig metadata.filePath)" && [ ${#metaPath} -gt 0 ] && metaPath="$(dirname $metaPath)" && echo "BLJ metaPath: $metaPath"
-		primerPath="$(get_property $localConfig trimPrimers.filePath)" && [ ${#primerPath} -gt 0 ] && primerPath="$(dirname $primerPath)" && echo "BLJ primerPath: $primerPath"
+		configPath="$(docker_config_path)" 
+		$(inDockerContainer) && echo "Docker BLJ config: $configPath"
+		inputPath="$(get_property $configPath input.dirPaths)" && echo "input.dirPaths: $inputPath"
+		metaPath="$(get_property $configPath metadata.filePath)" && [ ${#metaPath} -gt 0 ] && metaPath="$(dirname $metaPath)" && echo "metadata.filePath: $metaPath"
+		primerPath="$(get_property $configPath trimPrimers.filePath)" && [ ${#primerPath} -gt 0 ] && primerPath="$(dirname $primerPath)" && echo "trimPrimers.filePath: $primerPath"
 	fi
 }
 

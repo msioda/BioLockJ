@@ -83,9 +83,10 @@ stage_aws_and_nf_config_to_efs() {
 	upload_to_efs "${AWS_STAGE}/config" "${EC2_HOME}/.aws"
 	upload_to_efs "${AWS_STAGE}/credentials" "${EC2_HOME}/.aws"
 	upload_to_efs "$(local_nf_conf)" "${EC2_HOME}/.nextflow/config"
-	upload_to_efs "${BLJ}/resources/aws/ec2_head_node_profile ~/.bash_profile"
+	upload_to_efs "${BLJ}/resources/aws/ec2_head_node_profile"
 	upload_to_efs "${AWS_CONF}" "${EC2_HOME}/.aws"
 	upload_to_efs "${BLJ_SCRIPT}" "${EFS}"
+	upload_to_efs "~/ec2_head_node_profile"
 	exe_remote_cmd 'mv ~/.bash_profile ~/.bash_profile~; mv ~/ec2_head_node_profile ~/.bash_profile'
 	exe_remote_cmd "sudo chmod -R 777 ${EFS}"
 }
