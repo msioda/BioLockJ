@@ -6,21 +6,21 @@
 # Remove all job-definitions 
 aws_deregister_job_defs() {
 	count=0 && numComplete=0 && ids=$(aws batch describe-job-definitions --status ACTIVE --query "jobDefinitions[*].jobDefinitionArn")
-	aws_log "De-register ACTIVE job-definitions...${ids}" 
+	console_log "De-register ACTIVE job-definitions...${ids}" 
 	while $(has_data $ids); do
 		id=$(get_id $ids) && [ ${#id} -eq 0 ] && break
 		! $(is_owner $id) && ids="${ids/$id}" && continue
-		count=$[$count+1] && aws_log "De-register Job-definition ARN #${count}: ${id}" && \
+		count=$[$count+1] && console_log "De-register Job-definition ARN #${count}: ${id}" && \
 			aws batch deregister-job-definition --job-definition "${id}" && status=ACTIVE
 		while [ ${#status} -gt 0 ] && [ "$status" != "INACTIVE" ]; do
 			sleep 5 && status=$(aws batch describe-job-definitions --job-definitions ${id} --query "jobDefinitions[*].status")
 		done
-		[ "${ids/$id}" == "${ids}" ] && aws_log "UNEXPECTED error - invalid ID: ${id}" && break
+		[ "${ids/$id}" == "${ids}" ] && console_log "UNEXPECTED error - invalid ID: ${id}" && break
 		ids="${ids/$id}" && ((numComplete++))
 	done
 	[ -f "$(get_docker_job_def_flag)" ] && rm $(get_docker_job_def_flag)
-	aws_log "De-registered ${numComplete}/${count} job-definitions"
-	aws_log "Check for any job-definitions with status != 'INACTIVE':"
+	console_log "De-registered ${numComplete}/${count} job-definitions"
+	console_log "Check for any job-definitions with status != 'INACTIVE':"
 	aws batch describe-job-definitions --query "jobDefinitions[?status!='INACTIVE']|[*]"
 }
 
@@ -37,83 +37,83 @@ aws_get_arn() {
 # Remove AWS key_pairs + keyPair file
 aws_rm_key_pairs() {
 	count=0 && numComplete=0 && ids=$(aws ec2 describe-key-pairs --query "KeyPairs[*].KeyName")
-	aws_log "Deleting key-pairs...${ids}" 
+	console_log "Deleting key-pairs...${ids}" 
 	while $(has_data $ids); do
 		id=$(get_id $ids) && [ ${#id} -eq 0 ] && break
 		! $(is_owner $id) && ids="${ids/$id}" && continue
-		count=$[$count+1] && aws_log "Deleting key-pair ARN #${count}: ${id}" && aws ec2 delete-key-pair --key-name "${id}"
-		[ "${ids/$id}" == "${ids}" ] && aws_log "UNEXPECTED error - invalid ID: ${id}" && break
+		count=$[$count+1] && console_log "Deleting key-pair ARN #${count}: ${id}" && aws ec2 delete-key-pair --key-name "${id}"
+		[ "${ids/$id}" == "${ids}" ] && console_log "UNEXPECTED error - invalid ID: ${id}" && break
 		ids="${ids/$id}" && ((numComplete++))
 	done
-	aws_log "Deleted $numComplete/$count key-pairs" && myKey=$(key_file)
+	console_log "Deleted $numComplete/$count key-pairs" && myKey=$(key_file)
 	[ ${#myKey} -gt 0 ] && chmod 700 "${myKey}" && rm -rf "${myKey}"
-	aws_log "Check for remaining key-pairs:" && aws ec2 describe-key-pairs
+	console_log "Check for remaining key-pairs:" && aws ec2 describe-key-pairs
 }
 
 # Remove AWS Stacks
 aws_rm_stacks() {
 	count=0 && numComplete=0 && ids=$(aws cloudformation describe-stacks --query "Stacks[*].StackId")
-	aws_log "Deleting cloudformation stacks...${ids}" 
+	console_log "Deleting cloudformation stacks...${ids}" 
 	while $(has_data $ids); do
 		id=$(get_id $ids) && ! $(is_owner $id) && ids="${ids/$id}" && continue
 		status=$(aws cloudformation describe-stacks --stack-name "${id}" --query "Stacks[*].StackStatus")
-		[ "${status/DELETE}" != "${status}" ] && ids="${ids/$id}" && aws_log "Skipping Stack [ ${id} ] status=${status}..." && continue
-		count=$[$count+1] && aws_log "Deleting stack ARN #${count}: ${id}" && aws cloudformation delete-stack --stack-name "${id}" && status=DO_CHECK
+		[ "${status/DELETE}" != "${status}" ] && ids="${ids/$id}" && console_log "Skipping Stack [ ${id} ] status=${status}..." && continue
+		count=$[$count+1] && console_log "Deleting stack ARN #${count}: ${id}" && aws cloudformation delete-stack --stack-name "${id}" && status=DO_CHECK
 		while [ "${status}" != "DELETE_COMPLETE" ]; do
 			sleep 10 && status=$(aws cloudformation describe-stacks --stack-name ${id} --query "Stacks[*].StackStatus")
 		done
-		[ "${ids/$id}" == "${ids}" ] && aws_log "UNEXPECTED error - invalid ID: ${id}" && break
+		[ "${ids/$id}" == "${ids}" ] && console_log "UNEXPECTED error - invalid ID: ${id}" && break
 		ids="${ids/$id}" && ((numComplete++))
 	done
-	aws_log "Deleted $numComplete/$count stacks" && aws_log "Check for emaining stacks: $(aws cloudformation describe-stacks)"
+	console_log "Deleted $numComplete/$count stacks" && console_log "Check for emaining stacks: $(aws cloudformation describe-stacks)"
 }
 
 # Remove S3 buckets
 # Param 1 - (Optional) Set to "-all" to Remove all S3 buckets
 aws_rm_s3_buckets() {
 	count=0 && numComplete=0 && ids=$(aws s3api list-buckets --query "Buckets[*].Name")
-	! $(has_data $ids) && aws_log "No S3 buckets to remove" && return
-	aws_log "Deleting S3 buckets...${ids}" && buckets=( "$ids" )
+	! $(has_data $ids) && console_log "No S3 buckets to remove" && return
+	console_log "Deleting S3 buckets...${ids}" && buckets=( "$ids" )
 	for bucket in ${buckets[@]}; do
 		! $(is_owner $bucket) && continue
-		aws s3 rb --force "${bucket}"  && count=$[$count+1] && aws_log "Deleted s3-bucket #${count}: ${bucket}" && ((numComplete++))
+		aws s3 rb --force "${bucket}"  && count=$[$count+1] && console_log "Deleted s3-bucket #${count}: ${bucket}" && ((numComplete++))
 	done
-	aws_log "Deleted $numComplete/$count S3-buckets" && aws_log "Remaining S3-buckets:  $(aws s3api list-buckets)" 
+	console_log "Deleted $numComplete/$count S3-buckets" && console_log "Remaining S3-buckets:  $(aws s3api list-buckets)" 
 }
 
 # Clear all Pipeline Jobs
 clear_jobs() {
 	JQ=$(get_stack_param LowPriorityJobQueue) && [ "${awsEc2AcquisitionStrategy}" == "DEMAND" ] && JQ=$(get_stack_param HighPriorityJobQueue)
 	clear_staged_jobs "${JQ}" SUBMITTED && clear_staged_jobs "${JQ}" PENDING && clear_staged_jobs "${JQ}" RUNNABLE && 
-	clear_running_jobs "${JQ}" STARTING && clear_running_jobs "${JQ}" RUNNING && aws_log "Check for remaining Jobs:" && aws batch list-jobs --job-queue "${JQ}"
+	clear_running_jobs "${JQ}" STARTING && clear_running_jobs "${JQ}" RUNNING && console_log "Check for remaining Jobs:" && aws batch list-jobs --job-queue "${JQ}"
 }
 
 # Cancel jobs from the given Job queue with given status
 # Param 1 Job queue ARN
 # Param 2 Job status
 clear_staged_jobs() {
-	count=0 && numComplete=0 && ids="$(get_aws_jobs ${1} ${2})" && aws_log "Cancelling ${2} Jobs --> $ids"
+	count=0 && numComplete=0 && ids="$(get_aws_jobs ${1} ${2})" && console_log "Cancelling ${2} Jobs --> $ids"
 	while $(has_data $ids); do
 		id=$(get_id $ids) && count=$[$count+1] && [ ${#id} -eq 0 ] && break
-		aws_log "Cancel ${2} Job ARN #${count}: ${id}" && aws batch cancel-job --job-id "${id}" --reason "BAD PIPELINE" && ((numComplete++))
-		[ "${ids/$id}" == "${ids}" ] && aws_log "UNEXPECTED error - invalid ID: ${id}" && return
+		console_log "Cancel ${2} Job ARN #${count}: ${id}" && aws batch cancel-job --job-id "${id}" --reason "BAD PIPELINE" && ((numComplete++))
+		[ "${ids/$id}" == "${ids}" ] && console_log "UNEXPECTED error - invalid ID: ${id}" && return
 		ids="${ids/$id}"
 	done
-	aws_log "Cancelled ${numComplete}/${count} ${2} jobs"
+	console_log "Cancelled ${numComplete}/${count} ${2} jobs"
 }
 
 # Terminate jobs from the given Job queue with given status
 # Param 1 Job queue ARN
 # Param 2 Job status
 clear_running_jobs() {
-	count=0 && numComplete=0 && ids="$(get_aws_jobs ${1} ${2})" && aws_log "Terminating ${2} Jobs --> $ids"
+	count=0 && numComplete=0 && ids="$(get_aws_jobs ${1} ${2})" && console_log "Terminating ${2} Jobs --> $ids"
 	while $(has_data $ids); do
 		id=$(get_id $ids) && count=$[$count+1] && [ ${#id} -eq 0 ] && break
-		aws_log "Terminate ${2} Job ARN #${count}: ${id}" && aws batch terminate-job --job-id "${id}" --reason "BAD PIPELINE" && ((numComplete++))
-		[ "${ids/$id}" == "${ids}" ] && aws_log "UNEXPECTED error - invalid ID: ${id}" && return
+		console_log "Terminate ${2} Job ARN #${count}: ${id}" && aws batch terminate-job --job-id "${id}" --reason "BAD PIPELINE" && ((numComplete++))
+		[ "${ids/$id}" == "${ids}" ] && console_log "UNEXPECTED error - invalid ID: ${id}" && return
 		ids="${ids/$id}"
 	done
-	aws_log "Terminated ${numComplete}/${count} ${2} jobs"
+	console_log "Terminated ${numComplete}/${count} ${2} jobs"
 }
 
 # Get jobs by queue and status
@@ -149,10 +149,10 @@ kill_head_nodes() {
 	else
 		ids=$(aws ec2 describe-instances --filter "Name=tag:StackName,Values=$(get_blj_prop aws.stack)" --query "Reservations[].Instances[?State.Name!='terminated'].InstanceId")
 	fi
-	aws_log "Kill EC2 instances...${ids}" && runningIDs=$(aws ec2 describe-instances --query "Reservations[].Instances[?State.Name=='running'].InstanceId")
-	[ ${#runningInstances} -gt 0 ] && aws ec2 stop-instances --instance-ids ${runningIDs} && aws_log "The following EC2 instances have been stopped --> ${runningIDs}"
-	[ ${#ids} -gt 0 ] && aws ec2 terminate-instances --instance-id "${ids}" && aws_log "The following EC2 instances have been terminated --> ${ids}"
-	aws_log "Describe Remaining EC2 instances:" && 
+	console_log "Kill EC2 instances...${ids}" && runningIDs=$(aws ec2 describe-instances --query "Reservations[].Instances[?State.Name=='running'].InstanceId")
+	[ ${#runningInstances} -gt 0 ] && aws ec2 stop-instances --instance-ids ${runningIDs} && console_log "The following EC2 instances have been stopped --> ${runningIDs}"
+	[ ${#ids} -gt 0 ] && aws ec2 terminate-instances --instance-id "${ids}" && console_log "The following EC2 instances have been terminated --> ${ids}"
+	console_log "Describe Remaining EC2 instances:" && 
 		aws ec2 describe-instances --query "Reservations[].Instances[?State.Name!='terminated'].[InstanceId,State.Name,StateTransitionReason,Monitoring.State]"
 	aws_rm_key_pairs
 }

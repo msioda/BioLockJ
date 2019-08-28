@@ -126,6 +126,12 @@ blj_sup_git() {
 	blj_git_reset "${BLJ_SUP}"
 }
 
+# Append formatted time-stamp as prefix and print log output line "${1}"
+# Param 1 - Log statement  
+console_log() {
+	echo "[ $(date "+%Y-%m-%d %H:%M:%S") ] ${1}"
+}
+
 # Check bash array for element exact match
 # Param 1 - Search pattern = 1st item in arg array: args[0]
 # Param 2 - Remaining script args args[1:n]

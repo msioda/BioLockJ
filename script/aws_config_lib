@@ -12,7 +12,7 @@ alias awsr="aws_report_config"
 # Archive previous AWS Config properties file
 # Param 1 - Pipeline Config file-path
 aws_archive() {
-	aws_log "Archive AWS properties, key file, and start script to ~/.aws/history"
+	console_log "Archive AWS properties, key file, and start script to ~/.aws/history"
 	[ ! -d ~/.aws/history ] && mkdir ~/.aws/history
 	[ -f "${AWS_CONF}" ] && mv "${AWS_CONF}" ~/.aws/history/aws_config-$(date "+%Y-%m-%d.%H.%M.%S")
 	echo "# AWS + Pipeline Config Cache to launch ${1}" > "${AWS_CONF}" && chmod 770 "${AWS_CONF}" 
@@ -22,19 +22,13 @@ aws_archive() {
 # Param 1 - argName Parse filePath for a line that starts with argName
 # Param 2 - filePath Target file
 aws_local_prop() {
-	[ ! -f "${2}" ] && aws_log "Error:  File not found: ${2}" && return
+	[ ! -f "${2}" ] && console_log "Error:  File not found: ${2}" && return
 	foundProfile=0 && prop="${1} = "
 	cat "${2}" | while read -r line; do
 		[ $foundProfile -eq 1 ] && [ "${line:0:1}" == "[" ] && break
 		[ $foundProfile -eq 1 ] && [ "${line:0:${#prop}}" == "${prop}" ] && echo "${line/$prop}" && return
 		[ "$line" == "[$(aws_profile)]" ] && foundProfile=1
 	done
-}
-
-# Log current time-stamp and print the line parameter
-# Param 1 - Log statement  
-aws_log() {
-	echo "[ $(date "+%Y-%m-%d %H:%M:%S") ] ${1}"
 }
 
 # Return configured AWS Profile
@@ -49,12 +43,12 @@ aws_region() {
 
 # Print AWS Config report
 aws_report_config() {
-	[ ! -f "${AWS_CONF}" ] && aws_log "Cannot report cache --> ${AWS_CONF} not found" && return
-	aws_log "---------------------------------------------------"
-	aws_log "Report current AWS Config"
-	aws_log "---------------------------------------------------"
+	[ ! -f "${AWS_CONF}" ] && console_log "Cannot report cache --> ${AWS_CONF} not found" && return
+	console_log "---------------------------------------------------"
+	console_log "Report current AWS Config"
+	console_log "---------------------------------------------------"
 	cat "${AWS_CONF}"
-	aws_log "---------------------------------------------------"
+	console_log "---------------------------------------------------"
 }
 
 # Lists stacks available on AWS. If status arg provided, only return stacks with the given status.
@@ -123,7 +117,7 @@ init_aws_config() {
 	set_pipeline_conig_props "${STANDARD_CONFIG}" && set_pipeline_conig_props "${DOCKER_CONFIG}"
 	defConfig='' && propFile="$(get_property $1 pipeline.defaultProps)"
 	while [ -f "${propFile}" ] && [ "${propFile}" != "${STANDARD_CONFIG}" ] && [ "${propFile}" != "${DOCKER_CONFIG}" ] && [ "${defConfig}" == "${defConfig/$propFile}" ]; do
-		aws_log "Load default Config file: $propFile"
+		console_log "Load default Config file: $propFile"
 		[ ${#defConfig} -gt 0 ] && defConfig=", ${defConfig}"
 		defConfig="${propFile}${defConfig}" && set_pipeline_conig_props "${propFile}" && propFile="$(get_property $propFile pipeline.defaultProps)"
 	done
@@ -132,15 +126,15 @@ init_aws_config() {
 	#[ $# -eq 2 ] && set_blj_prop "aws.profile" "${2}"
  	export AWS_DEFAULT_PROFILE="$(aws_profile)"
 	verify_config
-	aws_log "Using AWS profile: $(aws_profile)"
+	console_log "Using AWS profile: $(aws_profile)"
 	set_blj_prop "internal.config" "${1}"
-	aws_log "MASTER AWS Config properties saved to --> ${AWS_CONF}" && sort -d "${AWS_CONF}" > "${TMP}" && mv "${TMP}" "${AWS_CONF}"
+	console_log "MASTER AWS Config properties saved to --> ${AWS_CONF}" && sort -d "${AWS_CONF}" > "${TMP}" && mv "${TMP}" "${AWS_CONF}"
 }
 
 # Get the ec2 key file for the ec2 head node
 key_file() {
 	[ "$(get_blj_prop aws.stack)" == "" ] && exit_script "Error [ aws_config_lib.key_file() ]: Required AWS Config \"aws.stack\" is undefined!"
-	echo "${HOME}/.aws/$(get_blj_prop aws.stack).pem"
+	console_log "${HOME}/.aws/$(get_blj_prop aws.stack).pem"
 }
 
 # Get local Nextflow <base> config file
@@ -165,7 +159,7 @@ set_blj_prop() {
 # Save AWS Config properties in pipeline Config file to AWS Config file: ${AWS_CONF}
 # Param 1 - Pipeline Config file path
 set_pipeline_conig_props() {
-	aws_log "Update ${AWS_CONF} with AWS properties found in Pipeline Config ${1}"
+	console_log "Update ${AWS_CONF} with AWS properties found in Pipeline Config ${1}"
 	while read line; do
 		line="$(echo ${line} | xargs)" && [ ${#line} -eq 0 ] || [ "${line:0:1}" == "#" ] && continue
 		IFS=$'=' && tokens=( ${line} ) && reset_IFS && set_blj_prop "${tokens[0]}" "$(eval echo ${tokens[1]})"
@@ -177,7 +171,7 @@ set_pipeline_conig_props() {
 verify_config() {
 	err="Error [ aws_config_lib.verify_config() ]: Unable to find required AWS Config: ${AWS_CONF}"
 	err2="Please verify AWS client configuration details from command line and try again."
-	aws_log "Verfiying rquired AWS Config configuration..."  
+	console_log "Verfiying rquired AWS Config configuration..."  
 	quiet=$(aws_region)
 	quiet=$(get_blj_prop aws.ec2InstanceType t2.micro)
 	quiet=$(get_blj_prop docker.imgVersion latest)
@@ -190,7 +184,7 @@ verify_config() {
 
 # Verify the Pipeline Config property aws.ec2AcquisitionStrategy
 verify_ec2_props() {
-	aws_log "Verify required BLJ pipeline properties..." && ec2SpotPer=$(get_blj_prop aws.ec2SpotPer)
+	console_log "Verify required BLJ pipeline properties..." && ec2SpotPer=$(get_blj_prop aws.ec2SpotPer)
 	ec2strategy=$(echo $(get_blj_prop aws.ec2AcquisitionStrategy) | awk '{print toupper($0)}')
 	[ ${#ec2strategy} -eq 0 ] && 
 		exit_script "Error [ aws_config_lib.verify_ec2_props() ]: Required property \"aws.ec2AcquisitionStrategy\" is undefined!"

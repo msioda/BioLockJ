@@ -8,7 +8,7 @@
 # Download reports from AWS
 # Param 1 - Pipeline directory name
 aws_dl_reports() {
-	aws_log "Opening SSH tunnel to Head Node...$(get_ec2_public_ip)"
+	console_log "Opening SSH tunnel to Head Node...$(get_ec2_public_ip)"
 	scp -pro StrictHostKeyChecking=no -i $(key_file) ${EC2_USER}@$(get_ec2_public_ip):${EFS}/pipelines/${1} $(get_blj_prop pipeline.downloadDir)
 }
 
@@ -16,7 +16,7 @@ aws_dl_reports() {
 # Param 1 - Nextflow label
 # Param 2 - Nextflow container
 add_nextflow_job_def() {
-	aws_log "Add Nextflow Docker job-definition label=${1}, container=${2}"
+	console_log "Add Nextflow Docker job-definition label=${1}, container=${2}"
 	echo "    withLabel: '${1}' {" >> "$(local_nf_conf)"
 	echo "        container = '${2}'" >> "$(local_nf_conf)"
 	echo "    }" >> "$(local_nf_conf)"
@@ -24,17 +24,17 @@ add_nextflow_job_def() {
 
 # Build Docker Job defs to use with label references in Nextflow main.nf
 build_docker_job_defs() {
-	[ -f "$(get_docker_job_def_flag)" ] && aws_log "Jobs already exist, found flag file: $(get_docker_job_def_flag)" && return
+	[ -f "$(get_docker_job_def_flag)" ] && console_log "Jobs already exist, found flag file: $(get_docker_job_def_flag)" && return
 	dockerUser="$(get_blj_prop docker.user)"
 	init_nextflow_config && dockerModules=$(docker search --no-trunc --limit 100 $dockerUser | grep -E ^$dockerUser ) 
-	[ ${#dockerModules} -eq 0 ] && aws_log "No Docker images found for Docker Account \"${dockerUser}\"" && return
-	IFS=$'\t' && aws_log "Building Docker job-definitions..."
+	[ ${#dockerModules} -eq 0 ] && console_log "No Docker images found for Docker Account \"${dockerUser}\"" && return
+	IFS=$'\t' && console_log "Building Docker job-definitions..."
 	echo ${dockerModules} | while read -r line; do
 		jobImg=$(echo $line | cut -f 1 -d " "):$(get_blj_prop docker.imgVersion)
 		# Uncomment next line to build java_module ONLY (the only Docker container needed to run testAwsEmail.properties)
 		#[ $(echo $jobImg | grep -c 'java_module') -eq 0 ] && continue
-		[ $(echo $jobImg | egrep -c 'blj_basic|biolockj_controller') -gt 0 ] && aws_log "Skip Docker image: \"$jobImg\"" && continue
-		aws_log "Add job-definition for Docker image: \"$jobImg\"" && jobLabel=${jobImg/\//_} && jobLabel=${jobLabel/:/_} 
+		[ $(echo $jobImg | egrep -c 'blj_basic|biolockj_controller') -gt 0 ] && console_log "Skip Docker image: \"$jobImg\"" && continue
+		console_log "Add job-definition for Docker image: \"$jobImg\"" && jobLabel=${jobImg/\//_} && jobLabel=${jobLabel/:/_} 
 	    jobConfig="{ 
 			\"image\": \"${jobImg}\", \"vcpus\": 2, \"memory\": 1024, \"command\": [ \"/bin/bash\" ], \"jobRoleArn\": \"$(get_stack_param ECSTaskRole)\",
 			\"volumes\": [ { \"host\": { \"sourcePath\": \"${EFS}\" }, \"name\": \"efs\" }, { \"host\": { \"sourcePath\": \"${EC2_HOME}\" }, \"name\": \"hostHome\" } ],
@@ -44,18 +44,18 @@ build_docker_job_defs() {
 		jobDef="$(get_blj_prop aws.stack)_${jobLabel}" && jobName=$(aws batch describe-job-definitions --status ACTIVE --job-definition-name ${jobDef} --query "jobDefinitions[*].jobDefinitionName")
 		if [ ${#jobName} -eq 0 ]; then
 			registeredJob=$(aws batch register-job-definition --job-definition-name $jobDef --type container --container-properties "${jobConfig}")
-			aws_log "Registered new Docker job-definition: ${registeredJob}"
+			console_log "Registered new Docker job-definition: ${registeredJob}"
 			jobName=$(echo $registeredJob | grep job-definition | sed 's/^.*job-definition/job-definition:\//' | awk '//{print $1}' )
 			[ ${#jobName} -eq 0 ] && exit_script "Error [ aws_head_node_lib.build_docker_job_defs() ]: Failed to register job-definition: ${jobDef}"
 		fi
-		aws_log "Registered Docker job-definition: ${jobName}" && add_nextflow_job_def "image_${jobLabel}" "${jobName}"
+		console_log "Registered Docker job-definition: ${jobName}" && add_nextflow_job_def "image_${jobLabel}" "${jobName}"
 	done
 	reset_IFS && echo "}" >> "$(local_nf_conf)" && echo "" >> "$(local_nf_conf)" && touch "$(get_docker_job_def_flag)"
 }
 
 # Connect to running head node
 connect_head() {
-	aws_log "SSH --> $(head_name) $(get_ec2_public_ip)" && ssh -o StrictHostKeyChecking=no -i $(key_file) ${EC2_USER}@$(get_ec2_public_ip)
+	console_log "SSH --> $(head_name) $(get_ec2_public_ip)" && ssh -o StrictHostKeyChecking=no -i $(key_file) ${EC2_USER}@$(get_ec2_public_ip)
 }
 
 # Get the flag file that indicates Docker job definitions were created
@@ -82,24 +82,24 @@ head_name() {
 
 # Start Head node if stopped, create if not found, and set awsEc2InstanceID
 init_ec2_head_node() {
-	aws_log "Starting --> [ init_ec2_head_node ]"
+	console_log "Starting --> [ init_ec2_head_node ]"
 	ec2Type="$(get_blj_prop aws.ec2InstanceType)" && ec2Id="$(get_blj_prop aws.ec2InstanceID)" && ec2Label="EC2 instance \"${ec2Id}\"" && cache_key_pair
-	[ ${#ec2Id} -gt 0 ] && aws_log "Found ${ec2Label}" &&
+	[ ${#ec2Id} -gt 0 ] && console_log "Found ${ec2Label}" &&
 		instances=$(aws ec2 describe-instances --instance-ids "$ec2Id" --query "Reservations[].Instances[].[State.Name, InstanceId]")
 	if [ ${#instances} -gt 0 ] && [ "${instances}" != "${instances/$ec2Id}" ]; then
-		aws_log "Found ${ec2Label} on AWS cloud"
+		console_log "Found ${ec2Label} on AWS cloud"
 		if [ "${instances/stopped}" != "${instances}" ]; then
 			printf "${ec2Label} was stopped - attempting restart, please wait..." && ec2Status=start && aws ec2 start-instances --instance-ids "${ec2Id}"
 		elif [ "${instances/terminated}" != "${instances}" ]; then
-			aws_log "${ec2Label} was terminated...launching a new instance, please wait..." && ec2Id=''
+			console_log "${ec2Label} was terminated...launching a new instance, please wait..." && ec2Id=''
 		elif [ "${instances/pending}" != "${instances}" ] || [ "${instances/shutting-down}" != "${instances}" ] || [ "${instances/stopping}" != "${instances}" ]; then
 			exit_script "Error [ aws_head_node_lib.init_ec2_head_node() ]: ${ec2Label} is in a transition state, abort script. Check console and try again --> ${instances}"
 		elif [ "${instances/running}" != "${instances}" ]; then
-			aws_log "${ec2Label} is running..." && ec2Status=ok && return
+			console_log "${ec2Label} is running..." && ec2Status=ok && return
 		fi
 	fi
 	if [ "${ec2Status}" != "start" ] && [ "${ec2Status}" != "ok" ]; then
-		aws_log "Creating EC2 head node --> type: ${ec2Type}" && subnet="$(get_stack_param Subnet1)" &&
+		console_log "Creating EC2 head node --> type: ${ec2Type}" && subnet="$(get_stack_param Subnet1)" &&
 			secureGroup="$(get_stack_param BastionSecurityGroup)" && templateId="$(get_stack_param HeadNodeLaunchTemplateId)"
 		[ "$(get_blj_prop aws.stack)" == "" ] || [ ${#secureGroup} -eq 0 ] || [ ${#subnet} -eq 0 ] || [ ${#templateId} -eq 0 ] &&
 			exit_script "Error [ aws_head_node_lib.init_ec2_head_node() ]: Cannot launch EC2 - required aws.stack parameters undefined in ${AWS_CONF}"
@@ -126,13 +126,13 @@ init_nextflow_config() {
 
 # Launch a new ec2 head node
 launch_ec2_head_node() {
-	aws_log "Starting --> [  launch_ec2_head_node ]" && [ ! -f "$(get_docker_job_def_flag)" ] && [ -x "$(which docker)" ] && build_docker_job_defs
+	console_log "Starting --> [  launch_ec2_head_node ]" && [ ! -f "$(get_docker_job_def_flag)" ] && [ -x "$(which docker)" ] && build_docker_job_defs
 	init_ec2_head_node && [ ! -f "$(get_docker_job_def_flag)" ] && exe_remote_cmd "build_docker_job_defs"
 	keyFound=$(cat ~/.ssh/known_hosts | grep -c $(get_ec2_public_ip))
 	[ ${keyFound} -gt 0 ] && ssh-keygen -f ~/.ssh/known_hosts -R $(get_ec2_public_ip)
-	stage_pipeline && aws_log "Exectue Remote CMD [  nohup ${EC2_HOME}/start-$(get_config_name).sh >/dev/null 2>&1 &  ]"
+	stage_pipeline && console_log "Exectue Remote CMD [  nohup ${EC2_HOME}/start-$(get_config_name).sh >/dev/null 2>&1 &  ]"
 	exe_remote_cmd "nohup bash ${EC2_HOME}/start-$(get_config_name).sh >/dev/null 2>&1 &"
-	aws_log "Exectue CMD [  connect_head --> type \"blj_go\" to navigate to the EC2 pipeline output directory  ]"
+	console_log "Exectue CMD [  connect_head --> type \"blj_go\" to navigate to the EC2 pipeline output directory  ]"
 	connect_head
 }
 
@@ -143,5 +143,5 @@ start_ec2_head_node() {
 		ec2Status=$(aws ec2 describe-instance-status --instance-ids $(get_blj_prop aws.ec2InstanceID) --query "InstanceStatuses[*].SystemStatus.Status")
 		printf "." && sleep 5s && runTime=$((runTime+5))  
 	done
-	echo "ready" && aws_log "EC2 Instance [ ID=$(get_blj_prop aws.ec2InstanceID) ] started in ${runTime} seconds"
+	echo "ready" && console_log "EC2 Instance [ ID=$(get_blj_prop aws.ec2InstanceID) ] started in ${runTime} seconds"
 }

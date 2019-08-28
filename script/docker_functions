@@ -141,7 +141,7 @@ goDock() {
 }
 
 # Retruns 0 (TRUE) if running in a Docker container (in which /.dockerenv exists)
-inDockerContainer() {
+in_docker_env() {
 	[ -f "/.dockerenv" ]
 }
 
@@ -154,6 +154,6 @@ push_blj_only() {
 # Run a clone of the last biolockj_controller container
 # Very useful to debug after failed Docker pipelines
 run_docker_clone() {
-	$(inDockerContainer) && export DOCKER_CLONE_SCRIPT="${BLJ_HOST_HOME}/$(basename $DOCKER_CLONE_SCRIPT)"
+	$(in_docker_env) && export DOCKER_CLONE_SCRIPT="${BLJ_HOST_HOME}/$(basename $DOCKER_CLONE_SCRIPT)"
 	[ -x "${DOCKER_CLONE_SCRIPT}" ] && bash "${DOCKER_CLONE_SCRIPT}"
 }
