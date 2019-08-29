@@ -157,3 +157,18 @@ run_docker_clone() {
 	$(in_docker_env) && export DOCKER_CLONE_SCRIPT="${BLJ_HOST_HOME}/$(basename $DOCKER_CLONE_SCRIPT)"
 	[ -x "${DOCKER_CLONE_SCRIPT}" ] && bash "${DOCKER_CLONE_SCRIPT}"
 }
+
+# Call with source $BLJ/script/docker_functions; verifyHostDir ${path}
+verifyHostDir(){
+ 	cmd="-d tmpTest/$(basename $1)"
+ 	docker run --rm --mount type=bind,source=$(dirname $1),target=/tmpTest ubuntu [ ${cmd} ] \
+ 		&& echo "yes" || echo "no"
+ 	
+ }
+ 
+# Call with: source ${BLJ}/script docker_functions; verifyHostFile ${path}
+verifyHostFile(){
+ 	cmd="-f tmpTest/$(basename $1)"
+ 	docker run --rm --mount type=bind,source=$(dirname $1),target=/tmpTest ubuntu [ ${cmd} ] \
+ 		&& echo "yes" || echo "no"
+}
