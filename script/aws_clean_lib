@@ -29,7 +29,7 @@ aws_deregister_job_defs() {
 aws_get_arn() {
 	id='' && i=1
 	while [ ${#id} -eq 0 ] || [ "${id:0:1}" != "a" ]; do
-		id=$(echo $1 | cut -f $i -d " ") && ((i++))
+		id=$(get_id $1 $i) && ((i++))
 	done
 	echo "${id}"
 }
@@ -120,13 +120,15 @@ clear_running_jobs() {
 # Param 1 - Job queue ARN
 # Param 2 - Job status
 get_aws_jobs() {
-	echo $(aws batch list-jobs --job-queue ${1} --job-status ${2} --query "jobSummaryList[].jobId")
+	aws batch list-jobs --job-queue ${1} --job-status ${2} --query "jobSummaryList[].jobId"
 }
 
 # Extract ID from a list of IDs
 # Param 1 - list of ids
+# Param 2 - cut -f arg value
 get_id() {
-	echo $(echo "${1}" | cut -f 1 -d " ")
+	if [ ${#2} -gt 0 ]; then cutArg=${2}; else cutArg=1; fi
+	echo "${1}" | cut -f ${cutArg} -d " "
 }
 
 # Check input for valid data

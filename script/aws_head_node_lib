@@ -130,8 +130,8 @@ launch_ec2_head_node() {
 	init_ec2_head_node && [ ! -f "$(get_docker_job_def_flag)" ] && exe_remote_cmd "build_docker_job_defs"
 	keyFound=$(cat ~/.ssh/known_hosts | grep -c $(get_ec2_public_ip))
 	[ ${keyFound} -gt 0 ] && ssh-keygen -f ~/.ssh/known_hosts -R $(get_ec2_public_ip)
-	stage_pipeline && console_log "Exectue Remote CMD [  nohup ${EC2_HOME}/start-$(get_config_name).sh >/dev/null 2>&1 &  ]"
-	exe_remote_cmd "nohup bash ${EC2_HOME}/start-$(get_config_name).sh >/dev/null 2>&1 &"
+	stage_pipeline && console_log "Exectue Remote CMD [  nohup ${EC2_HOME}/start-$(get_config_root).sh >/dev/null 2>&1 &  ]"
+	exe_remote_cmd "nohup bash ${EC2_HOME}/start-$(get_config_root).sh >/dev/null 2>&1 &"
 	console_log "Exectue CMD [  connect_head --> type \"blj_go\" to navigate to the EC2 pipeline output directory  ]"
 	connect_head
 }
@@ -143,5 +143,5 @@ start_ec2_head_node() {
 		ec2Status=$(aws ec2 describe-instance-status --instance-ids $(get_blj_prop aws.ec2InstanceID) --query "InstanceStatuses[*].SystemStatus.Status")
 		printf "." && sleep 5s && runTime=$((runTime+5))  
 	done
-	echo "ready" && console_log "EC2 Instance [ ID=$(get_blj_prop aws.ec2InstanceID) ] started in ${runTime} seconds"
+	console_log "Started Head-Node: aws.ec2InstanceID=$(get_blj_prop aws.ec2InstanceID) in ${runTime} seconds"
 }

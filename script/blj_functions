@@ -19,18 +19,18 @@ add_named_arg() {
 
 # Call ANT to build BioLockJ
 blj_build() {
-	echo "Building BioLockJ with ANT..."
-	[ ! -f "$BLJ/resources/build.xml" ] && exit_script "Error [ blj_functions.blj_build() ]: ANT build script missing: $BLJ/resources/build.xml"
+	console_log "Building BioLockJ with ANT..."
+	[ ! -f "$BLJ/resources/build.xml" ] && console_log "Error [ blj_functions.blj_build() ]: ANT build script missing: $BLJ/resources/build.xml" && return
 	myDir="$PWD"
 	cd $BLJ/resources
 	[ ${#1} -eq 0 ] && ant
 	[ ${#1} -gt 0 ] && ant $1
-	echo "Ant script execution complete"
+	console_log "Ant script execution complete"
 
 	if [ -f "$BLJ/dist/BioLockJ.jar" ]; then
 		ls -lh "$BLJ/dist/BioLockJ.jar"
 	else
-		echo "Build Failed - missing $BLJ/dist/BioLockJ.jar"
+		console_log "Build Failed - missing $BLJ/dist/BioLockJ.jar"
 	fi
 	cd $myDir
 }
@@ -44,7 +44,7 @@ blj_deploy() {
 
 # Git latest $BLJ + build BioLockJ.jar
 blj_git() {
-	[ ! -d "${BLJ}" ] && echo "Cannot build BLJ: directory not found: ${BLJ}" && return
+	[ ! -d "${BLJ}" ] && console_log "Cannot build BLJ: directory not found: ${BLJ}" && return
 	blj_git_reset "${BLJ}"
 }
 
@@ -65,7 +65,7 @@ blj_git_reset() {
 
 # This script navigates the $USER to their most recent pipeline and lists the current directory
 blj_go() {
-	[ ! -d "${BLJ_PROJ}" ] && echo "Exit program - BLJ_PROJ: directory not found: ${BLJ_PROJ}" && return
+	[ ! -d "${BLJ_PROJ}" ] && exit_script "Exit program - BLJ_PROJ: directory not found: ${BLJ_PROJ}"
 	pipeline=$(most_recent_pipeline)
 	if [ ${#pipeline} -gt 0 ]; then
 		echo "Goto latest BioLockJ pipeline: ${pipeline}"
@@ -218,6 +218,14 @@ kill_blj() {
 	pgrep ${procName}
 	pkill -9 [^]]${procName}
 }
+
+# Return basename of ${2} under new parent directory ${1}
+# Param 1 - Target directory
+# Param 2 - Absolute file/dir path
+modify_path() {
+	echo "${1}/$(basename $2)" 
+}
+
 
 # Override function in $BLJ_SCRIPT/blj_functions to return the most recent pipeline dir-path 
 most_recent_pipeline() {
