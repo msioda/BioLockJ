@@ -110,7 +110,6 @@ stage_blj_config() {
 	console_log "Finished --> [  stage_blj_config  ]: EFS Pipeline Config: $(get_config ec2)"
 }
 
-
 # Upload local pipeline inputs and aws/nextflow config files to EFS
 stage_pipeline() {
 	console_log "Starting --> [  stage_pipeline  ]: Upload pipeline config to EC2: $(get_blj_prop aws.ec2InstanceID)"
@@ -161,7 +160,7 @@ stage_efs_dbs() {
 	
 	if [ -f "${rdpDb}" ]; then
 		filePath="$(upload_to_efs $(dirname $rdpDb) $BLJ_DB)" && echo "Uploading RDP DB directory: $(dirname $rdpDb) --> ${filePath}"
-		exe_remote_cmd ". ${EC2_HOME}/.bash_profile; set_property $(get_config ec2) rdp.db ${filePath}/$(basename $rdpDb)"
+		update_efs_config "rdp.db" "${filePath}/$(basename $rdpDb)"
 	fi 
 
 	console_log "Finished --> [  stage_efs_dbs  ]: DB uploads complete (if any)..."
@@ -179,13 +178,20 @@ stage_efs_inputs() {
 	console_log "Finished --> [  stage_efs_inputs  ]: Pipeline input uploads complete (if any)..."
 }
 
+# Update EC2 config 
+# Param 1 - Config property name
+# Param 2 - Config property value
+update_efs_config() {
+	exe_remote_cmd ". ${EC2_HOME}/.bash_profile; set_property $(get_config ec2) ${1} ${2}"
+}
+
 # Upload file/directory to the EC2 head node, if no target dir specified use EC2 ${HOME}.
 # Return the EC2 path
 # Param 1 - Local file or directory
 # Param 2 - (optional) AWS Target EC2 directory-path 
 upload_to_efs() {
 	if [ $# -eq 2 ]; then target="${2}"; else target="${EC2_HOME}"; fi
-	scp -pro StrictHostKeyChecking=no -i $(key_file) "${1}" ${EC2_USER}@$(get_ec2_public_ip):${target}
+	scp -pro StrictHostKeyChecking=no -i "$(key_file)" "${1}" ${EC2_USER}@$(get_ec2_public_ip):${target}
 	echo "${target}/$(basename $1)"
 }
 
@@ -196,5 +202,5 @@ upload_to_efs() {
 # Param 3 - Target path
 upload_to_efs_and_update_config() {
 	target="$(upload_to_efs $2 $3)" && console_log "Uploaded ${2} --> ${target}"
-	exe_remote_cmd ". ${EC2_HOME}/.bash_profile; set_property $(get_config ec2) ${1} ${target}"
+	update_efs_config "${1}" "${target}"
 }
