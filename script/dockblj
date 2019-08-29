@@ -140,6 +140,8 @@ on_aws() {
 parse_script_input() {
 	if $(containsElement gui $@); then startGUI=true; else startGUI=false; fi
 	configPath=$(named_arg $@ c)
+	newPass=$(named_arg $@ p)
+	restartPath=$(named_arg $@ r)
 	if [ $# -eq 1 ] && [ ${#configPath} -eq 0 ] && ! $startGUI; then
 		[ -f "${1}" ] && configPath="${1}" && console_log "Run Docker-BioLockJ pipeline w/ Config --> ${1}" 
 		[ -d "${1}" ] && restartPath="${1}" && console_log "Restart Docker-BioLockJ pipeline --> ${1}" 
@@ -178,9 +180,6 @@ run_docker() {
 # Set arg flags
 # Params - $@ --> all script input args
 set_arg_flags() {
-	configPath=$(named_arg $@ c)
-	newPass=$(named_arg $@ p)
-	restartPath=$(named_arg $@ r)
 	if [ ${#configPath} -gt 0 ]; then mapConfigDir=true; else mapConfigDir=false; fi
 	if [ ${#inputPath} -gt 0 ]; then mapInputDir=true; else mapInputDir=false; fi
 	if [ ${#metaPath} -gt 0 ]; then mapMetaDir=true; else mapMetaDir=false; fi
