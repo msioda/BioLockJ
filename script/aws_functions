@@ -10,18 +10,14 @@ alias tailnf="tail -1000f /.nextflow.log"
 # Build Cloud-formation Stack
 build_stack() {
 	numSecs=0 && stackYml="file://${BLJ}/resources/aws/StackEFS.yml" && stack="$(get_blj_prop aws.stack)"
-	[ $(is_stack_complete) == "true" ] && aws_log "Reusing configured CREATE_COMPLETE AWS Stack: ${stack}" && return 
-	aws_log "Please wait while building AWS cloud formation stack: ${stack}..." 
-	#myIP=$(curl -s checkip.dyndns.org | sed -e 's/.*Current IP Address: //' -e 's/<.*$//')
-	
-	ec2SpotPer=$(get_blj_prop aws.ec2SpotPer)
-	[ ${#ec2SpotPer} -eq 0 ] && ec2SpotPer=80
-	params="ParameterKey=SpotBidPercentage,ParameterValue=${ec2SpotPer}"
-	aws_log "aws cloudformation create-stack --tags \"Name=owner,Values=$(get_aws_user)\" --template-body ${stackYml} --stack-name ${stack} --capabilities CAPABILITY_IAM --parameters ${params}"
+	$(is_stack_ready) && console_log "Reusing configured CREATE_COMPLETE AWS Stack: ${stack}" && return 
+	console_log "Please wait while building AWS cloud formation stack: ${stack}..." 
+	params="ParameterKey=SpotBidPercentage,ParameterValue=$(get_blj_prop aws.ec2SpotPer 80)"
+	params="${params} ParameterKey=OnDemandBatchMaxvCPUs,ParameterValue=$(get_blj_prop aws.maxBatchvCpus 256)"
+	console_log "aws cloudformation create-stack --tags \"Name=owner,Values=$(get_aws_user)\" --template-body ${stackYml} --stack-name ${stack} --capabilities CAPABILITY_IAM --parameters ${params}"
 	aws cloudformation create-stack --tags "Key=owner,Value=$(get_aws_user)" --template-body "${stackYml}" --stack-name "${stack}" --capabilities CAPABILITY_IAM --parameters ${params}
-	#aws cloudformation create-stack --template-body "${stackYml}" --stack-name "${stack}" --capabilities CAPABILITY_IAM --parameters ${params}
-	while [ $(is_stack_complete) != "true" ]; do printf "." && sleep 5s && numSecs=$((numSecs+5)); done
-	aws_log "New AWS Stack: ${stack} created in ${numSecs} seconds"
+	while ! $(is_stack_ready); do printf "." && sleep 5s && numSecs=$((numSecs+5)); done
+	console_log "Created AWS Stack: ${stack} in ${numSecs} seconds"
 }
 
 # Get the s3 bucket for pipeline output, if no bucket name specified, a new bucket is created
@@ -31,11 +27,12 @@ build_s3() {
 	testAws=$(aws s3api list-buckets --region $(aws_region) --query "Buckets[?Name=='$awsS3']|[*].Name")
 	if [ ${#testAws} -eq 0 ] || [ "${testAws}" == "None" ]; then
 		testAws=$(aws s3api create-bucket --region $(aws_region) --bucket ${awsS3})
-		aws s3api put-object --bucket "${awsS3}" --key OWNER --tagging $(get_aws_user)
+		# This doesn't work - still need to figure out how to add tag --> key=ower, value=$(get_aws_user)
+		#aws s3api put-object --bucket "${awsS3}" --key OWNER --tagging $(get_aws_user)
 		[ ${#testAws} -eq 0 ] || [ "${testAws}" == "None" ] && exit_script "Error [ aws_functions.build_s3() ]:  Failed to create S3 bucket: ${awsS3}"
-		aws_log "Set aws.s3=${awsS3}"
+		console_log "Set aws.s3=${awsS3}"
 	else
-		aws_log "Found existing S3 Bucket ${awsS3}"
+		console_log "Found existing S3 Bucket ${awsS3}"
 	fi
 
 	s3items=$(aws s3api list-objects --bucket $awsS3 --query "Contents[].Key")
@@ -45,16 +42,16 @@ build_s3() {
 
 # Build key pair + save to $(key_file) file with security requirement (perms 400) 
 cache_key_pair() {
-	[ -f "$(key_file)" ] && aws_log "Found existing: $(key_file)" && return
+	[ -f "$(key_file)" ] && console_log "Found existing: $(key_file)" && return
 	keys=$(aws ec2 describe-key-pairs) && [ "${keys/$keyPair}" == "$keys" ]
 	aws ec2 create-key-pair --key-name "$(get_blj_prop aws.stack)" --query "KeyMaterial" > "$(key_file)" 
-	chmod 400 "$(key_file)" && aws_log "Security keys created --> private key: $(key_file)"
+	chmod 400 "$(key_file)" && console_log "Security keys created --> private key: $(key_file)"
 }
 
 # Deploy AWS S3 Bucket, EC2-KeyPair, Cloud Formation Stack (including Comp. Env. + Batch queues)
 # Confirm any configured values exist, create objects that are undefined as store them in AWS config
 deploy_cloud_formation() {
-	aws_log "Starting --> [  deploy_cloud_formation  ]" && build_s3 && set_stack_name && cache_key_pair && verify_stack
+	console_log "Starting --> [  deploy_cloud_formation  ]" && build_s3 && set_stack_name && cache_key_pair && verify_stack
 }
 
 # Generate a name not found in $1, created using format $USER-biolockj
@@ -83,13 +80,9 @@ get_ami() {
 	echo "${awsAmi}"
 }
 
-# Check status of Cloud Formation Stack
-is_stack_complete() {
-	stacks=$(aws cloudformation describe-stacks --query "Stacks[].StackName")
-	[ ${#stacks} -eq 0 ] || [ "${stacks}" == "None" ] && echo "false" && return
-	stacks=$(aws cloudformation describe-stacks --query "Stacks[?StackStatus=='CREATE_COMPLETE']|[*].StackName")
-	[ ${#stacks} -gt 0 ] && [ "${stacks}" != "None" ] && [ "${stacks/$(get_blj_prop aws.stack)}" != "${stacks}"  ] && echo "true" && return
-	echo "false"
+# Check status of CloudFormation Stack
+is_stack_ready() {
+	[ $(aws cloudformation describe-stacks --stack-name "$(get_blj_prop aws.stack)" --query "Stacks[*].StackStatus") == CREATE_COMPLETE ]
 }
 
 # List existing S3 bucket names in your region
@@ -120,40 +113,41 @@ list_ec2_instance_types() {
 # Param 1 - Pipeline Config file-path
 run_aws() {
 	[ ! -f "${1}" ] && exit_script "Error [ aws_functions.run_aws() ]: Required pipeline Config file not found: ${1}"
-	aws_log "Starting --> [  run_aws ${1}  ]" && init_aws_config "${1}" && deploy_cloud_formation && launch_ec2_head_node
+	console_log "Starting --> [  run_aws ${1}  ]" && init_aws_config "${1}" && deploy_cloud_formation && launch_ec2_head_node
 }
 
 # This method will  build AWS environment and launch BioLockJ GUI on AWS 
 run_aws_gui() {
-	aws_log "Starting --> [  run_aws ${1}  ]" && init_aws_config "gui" && deploy_cloud_formation && echo "TBD - add code to launch GUI from head node"
+	console_log "Starting --> [  run_aws ${1}  ]" && init_aws_config "gui" && deploy_cloud_formation && echo "TBD - add code to launch GUI from head node"
 }
 
 # Create default stack name if $(get_blj_prop aws.stack) is undefined in AWS Config
 set_stack_name() {
+	[ "$(get_blj_prop aws.stack)" == "" ] && set_blj_prop aws.stack "$(get_aws_user)-biolockj"
 	stack="$(get_blj_prop aws.stack)"
-	[ ${#stack} -eq 0 ] && set_blj_prop aws.stack "$(get_aws_user)-biolockj"
-	enabledStacks=$(aws_stacks CREATE_COMPLETE)
-	if [ "${enabledStacks/$stack}" == "${enabledStacks}" ]; then
+	if ! $(is_stack_ready); then
 		stacks=$(aws cloudformation list-stacks --query "StackSummaries[].StackName")
-		set_blj_prop aws.stack $(generate_name $(get_blj_prop aws.stack) "${stacks}")
+		if [ "${stacks/$stack}" != "${stacks}" ]; then
+			set_blj_prop aws.stack $(generate_name $stack "$stacks")
+		fi
 	fi
-	aws_log "Cloudformation: \"aws.stack=$(get_blj_prop aws.stack)\""
+	console_log "Cloudformation: \"aws.stack=$(get_blj_prop aws.stack)\""
 }
 
 # Return stack name.  If aws.stack pipeline Config defined, verify it exists with status CREATE_COMPLETE.
 # If aws.stack was undefined, create a new stack.
 verify_stack() {
-	stack="$(get_blj_prop aws.stack)" && aws_log "Check status of AWS Stack: \"${stack}\""
+	stack="$(get_blj_prop aws.stack)" && console_log "Check status of AWS Stack: \"${stack}\""
 	allStacks=$(aws cloudformation list-stacks --query "StackSummaries[].StackName")
 	enabledStacks=$(aws_stacks CREATE_COMPLETE) && createInProgStacks=$(aws_stacks CREATE_IN_PROGRESS)
 	if [ ${#enabledStacks} -gt 0 ] && [ "${enabledStacks/$stack}" != "${enabledStacks}" ]; then
-		aws_log "Configured AWS Stack: ${stack} --> status=CREATE_COMPLETE"
+		console_log "Configured AWS Stack: ${stack} --> status=CREATE_COMPLETE"
 	elif [ ${#createInProgStacks} -gt 0 ] && [ "${createInProgStacks/$stack}" != "${createInProgStacks}" ]; then
 		sleep 30 && verify_stack
 	elif [ ${#allStacks} -gt 0 ] && [ "${allStacks/$stack}" != "${allStacks}" ]; then
 		status=$(aws cloudformation describe-stacks --stack-name "${stack}" --query "Stacks[*].StackStatus")
 		exit_script "Error [ aws_functions.verify_stack() ]:  Configured AWS Stack \"${stack}\" exists but is disabled --> status=$status"
-	else 
+	else # Malcolm says we may not need to verify stack name is unique!!!
 		build_stack
 	fi
 }

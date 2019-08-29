@@ -179,7 +179,7 @@ public interface BioModule {
 	public static final String OUTPUT_DIR = "output";
 
 	/**
-	 * Name of the temporary sub-directory: {@value #OUTPUT_DIR}
+	 * Name of the temporary sub-directory: {@value #TEMP_DIR}
 	 */
 	public static final String TEMP_DIR = "temp";
 }

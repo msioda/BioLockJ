@@ -24,40 +24,40 @@ GUI_PORT=8080
 # In AWS mode, add a indicator, otherwise include the Host path for pipeline input. 
 # These paths are used by biolockj_controller to map Docker volumes for java_module containers
 blj_options() {
-	if $(inDockerContainer); then
+	if $(in_docker_env); then
 		options="${BLJ_OPTIONS}"
-	else # on host machine
+	else
 		options="-u ${HOME} -b $(blj_proj) -h $(hostname)"
 		$mapBlj && options="${options} -blj ${BLJ}"
 		$mapBljSup && options="${options} -blj_sup ${BLJ_SUP}"
 	fi
 	
-	# -i is required if not launching the WebApp GUI 
-	$startGUI && echo "${options}" && return
-	options="${options} -i ${inputPath}" 
-
-	$mapRestartDir && options="${options} -r ${BLJ_PROJ}/${restartPath#$(blj_proj)/}"
-	$mapMetaDir && options="${options} -m $metaPath"
-	$mapPrimerDir && options="${options} -t $primerPath"
-	$runAws && options="${options} -aws"
-	$doChangePass && options="${options} -p $newPass"
-	echo "${options} -c ${configPath}"
+	if $startGUI; then 
+		echo "${options}"
+	else
+		options="${options} -i ${inputPath}" 
+		$mapRestartDir && options="${options} -r ${BLJ_PROJ}/${restartPath#$(blj_proj)/}"
+		$mapMetaDir && options="${options} -m $metaPath"
+		$mapPrimerDir && options="${options} -t $primerPath"
+		$(on_aws) && options="${options} -aws"
+		$doChangePass && options="${options} -p $newPass"
+		echo "${options} -c ${configPath}"
+	fi
 }
 
 # If dockblj called by biolockj_controller Docker container in GUI mode, set BLJ_PROJ based on the $BLJ_OPTIONS
 # env var, otherwise return $BLJ_PROJ if called from a host machine.  If dir ends with "/" trim it off
 blj_proj() {
-	if $(inDockerContainer) && [ ${#BLJ_OPTIONS} -gt 0 ]; then
-		found='false' && opts=( "${BLJ_OPTIONS}" )
+	if $(in_docker_env) && [ ${#BLJ_OPTIONS} -gt 0 ]; then
+		found=false && opts=( "${BLJ_OPTIONS}" )
 		args=("$@") && i=0 && name='' && numArgs=${#args[*]} && out=''
 		for arg in ${z[@]}; do
     			arg=$(echo $arg | sed 's/^\(-\)*//')
-    			[ "${found}" == "true" ] && bljProj="${arg}" && break
-    			[ "${arg}" == "b" ] && found="true"
+    			$found && bljProj="${arg}" && break
+    			[ "${arg}" == "b" ] && found=true
 		done		
-	else
-		bljProj="${BLJ_PROJ}"
-	fi
+	else bljProj="${BLJ_PROJ}"; fi
+	
 	if [ "${bljProj: -1}" == "/" ]; then
 		len=$((${#bljProj}-1))
 		bljProj="${bljProj:0:len}"
@@ -79,7 +79,7 @@ build_clone_script() {
 	img="$(dock_id)/biolockj_controller"
 	cmd=${args/$img/-ti $img /bin/bash} 
 	$startGUI && cmd=${cmd/npm start}
-	$(inDockerContainer) && DOCKER_CLONE_SCRIPT="${BLJ_HOST_HOME}/$(basename $DOCKER_CLONE_SCRIPT)"
+	$(in_docker_env) && DOCKER_CLONE_SCRIPT="${BLJ_HOST_HOME}/$(basename $DOCKER_CLONE_SCRIPT)"
 	echo "#!/bin/bash" > "${DOCKER_CLONE_SCRIPT}"
 	echo "# This script launches a clone of the last biolockj_controller (same env vars + volumes)" >> "${DOCKER_CLONE_SCRIPT}"
 	echo "${cmd}" >> "${DOCKER_CLONE_SCRIPT}"
@@ -99,7 +99,7 @@ get_docker_img() {
 # Get mapped  Docker volumes
 get_volumes() {
 	vols="-v ${DOCK_SOCK}:${DOCK_SOCK} -v ${HOME}:${BLJ_HOST_HOME}:delegated"
-	if $runAws; then
+	if $(on_aws); then
 		vols="${vols} -v ${EFS}:${EFS}:delegated"
 	else
 		vols="${vols} -v $(blj_proj):${EFS_PROJ}:delegated"
@@ -123,42 +123,42 @@ get_volumes() {
 main() {
 	printf "Execute CMD  --------->  dockblj $(echo $@) \n"
 	parse_script_input $@
-	on_host_filesystem  && ! $startGUI && verify_inputs 
+	! $startGUI && ! $(in_docker_env) && verify_inputs 
 	print_docker_run_cmd
 	build_clone_script
 	run_docker
 	$startGUI && startBrowser
 }
 
-# Return TRUE if running on host filesystem
-on_host_filesystem() {
-	[ "${HOME}" != "${EC2_HOME}" ] && ! $(inDockerContainer)
+# Return TRUE if running on AWS EC2 instance
+on_aws() {
+	[ "${HOME}" == "${EC2_HOME}" ]
 }
 
 # Read script args and bash env vars
 # Param 1 - Array of dockblj script args
 parse_script_input() {
+	if $(containsElement gui $@); then startGUI=true; else startGUI=false; fi
 	configPath=$(named_arg $@ c)
 	newPass=$(named_arg $@ p)
 	restartPath=$(named_arg $@ r)
-	if [ ${#configPath} -gt 0 ]; then
-		echo "BLJ config: $configPath"
-		localConfig="${configPath}"
-		$(inDockerContainer) && localConfig="${BLJ_CONFIG}/$(basename $configPath)" && echo "Docker BLJ config: $localConfig"
-		inputPath="$(get_property $localConfig input.dirPaths)" && echo "BLJ inputPath: $inputPath"
-		metaPath="$(get_property $localConfig metadata.filePath)" && [ ${#metaPath} -gt 0 ] && metaPath="$(dirname $metaPath)" && echo "BLJ metaPath: $metaPath"
-		primerPath="$(get_property $localConfig trimPrimers.filePath)" && [ ${#primerPath} -gt 0 ] && primerPath="$(dirname $primerPath)" && echo "BLJ primerPath: $primerPath"
+	if [ $# -eq 1 ] && [ ${#configPath} -eq 0 ] && ! $startGUI; then
+		[ -f "${1}" ] && configPath="${1}" && console_log "Run Docker-BioLockJ pipeline w/ Config --> ${1}" 
+		[ -d "${1}" ] && restartPath="${1}" && console_log "Restart Docker-BioLockJ pipeline --> ${1}" 
 	fi
-	if [ ${#configPath} -gt 0 ]; then mapConfigDir=true; else mapConfigDir=false; fi
-	if [ ${#inputPath} -gt 0 ]; then mapInputDir=true; else mapInputDir=false; fi
-	if [ ${#metaPath} -gt 0 ]; then mapMetaDir=true; else mapMetaDir=false; fi
-	if [ ${#primerPath} -gt 0 ]; then mapPrimerDir=true; else mapPrimerDir=false; fi
-	if [ ${#restartPath} -gt 0 ]; then mapRestartDir=true; else mapRestartDir=false; fi
-	if [ ${#newPass} -gt 0 ]; then doChangePass=true; else doChangePass=false; fi
-	if $(containsElement aws $@); then runAws=true; else runAws=false; fi
-	if $(containsElement gui $@); then startGUI=true; else startGUI=false; fi
-	if $(containsElement blj $@); then mapBlj=true; else mapBlj=false; fi
-	if $(containsElement blj_sup $@); then mapBljSup=true; else mapBljSup=false; fi
+
+	if [ ${#configPath} -gt 0 ]; then
+		console_log "Host config path: $configPath"
+		if $(in_docker_env);
+			then localPath="${BLJ_CONFIG}/$(basename $configPath)"
+			else localPath="${configPath}"
+		fi
+		[ "${configPath}" != "${localPath}" ] && console_log "Docker config path: $localPath"
+		inputPath="$(get_property $localPath input.dirPaths)" && console_log "input.dirPaths: $inputPath"
+		metaPath="$(get_property $localPath metadata.filePath)" && [ ${#metaPath} -gt 0 ] && metaPath="$(dirname $metaPath)" && console_log "metadata.filePath: $metaPath"
+		primerPath="$(get_property $localPath trimPrimers.filePath)" && [ ${#primerPath} -gt 0 ] && primerPath="$(dirname $primerPath)" && console_log "trimPrimers.filePath: $primerPath"
+	fi
+	set_arg_flags $@
 }
 
 # Print the docker run command to the console.
@@ -177,6 +177,19 @@ run_docker() {
 	fi
 }
 
+# Set arg flags
+# Params - $@ --> all script input args
+set_arg_flags() {
+	if [ ${#configPath} -gt 0 ]; then mapConfigDir=true; else mapConfigDir=false; fi
+	if [ ${#inputPath} -gt 0 ]; then mapInputDir=true; else mapInputDir=false; fi
+	if [ ${#metaPath} -gt 0 ]; then mapMetaDir=true; else mapMetaDir=false; fi
+	if [ ${#primerPath} -gt 0 ]; then mapPrimerDir=true; else mapPrimerDir=false; fi
+	if [ ${#restartPath} -gt 0 ]; then mapRestartDir=true; else mapRestartDir=false; fi
+	if [ ${#newPass} -gt 0 ]; then doChangePass=true; else doChangePass=false; fi
+	if $(containsElement blj $@); then mapBlj=true; else mapBlj=false; fi
+	if $(containsElement blj_sup $@); then mapBljSup=true; else mapBljSup=false; fi
+}
+
 # Start the local browswer
 startBrowser() {
 	sleep 6 # See also: https://stackoverflow.com/questions/3124556/clean-way-to-launch-the-web-browser-from-shell-script#3124750
@@ -187,34 +200,35 @@ startBrowser() {
 	elif which python > /dev/null; then
 		python -mwebbrowser http://localhost:${GUI_PORT}
 	else
-		echo "Web browser not found on localhost!"
+		console_log "Web browser not found on localhost!"
 	fi
 }
 
 # Verify host directory exists, if dockblj is not deployed inside a Docker container
 # Param 1 - System path
 verify_dir() {
- 	[ ! -d "${1}" ] && exit_script "Error [ dockblj.verify_dir ]: Parameter \"${1}\" not found"
+ 	[ ! -d "${1}" ] && exit_script "Error [ dockblj.verify_dir() ]: Parameter \"${1}\" not found"
 }
 
 # Verify host file exists, if dockblj is not deployed inside a Docker container
 # Param 1 - System path
 verify_file() {
-	[ ! -f "${1}" ] && exit_script "Error [ dockblj.verify_file ]: Parameter \"${1}\" not found"
+	[ ! -f "${1}" ] && exit_script "Error [ dockblj.verify_file() ]: Parameter \"${1}\" not found"
 }
 
 # Verify paths are valid, if dockblj is not run inside a Docker container
 verify_inputs() {
-	echo "Verify host machine file paths"
+	console_log "Verify host machine file paths"
 	$mapInputDir && dirPath=( ${inputPath//, } )
-	! $mapInputDir || [ ${#dirPath[@]} -gt 1 ] && exit_script "Error [ dockblj ]: The \"i\" parameter must reference a single input directory"
+	! $mapInputDir || [ ${#dirPath[@]} -gt 1 ] && exit_script "Error [ dockblj.verify_inputs() ]: The \"i\" parameter must reference a single input directory"
 	verify_dir $dirPath
 	verify_dir $BLJ_PROJ
 	$mapRestartDir && verify_dir $restartPath
 	$mapConfigDir && verify_file $configPath
 	$mapMetaDir && verify_dir $metaPath
 	$mapPrimerDir && verify_dir $primerPath
-	echo "Verifications complete"
+	console_log "Verifications complete"
 }
 
+# See line 125 for main() function
 main $@

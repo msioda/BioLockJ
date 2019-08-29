@@ -89,7 +89,6 @@ public class UpdateJavaDocs {
 	private static void updateFile( final File file, final List<String> lines ) throws Exception {
 		final String filePath = file.getAbsolutePath();
 		// FileUtils.forceDelete( file );
-		// BioLockJUtil.deleteWithRetry( file, 5 );
 		file.delete();
 		System.out.println( "Deleted: " + filePath );
 		final BufferedWriter writer = new BufferedWriter( new FileWriter( filePath ) );

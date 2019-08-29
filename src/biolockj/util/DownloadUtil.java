@@ -182,7 +182,6 @@ public final class DownloadUtil {
 		if( includeOutput ) dirFilter.add( BioModule.OUTPUT_DIR );
 		if( includeScript ) dirFilter.add( Constants.SCRIPT_DIR );
 		if( includeTemp ) dirFilter.add( BioModule.TEMP_DIR );
-
 		return new NameFileFilter( dirFilter );
 	}
 
