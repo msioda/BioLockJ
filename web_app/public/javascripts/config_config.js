@@ -963,6 +963,29 @@ function retreiveDefaultProps(dpropPath) {
 //     }
 // }
 
+function promiseFromNode(address, jsonParam, method = 'POST') {
+  return new Promise((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.open(method, address, true);
+    request.setRequestHeader("Content-Type", "application/json");
+    request.send(jsonParam);
+    request.onreadystatechange = function() {
+      if (request.readyState === XMLHttpRequest.DONE) {
+        try {
+          if(this.status === 200 && request.readyState === 4){
+            console.log('this.responseText', this.responseText);
+            resolve(this.responseText);
+          }else{
+            reject(this.status + " " + this.statusText)
+          }
+        } catch (e) {
+          reject (e.message)
+        }
+      }
+    }
+  });
+}
+
 function sendFormToNode( formElementId, nodeAddress, requestMethod = 'POST') {
   return new Promise((resolve, reject) => {
     let formData = {};
@@ -1040,7 +1063,7 @@ document.getElementById('submitDeleteConfig').addEventListener('click', event =>
     request.setRequestHeader("Content-Type", "application/json");
     request.send(JSON.stringify({ configFileName : input }));
   });//end forEach
-})//end submitDeleteConfig').addEventListener(
+})//end submitDeleteConfig').addEventListener
 
 document.getElementById('prevConfigNavBut').addEventListener('click', event => {
   const mdl = document.getElementById('prevConfigModal');
@@ -1108,7 +1131,72 @@ document.getElementById('prevConfigNavBut').addEventListener('click', event => {
   });
 
   toggleShow('prevConfigModal');
+});
+
+Array.from(document.getElementsByClassName('checkDirs')).forEach(ele => {
+  ['keyup', 'focusout', 'focusin'].forEach( evt => {
+    ele.addEventListener(evt, evnt => {
+      let pths = document.getElementById(evnt.target.id)
+        .value
+        .trim()
+        .replace(/(^,)|(,$)/g, "")
+        .split(',')
+        .map( pth => {
+          return promiseFromNode('/verifyHostDir', JSON.stringify({path : pth.trim()}));
+          });
+      Promise.all(pths).then( check => {
+        displayPathStatus(ele, check);
+      })
+    })
+  })
 })
+
+Array.from(document.getElementsByClassName('checkFiles')).forEach(ele => {
+  ['keyup', 'focusout', 'focusin'].forEach( evt => {
+    ele.addEventListener(evt, evnt => {
+      let pths = document.getElementById(evnt.target.id)
+        .value
+        .trim()
+        .replace(/(^,)|(,$)/g, "")
+        .split(',')
+        .map( pth => {
+          return promiseFromNode('/verifyHostFile', JSON.stringify({path : pth.trim()}));
+          });
+      Promise.all(pths).then( check => {
+        displayPathStatus(ele, check);
+      })
+    })
+  })
+})
+
+Array.from(document.getElementsByClassName('checkFile')).forEach(ele => {
+  ['keyup', 'focusout', 'focusin'].forEach( evt => {
+    ele.addEventListener(evt, evnt => {
+      let val = document.getElementById(evnt.target.id).value;
+      let pth = promiseFromNode('/verifyHostFile', JSON.stringify({path : val}));
+      pth.then( check => {
+        displayPathStatus(ele, [check]);
+      })
+    })
+  })
+})
+
+function displayPathStatus(targetEle, statuses) {
+  let parent = targetEle.parentNode;
+  let correct = parent.getElementsByClassName('correctPathIcon')[0];
+  let wrong = parent.getElementsByClassName('wrongPathIcon')[0];
+  if (statuses.some( resp => resp.trim() !== 'yes')){
+    wrong.classList.remove('hidden');
+    if (!correct.classList.contains('hidden')){
+      correct.classList.add('hidden');
+    }
+  }else{
+    correct.classList.remove('hidden');
+    if (!wrong.classList.contains('hidden')){
+      wrong.classList.add('hidden');
+    }
+  }
+}
 
 //Updates local list of configs based on list from node.
 function updateConfigManager() {
