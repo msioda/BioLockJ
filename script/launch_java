@@ -6,25 +6,89 @@
 ##                                                                      ##
 ##########################################################################
 
-. ${BLJ}/script/blj_functions
-. ${BLJ}/script/blj_user_arg_functions
+main(){
+	
+	printf "\n ---------> Execute CMD [  launch_java $(echo ${@})  ]\n"
+	
+	take_standard_biolockj_args "$@"
+	assign_main_arg
+	
+	check_env_vars
+	check_basic_args
 
-catch_bad_values(){
+	CMD=$(assemble_java_cmd)
+	echo -e "Starting BioLockJ:  $CMD"    #<-- for the user to see cmd
+	
+	before_java_start
+	continue_after_command $CMD           #<-- for the developer and test suite to see cmd
+	after_java_start
+}
+
+. ${BLJ_SCRIPT}/blj_functions
+. ${BLJ_SCRIPT}/blj_user_arg_lib
+
+# Make sure required variables exist and are valid
+check_env_vars(){
+	pls_use_install="\nThe install script packaged with BioLockJ sets this value. You may need to start a new terminal window.\n"
+	[ ${#BLJ_PROJ} -eq 0 ] && exit_with_message "Error [ launch_java ]: Required env variable BLJ_PROJ is not defined. $pls_use_install"
+	[ ! -d "${BLJ_PROJ}" ] && exit_with_message "Error [ launch_java ]: Required env variable BLJ_PROJ [\"${BLJ_PROJ}\"] must be a directory on the filesystem. $pls_use_install"
+	[ ${#BLJ} -eq 0 ] && exit_with_message "Error [ launch_java ]: Required env variable BLJ is not defined. $pls_use_install"
+	[ ! -d "${BLJ}" ] && exit_with_message "Error [ launch_java ]: Required env variable BLJ [\"${BLJ_PROJ}\"] must be a directory on the filesystem. $pls_use_install"
+	BLJ_JAR=${BLJ}/dist/BioLockJ.jar
+	[ ! -f "${BLJ_JAR}" ] && exit_script "Error [ launch_java ]: BioLockJ Jar file \"${BLJ_JAR}\" not found."
+}
+
+check_basic_args(){
 	if ifArgUsed $RESTART_ARG ; then
 		[ ! -d $restartDir ] && exit_with_message "Error [ launch_java ]: $restartDir is not a directory on the filesystem."
 		ifArgUsed $CONFIG_ARG && [ ! -f "${configFile}" ] && exit_with_message "Error [ launch_java ]: Config file [ $configFile ] not found on filesystem."
 	else
 		[ ! -f "${configFile}" ] && exit_with_message "Error [ launch_java ]: Config file [ $configFile ] not found on filesystem."
 	fi
-	[ ! -d "${BLJ_PROJ}" ] && exit_with_message "Error [ launch_java ]: Required env variable BLJ_PROJ undefined: \"${BLJ_PROJ}\""
-	[ ! -f "${BLJ_JAR}" ] && exit_script "Error [ launch_java ]: BioLockJ Jar file \"${BLJ_JAR}\" not found."
+}
+
+assemble_java_cmd(){
+	if ifArgUsed $FG_ARG ; then
+		directStdOut=""
+		useNohup=""
+	else
+		directStdOut=">/dev/null 2>&1 &"
+		useNohup="nohup"
+	fi
+	
+	echo "${useNohup} $(java_cmd_core) $(assemble_args) $directStdOut"
+}
+
+java_cmd_core(){
+	if ifArgUsed $EXT_MODS_ARG ; then
+		echo "java -cp ${BLJ_JAR}:$(get_arg_value $EXT_MODS_ARG)/* biolockj.BioLockJ"
+	else
+		echo "java -jar ${BLJ_JAR}"
+	fi
+}
+
+# Put together the arguments to pass to the java program
+assemble_args(){
+	args="-b ${BLJ_PROJ} -u ${HOME}"
+	ifArgUsed $PASSWORD_ARG && args="${args} p=$(get_arg_value $PASSWORD_ARG)" 
+	ifArgUsed $RESTART_ARG && args="${args} r=${restartDir}"
+	[ ${#configFile} -gt 0 ] && args="${args} ${configFile}"
+	echo $args
 }
 
 before_java_start(){
-	initDir="$(most_recent_pipeline)" && pipeDir="${initDir}" && initJava=$(ps | grep -c java) 
+	initDir="$(most_recent_pipeline)"
+	pipeDir="${initDir}"
+	initJava=$(ps | grep -c java)
+	numJava=${initJava}
 }
 
-confirm_java_start(){
+after_java_start(){
+	confirm_java_started
+	print_info
+}
+
+confirm_java_started(){
 	[ $? != 0 ] && exit_with_message "Error [ biolockj ]:  Unable to run ${BLJ_JAR}"
 	printf "Initializing BioLockJ."
 	i=0
@@ -32,7 +96,6 @@ confirm_java_start(){
 		sleep 3 && i=$((i+1)) && printf "." && pipeDir="$(most_recent_pipeline)" && numJava=$(ps | grep -c java)
 	done
 	sleep 1 && echo "." && pipeDir="$(most_recent_pipeline)"
-	print_info
 }
 
 print_info(){
@@ -48,48 +111,4 @@ print_info(){
 	echo "blj_summary  -> View module execution summary"
 }
 
-
-### END OF DEFINING FUNCTIONS
-
-printf "\n ---------> Execute CMD [  launch_java $(echo ${@})  ]\n"
-
-take_standard_biolockj_args "$@"
-
-assign_main_arg
-
-# Make sure required variables exist and are valid
-pls_use_install="\nThe install script packaged with BioLockJ sets this value. You may need to start a new terminal window.\n"
-[ ${#BLJ_PROJ} -eq 0 ] && exit_with_message "Error [ biolockj ]: Required env variable BLJ_PROJ is not defined. $pls_use_install"
-[ ! -d "${BLJ_PROJ}" ] && exit_with_message "Error [ biolockj ]: Required env variable BLJ_PROJ [\"${BLJ_PROJ}\"] must be a directory on the filesystem. $pls_use_install"
-[ ${#BLJ} -eq 0 ] && exit_with_message "Error [ biolockj ]: Required env variable BLJ is not defined. $pls_use_install"
-[ ! -d "${BLJ}" ] && exit_with_message "Error [ biolockj ]: Required env variable BLJ [\"${BLJ_PROJ}\"] must be a directory on the filesystem. $pls_use_install"
-
-# Start local pipeline
-BLJ_JAR=${BLJ}/dist/BioLockJ.jar
-catch_bad_values
-before_java_start
-
-args="-b ${BLJ_PROJ} -u ${HOME}"
-ifArgUsed $PASSWORD_ARG && args="${args} p=$(get_arg_value $PASSWORD_ARG)" 
-ifArgUsed $RESTART_ARG && args="${args} r=${restartDir}"
-[ ${#configFile} -gt 0 ] && args="${args} ${configFile}"
-if ifArgUsed $FG_ARG ; then
-	directStdOut=""
-	useNohup=""
-else
-	directStdOut=">/dev/null 2>&1 &"
-	useNohup="nohup"
-fi
-if ifArgUsed $EXT_MODS_ARG ; then
-	classPathAndMain="-cp ${BLJ_JAR}:$(get_arg_value $EXT_MODS_ARG)/* biolockj.BioLockJ"
-else
-	classPathAndMain="-jar ${BLJ_JAR}"
-fi
-
-CMD="$useNohup java $classPathAndMain $args $directStdOut"
-numJava=${initJava}
-echo -e "Starting BioLockJ:  $CMD" #<-- for the user to see cmd
-continue_after_command $CMD #<-- for the developer and test suite to see cmd
-confirm_java_start
-
-
+main $@

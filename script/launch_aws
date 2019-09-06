@@ -1,22 +1,176 @@
 #!/bin/bash
 ##############################################################
-##  This script launches an aws pipeline                    ##
+##  This script is used for AWS core functions + logic      ##
 ##############################################################
 
-. ${BLJ}/script/blj_functions
-. ${BLJ}/script/blj_user_arg_functions
-. ${BLJ}/script/aws_functions
+main(){
+	printf "\n ---------> Execute CMD [  launch_aws $(echo ${@})  ]\n"
+	
+	take_standard_biolockj_args "$@"
+	assign_main_arg
+	
+	if ifArgUsed $GUI_ARG ; then
+		exit_after_command run_aws_gui
+	else
+		[ ${#configFile} -eq 0 ] && exit_script "Error [ biolockj ]: AWS pipelines require a config file."
+		[ ! -f $configFile ] && exit_script "Error [ biolockj ]: Config file \"$configFile\" is not found on the filesystem."
+		exit_after_command run_aws $configFile
+	fi
+}
 
-printf "\n ---------> Execute CMD [  launch_aws $(echo ${@})  ]\n"
+. ${BLJ_SCRIPT}/aws_config_lib
+. ${BLJ_SCRIPT}/aws_head_node_lib
+. ${BLJ_SCRIPT}/aws_upload_lib
+. ${BLJ_SCRIPT}/aws_clean_lib
+. ${BLJ_SCRIPT}/blj_functions
+. ${BLJ_SCRIPT}/blj_user_arg_lib
 
-take_standard_biolockj_args "$@"
+alias clearPipes="sudo rm -rf ${EFS}/pipelines/*; echo AWS pipelines removed"
+alias tailnf="tail -1000f /.nextflow.log"
 
-assign_main_arg
+# Build Cloud-formation Stack
+build_stack() {
+	numSecs=0 && stackYml="file://${BLJ}/resources/aws/StackEFS.yml" && stack="$(get_blj_prop aws.stack)"
+	$(is_stack_ready) && console_log "Reusing configured CREATE_COMPLETE AWS Stack: ${stack}" && return 
+	console_log "Please wait while building AWS cloud formation stack: ${stack}..." 
+	params="ParameterKey=SpotBidPercentage,ParameterValue=$(get_blj_prop aws.ec2SpotPer 80)"
+	params="${params} ParameterKey=OnDemandBatchMaxvCPUs,ParameterValue=$(get_blj_prop aws.maxBatchvCpus 256)"
+	console_log "aws cloudformation create-stack --tags \"Name=owner,Values=$(get_aws_user)\" --template-body ${stackYml} --stack-name ${stack} --capabilities CAPABILITY_IAM --parameters ${params}"
+	aws cloudformation create-stack --tags "Key=owner,Value=$(get_aws_user)" --template-body "${stackYml}" --stack-name "${stack}" --capabilities CAPABILITY_IAM --parameters ${params}
+	while ! $(is_stack_ready); do printf "." && sleep 5s && numSecs=$((numSecs+5)); done
+	console_log "Created AWS Stack: ${stack} in ${numSecs} seconds"
+}
 
-if ifArgUsed $GUI_ARG ; then
-	exit_after_command run_aws_gui
-else
-	[ ${#configFile} -eq 0 ] && exit_script "Error [ biolockj ]: AWS pipelines require a config file."
-	[ ! -f $configFile ] && exit_script "Error [ biolockj ]: Config file \"$configFile\" is not found on the filesystem."
-	exit_after_command run_aws $configFile
-fi
+# Get the s3 bucket for pipeline output, if no bucket name specified, a new bucket is created
+build_s3() {
+	awsS3=$(get_blj_prop aws.s3)
+	[ ${#awsS3} -eq 0 ] && awsS3="$(get_aws_user)-biolockj"
+	testAws=$(aws s3api list-buckets --region $(aws_region) --query "Buckets[?Name=='$awsS3']|[*].Name")
+	if [ ${#testAws} -eq 0 ] || [ "${testAws}" == "None" ]; then
+		testAws=$(aws s3api create-bucket --region $(aws_region) --bucket ${awsS3})
+		# This doesn't work - still need to figure out how to add tag --> key=ower, value=$(get_aws_user)
+		#aws s3api put-object --bucket "${awsS3}" --key OWNER --tagging $(get_aws_user)
+		[ ${#testAws} -eq 0 ] || [ "${testAws}" == "None" ] && exit_script "Error [ aws_functions.build_s3() ]:  Failed to create S3 bucket: ${awsS3}"
+		console_log "Set aws.s3=${awsS3}"
+	else
+		console_log "Found existing S3 Bucket ${awsS3}"
+	fi
+
+	s3items=$(aws s3api list-objects --bucket $awsS3 --query "Contents[].Key")
+	[ "${s3items/nextflow}" == "${s3items}" ] && aws s3api put-object --bucket "${awsS3}" --key nextflow/
+	set_blj_prop "aws.s3" "${awsS3}"
+}
+
+# Build key pair + save to $(key_file) file with security requirement (perms 400) 
+cache_key_pair() {
+	[ -f "$(key_file)" ] && console_log "Found existing: $(key_file)" && return
+	keys=$(aws ec2 describe-key-pairs) && [ "${keys/$keyPair}" == "$keys" ]
+	aws ec2 create-key-pair --key-name "$(get_blj_prop aws.stack)" --query "KeyMaterial" > "$(key_file)" 
+	chmod 400 "$(key_file)" && console_log "Security keys created --> private key: $(key_file)"
+}
+
+# Deploy AWS S3 Bucket, EC2-KeyPair, Cloud Formation Stack (including Comp. Env. + Batch queues)
+# Confirm any configured values exist, create objects that are undefined as store them in AWS config
+deploy_cloud_formation() {
+	console_log "Starting --> [  deploy_cloud_formation  ]" && build_s3 && set_stack_name && cache_key_pair && verify_stack
+}
+
+# Generate a name not found in $1, created using format $USER-biolockj
+# Param 1 - Key String
+# Param 2 - (optional) List of unavailable names
+generate_name() {
+	baseVal="$(get_aws_user)-biolockj"
+	testVal="${baseVal}" && i=0 && [ $# -eq 1 ] && echo "${testVal}" && return
+	while [ ${i} -lt 1000 ]; do
+		[ "${2/$testVal}" == "${2}" ] && echo "${testVal}" && return
+		i=$((i+1)) && testVal="${baseVal}-${i}"
+	done
+	[ ${i} -ge 1000 ] && exit_script "Error [ aws_functions.generate_name() ]: Failed to generate unique name: ${i} names already exist!"
+}
+
+# Retrieve Linux AMI with name like amzn2-ami-ecs-hvm-2.0.20190301-x86_64-ebs AMI
+get_ami() {
+	awsAmi="$(get_blj_prop aws.ami)"
+	[ ${#awsAmi} -eq 0 ] || [ $awsAmi == "None" ] &&
+		awsAmi=$(aws ec2 describe-images --region $(aws_region) --owner amazon \
+			--filter "Name=name,Values=amzn2-ami-ecs-hvm-*$(date +%Y)*x86_64-ebs" \
+			--query "reverse(sort_by(Images, &CreationDate))[:1].ImageId" )
+	[ ${#awsAmi} -gt 0 ] && [ $awsAmi != "None" ] &&
+		awsAmi=$(aws ec2 describe-images --image-ids $awsAmi --query "Images[?State=='available'].ImageId")
+	[ ${#awsAmi} -eq 0 ] || [ $awsAmi == "None" ] && exit_script "Error [ aws_functions.get_ami() ]:  Unable to use configured AWS AMI: $ami"
+	echo "${awsAmi}"
+}
+
+# Check status of CloudFormation Stack
+is_stack_ready() {
+	[ $(aws cloudformation describe-stacks --stack-name "$(get_blj_prop aws.stack)" --query "Stacks[*].StackStatus") == CREATE_COMPLETE ]
+}
+
+# List existing S3 bucket names in your region
+# Param 1 - AWS region
+list_s3_buckets() {
+	[ ${#1} -gt 0 ] && region=${1}
+	[ ${#region} -eq 0 ] && region=$(aws_region)
+	aws s3api list-buckets --region ${region} --query Buckets[].Name
+}
+
+# List all available regions
+list_regions() {
+	aws ec2 describe-regions --query Regions[*].RegionName
+}
+
+# List EC2 instance types by region
+# Param 1 - AWS region
+list_ec2_instance_types() {
+	[ ${#1} -gt 0 ] && region=${1}
+	[ ${#region} -eq 0 ] && region=$(aws_region)
+	curl -s https://pricing.${region}.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/${region}/index.csv  \
+  		| tail -n +7 | cut -d , -f 19 | grep "\." | sed 's/"//g' | sort -u
+}
+
+
+
+# Main method #1, called to build AWS environment and launch BioLockJ pipeline on AWS
+# Param 1 - Pipeline Config file-path
+run_aws() {
+	[ ! -f "${1}" ] && exit_script "Error [ aws_functions.run_aws() ]: Required pipeline Config file not found: ${1}"
+	console_log "Starting --> [  run_aws ${1}  ]" && init_aws_config "${1}" && deploy_cloud_formation && launch_ec2_head_node
+}
+
+# This method will  build AWS environment and launch BioLockJ GUI on AWS 
+run_aws_gui() {
+	console_log "Starting --> [  run_aws ${1}  ]" && init_aws_config "gui" && deploy_cloud_formation && echo "TBD - add code to launch GUI from head node"
+}
+
+# Create default stack name if $(get_blj_prop aws.stack) is undefined in AWS Config
+set_stack_name() {
+	[ "$(get_blj_prop aws.stack)" == "" ] && set_blj_prop aws.stack "$(get_aws_user)-biolockj"
+	stack="$(get_blj_prop aws.stack)"
+	if ! $(is_stack_ready); then
+		stacks=$(aws cloudformation list-stacks --query "StackSummaries[].StackName")
+		if [ "${stacks/$stack}" != "${stacks}" ]; then
+			set_blj_prop aws.stack $(generate_name $stack "$stacks")
+		fi
+	fi
+	console_log "Cloudformation: \"aws.stack=$(get_blj_prop aws.stack)\""
+}
+
+# Return stack name.  If aws.stack pipeline Config defined, verify it exists with status CREATE_COMPLETE.
+# If aws.stack was undefined, create a new stack.
+verify_stack() {
+	stack="$(get_blj_prop aws.stack)" && console_log "Check status of AWS Stack: \"${stack}\""
+	allStacks=$(aws cloudformation list-stacks --query "StackSummaries[].StackName")
+	enabledStacks=$(aws_stacks CREATE_COMPLETE) && createInProgStacks=$(aws_stacks CREATE_IN_PROGRESS)
+	if [ ${#enabledStacks} -gt 0 ] && [ "${enabledStacks/$stack}" != "${enabledStacks}" ]; then
+		console_log "Configured AWS Stack: ${stack} --> status=CREATE_COMPLETE"
+	elif [ ${#createInProgStacks} -gt 0 ] && [ "${createInProgStacks/$stack}" != "${createInProgStacks}" ]; then
+		sleep 30 && verify_stack
+	elif [ ${#allStacks} -gt 0 ] && [ "${allStacks/$stack}" != "${allStacks}" ]; then
+		status=$(aws cloudformation describe-stacks --stack-name "${stack}" --query "Stacks[*].StackStatus")
+		exit_script "Error [ aws_functions.verify_stack() ]:  Configured AWS Stack \"${stack}\" exists but is disabled --> status=$status"
+	else # Malcolm says we may not need to verify stack name is unique!!!
+		build_stack
+	fi
+}
+
+main $@

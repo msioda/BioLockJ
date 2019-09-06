@@ -28,7 +28,7 @@
 
 
 . ${BLJ}/script/blj_functions
-. ${BLJ}/script/blj_user_arg_functions
+. ${BLJ}/script/blj_user_arg_lib
 
 # Before anything else, check to see if the user just wants help or version info.
 containsElement "--help" "$@" || containsElement "-h" "$@" && display_help && exit 0
