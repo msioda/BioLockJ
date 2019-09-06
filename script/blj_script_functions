@@ -17,6 +17,13 @@ containsElement() {
   return 1
 }
 
+# Logic control; if the variable given is empty then evaluates like false,
+# if the variable has a positive size then evaluates like true
+ifDefined(){
+	[ ${#1} -gt 0 ] && return 0 #TODO: this could be a one-liner ?
+	[ ${#1} -eq 0 ] && return 1
+}
+
 # Convert a path variable to store the absolute path
 # param 1 - a path
 # recommended: aPath=$(to_abs_path $aPath)
