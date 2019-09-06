@@ -7,7 +7,7 @@
 ##  substituting "_" for each "." characters in the Java class name           ##
 ################################################################################
 . /app/biolockj/script/blj_config
-. "${AWS_LIB}"
+. ${BLJ_SCRIPT}/aws_functions
 
 # Build the template file that NextflowUtil.java will use to create the pipeline main.nf
 # Param 1 - All make_nextflow script args
@@ -16,21 +16,21 @@ build_template() {
 	echo "Building Nextflow Template ${1} with ---> ${modules[@]}"
 	numModules=$(echo ${modules[@]} | wc -w | xargs)
 	summaryMsg="BioLockJ $(biolockj -v) generated Nextflow Config with $numModules BioModule process definitions"
-	echo "// $summaryMsg" > "${1}"
-	echo "" >> "${1}"
+	echo "// $summaryMsg"                                               > "${1}"
+	echo ""                                                            >> "${1}"
 	for module in ${modules[@]}; do
-		echo "process ${module} {" >> "${1}"
-		echo '    echo true' >> "${1}"
-		echo '    cpus $script.numThreads' >> "${1}"
-		echo '    memory $aws.ram' >> "${1}"
-		echo '    label $nextflow.dockerImage' >> "${1}"
-		echo '    input:' >> "${1}"
+		echo "process ${module} {"                                     >> "${1}"
+		echo '    echo true'                                           >> "${1}"
+		echo '    cpus $script.numThreads'                             >> "${1}"
+		echo '    memory $aws.ram'                                     >> "${1}"
+		echo '    label $nextflow.dockerImage'                         >> "${1}"
+		echo '    input:'                                              >> "${1}"
 		echo '    file worker from Channel.watchPath( "BLJ_MODULE_SUB_DIR/*.sh" )' >> "${1}"
-		echo '    """' >> "${1}"
-		echo '    #!/bin/bash' >> "${1}"
-		echo '    bash ${worker}' >> "${1}"
-		echo '    """' >> "${1}"
-		echo '}' >> "${1}"
+		echo '    """'                                                 >> "${1}"
+		echo '    #!/bin/bash'                                         >> "${1}"
+		echo '    bash ${worker}'                                      >> "${1}"
+		echo '    """'                                                 >> "${1}"
+		echo '}'                                                       >> "${1}"
 	done
 	echo "-----------------------------------------------------------------------------------------"
 	[ -f "${1}" ] && echo "Created TEMPLATE Nextflow Config: ${1}" && cat "${1}" && \

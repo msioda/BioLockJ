@@ -42,8 +42,8 @@ main(){
 	fi
 }
 
-. "${DOCKER_LIB}"
-. ${BLJ}/script/blj_user_arg_functions
+. ${BLJ_SCRIPT}/docker_functions
+. ${BLJ_SCRIPT}/blj_user_arg_functions
 
 # Read script args and bash env vars
 # Param 1 - Array of launch_docker script args
@@ -178,9 +178,9 @@ build_clone_script() {
 	ifArgUsed $GUI_ARG && cmd=${cmd/npm start}
 	$(in_docker_env) && DOCKER_CLONE_SCRIPT="${BLJ_HOST_HOME}/$(basename $DOCKER_CLONE_SCRIPT)"
 	
-	echo "#!/bin/bash" > "${DOCKER_CLONE_SCRIPT}"
+	echo "#!/bin/bash"                       > "${DOCKER_CLONE_SCRIPT}"
 	echo "# This script launches a clone of the last biolockj_controller (same env vars + volumes)" >> "${DOCKER_CLONE_SCRIPT}"
-	echo "${cmd}" >> "${DOCKER_CLONE_SCRIPT}"
+	echo "${cmd}"                           >> "${DOCKER_CLONE_SCRIPT}"
 	chmod 777 "${DOCKER_CLONE_SCRIPT}"
 	echo "launch_docker created \"${DOCKER_CLONE_SCRIPT}\" -->  This script will launch a clone of the current biolockj_controller (same env vars + volumes)"
 	echo "alias \"dclone\" can be used to run \"${DOCKER_CLONE_SCRIPT}\""

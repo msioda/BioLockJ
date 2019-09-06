@@ -3,7 +3,7 @@
 ##  This script manually completes current module and pipeline status.       ##
 ##  All modules numbered below than the current module will also be reset.   ##
 ###############################################################################
-. "${BLJ_LIB}"
+. ${BLJ_SCRIPT}/blj_functions
 
 if [ ${#1} -gt 0 ]; then myDir="${1}"; else myDir="$PWD"; fi
 echo "Starting [ blj_complete ] to reset status of modules before/including $myDir to --> \"biolockjComplete\""

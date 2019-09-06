@@ -17,21 +17,18 @@
 export BLJ_SCRIPT="$( cd "$( dirname ${BASH_SOURCE[0]} )" && pwd )"
 export BLJ="$(dirname $BLJ_SCRIPT)"
 export BLJ_PROJ="${BLJ}/pipelines"
-export BLJ_LIB="${BLJ_SCRIPT}/blj_functions"
-export DOCKER_LIB="${BLJ_SCRIPT}/docker_functions"
-export AWS_LIB="${BLJ_SCRIPT}/aws_functions"
 export EC2_USER="ec2-user"
 export EC2_HOME="/home/${EC2_USER}"
 export TMP="${HOME}/.temp_config.txt"
 
-alias load_blj=". ${BLJ_LIB}"
-alias load_docker=". ${DOCKER_LIB}"
-alias load_aws=". ${AWS_LIB}"
+alias load_blj=". ${BLJ_SCRIPT}/blj_functions"
+alias load_docker=". ${BLJ_SCRIPT}/docker_functions"
+alias load_aws=". ${BLJ_SCRIPT}/aws_functions"
 
 if [ -f "/.dockerenv" ] || [ "${HOME}" == "${EC2_HOME}" ]; then 
-	. "${AWS_LIB}"
+	. ${BLJ_SCRIPT}/aws_functions
 else
-	. "${DOCKER_LIB}"
+	. ${BLJ_SCRIPT}/docker_functions
 fi
 
 [ "${PATH/$BLJ_SCRIPT}" == "${PATH}" ] && export PATH="${BLJ_SCRIPT}:$PATH"

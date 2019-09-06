@@ -9,7 +9,7 @@
 ##  Otherwise exit script if any pipeline fails.                         ##
 ##                                                                       ##
 ###########################################################################
-. "${BLJ_LIB}"
+. ${BLJ_SCRIPT}/blj_functions
 
 
 # Get pipeline status

@@ -6,6 +6,7 @@
 ##                                                               ##
 ###################################################################
 
+. ${BLJ_SCRIPT}/blj_functions
 
 # example: take_standard_biolockj_args "$@"
 take_standard_biolockj_args(){

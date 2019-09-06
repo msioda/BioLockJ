@@ -5,7 +5,7 @@
 ##                                                               ##
 ###################################################################
 . "${BLJ_SCRIPT}/docker_config"
-. "${BLJ_LIB}"
+. ${BLJ_SCRIPT}/blj_functions
 
 alias bljb="build_blj_only"
 alias bljd="build_blj_only; clearDock; push_blj_only"
