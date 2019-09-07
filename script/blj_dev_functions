@@ -2,12 +2,11 @@
 ###################################################################
 ##                                                               ##
 ##  Functions for BioLockJ developers.                           ##
+##  These will all be replaced by automated processes,           ##
+##  or desolved without replacement.                             ##
 ##                                                               ##
 ###################################################################
 
-
-
-# ---> should be removed
 # Call ANT to build BioLockJ
 blj_build() {
 	console_log "Building BioLockJ with ANT..."
@@ -26,7 +25,6 @@ blj_build() {
 	cd $myDir
 }
 
-# ---> should be removed
 # Pull the latest Git code and build BioLockJ.jar
 blj_deploy() {
 	blj_sup_git
@@ -34,14 +32,12 @@ blj_deploy() {
 	blj_build build-jar
 }
 
-# ---> should be removed
 # Git latest $BLJ + build BioLockJ.jar
 blj_git() {
 	[ ! -d "${BLJ}" ] && console_log "Cannot build BLJ: directory not found: ${BLJ}" && return
 	blj_git_reset "${BLJ}"
 }
 
-# ---> should be removed
 # Reset git repo + set file permissions 770
 # Param 1 - Directory path of Git repo (use current directory if undefined)
 blj_git_reset() {
@@ -56,7 +52,6 @@ blj_git_reset() {
 	echo "$SPACER"
 	echo "" && cd "${gitDir}"
 }
-
 
 # Git latest ${BLJ_SUP}
 blj_sup_git() {
