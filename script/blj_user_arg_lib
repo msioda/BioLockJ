@@ -28,19 +28,17 @@ set_arg_names(){
 	EXT_MODS_ARG="external-modules"
 	BLJ_ARG="blj"
 	BLJ_SUP_ARG="blj_sup"
-	# not shown in user documentation
-	FROM_GUI_ARG="blj_gui" #This flag indicates that a pipeline was launched by the GUI.
 }
 
 init_defaults(){
 	# Order does not matter for $longArgName or $takeShortArg, but it is easier to read if they match
 	# Order MATTERS for $shortArgName and $parameters ---they must match whatever order is in $longArgName.
-	longArgName=( $GUI_ARG $PASSWORD_ARG $CONFIG_ARG $RESTART_ARG $AWS_ARG $DOCKER_ARG $FG_ARG $EXT_MODS_ARG $BLJ_ARG $BLJ_SUP_ARG $FROM_GUI_ARG )
+	longArgName=( $GUI_ARG $PASSWORD_ARG $CONFIG_ARG $RESTART_ARG $AWS_ARG $DOCKER_ARG $FG_ARG $EXT_MODS_ARG $BLJ_ARG $BLJ_SUP_ARG )
 	takeShortArg=($GUI_ARG $PASSWORD_ARG $CONFIG_ARG $RESTART_ARG $AWS_ARG $DOCKER_ARG $FG_ARG help version)
 	shortArgName=()
 	parameters=()
-	mustTakeValue=($PASSWORD_ARG $CONFIG_ARG)
-	canTakeValue=($mustTakeValue $BLJ_SUP_ARG)
+	mustTakeValue=($PASSWORD_ARG $CONFIG_ARG $EXT_MODS_ARG)
+	canTakeValue=(${mustTakeValue[@]} $BLJ_SUP_ARG)
 	for i in ${!longArgName[@]}; do
 		longName=${longArgName[ $i ]}
 		if containsElement $longName ${takeShortArg[@]}
@@ -116,8 +114,8 @@ parse_options(){
 # otherwise the argument is a flag, set that parameter to true
 # param1: the long-form argument name
 apply_arg(){
-	argsFromUser=($argsFromUser $1)
-	containsElement $1 "${canTakeValue[@]}" && argName=$1
+	argsFromUser=(${argsFromUser[@]} $1)
+	containsElement $1 ${canTakeValue[@]} && argName=$1
 	set_flag_to_true $1
 }
 

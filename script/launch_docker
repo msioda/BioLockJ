@@ -57,7 +57,7 @@ scan_script_and_env_args() {
 	ifArgUsed $EXT_MODS_ARG && extMods=$(get_arg_value $EXT_MODS_ARG)
 	ifArgUsed $GUI_ARG && echo "Starting BioLockJ GUI..."
 	config=$configFile
-	if ! ifArgUsed $GUI_ARG && ! ifArgUsed $FROM_GUI_ARG && [ ${#config} -gt 0 ] && [ -f $config ] ; then
+	if ! ifArgUsed $GUI_ARG && [ ${#config} -gt 0 ] && [ -f $config ] ; then
 		inputDir="$(get_property $config input.dirPaths)"
 		metaPath="$(get_property $config metadata.filePath)" && [ ${#metaPath} -gt 0 ] && metaPath="$(dirname $metaPath)"
 		primerPath="$(get_property $config trimPrimers.filePath)" && [ ${#primerPath} -gt 0 ] && primerPath="$(dirname $primerPath)"
